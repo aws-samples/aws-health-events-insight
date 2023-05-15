@@ -1,0 +1,1192 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  AWSHealthEventQSDataSetArn:
+    Type: String
+    Description: The AWS Health Event QSDataSetArn for Analysis.
+  QuickSightUser:
+    Type: String
+    Description: The QuickSight User that is allowed configure and manage the QS dashboard.
+
+Resources:
+  AWSHealthEventAnalysis:
+    Type: AWS::QuickSight::Analysis
+    Properties:
+      AwsAccountId: !Sub "${AWS::AccountId}"
+      Name: !Sub "EventHealth-Analysis-${AWS::AccountId}"
+      AnalysisId: !Sub "cfn-integration-EventHealth-Analysis-${AWS::AccountId}"
+      Definition: 
+        FilterGroups: [ ]
+        AnalysisDefaults:
+          DefaultNewSheetConfiguration:
+            SheetContentType: INTERACTIVE
+            InteractiveLayoutConfiguration:
+              Grid:
+                CanvasSizeOptions:
+                  ScreenCanvasSizeOptions:
+                    ResizeOption: RESPONSIVE
+        DataSetIdentifierDeclarations:
+        - Identifier: !Sub "EventHealth-${AWS::AccountId}"
+          DataSetArn: !Ref AWSHealthEventQSDataSetArn
+        Sheets:
+        - SheetId: fb07dc95-b53c-4830-95b0-ab8441a3c3fd
+          Name: "<<$Location>>ActiveEvents"
+          Visuals:
+          - GeospatialMapVisual:
+              VisualId: 1c5f1d76-a417-4f50-a136-161e621072ea
+              Title:
+                Visibility: VISIBLE
+                FormatText:
+                  RichText: "<visual-title>GeoLocation</visual-title>"
+              Subtitle:
+                Visibility: VISIBLE
+              ChartConfiguration:
+                FieldWells:
+                  GeospatialMapAggregatedFieldWells:
+                    Geospatial:
+                    - CategoricalDimensionField:
+                        FieldId: 11765d00-e55d-4974-9278-c0a49783a5a9.1.1683488808189
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: location
+                    Values: []
+                    Colors:
+                    - CategoricalDimensionField:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventTypeCategory.0.1683487801849
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: eventTypeCategory
+                Legend:
+                  Visibility: HIDDEN
+                Tooltip:
+                  TooltipVisibility: VISIBLE
+                  SelectedTooltipType: DETAILED
+                  FieldBasedTooltip:
+                    AggregationVisibility: HIDDEN
+                    TooltipTitleType: PRIMARY_VALUE
+                    TooltipFields:
+                    - FieldTooltipItem:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventTypeCategory.0.1683487801849
+                        Visibility: VISIBLE
+                    - FieldTooltipItem:
+                        FieldId: 11765d00-e55d-4974-9278-c0a49783a5a9.1.1683488808189
+                        Visibility: VISIBLE
+                    - FieldTooltipItem:
+                        FieldId: 11765d00-e55d-4974-9278-c0a49783a5a9.1.1683488808189
+                        Visibility: VISIBLE
+                WindowOptions:
+                  Bounds:
+                    North: 53.14944584971619
+                    South: 25.182315778066837
+                    West: -200.77816308215176
+                    East: 14.006067954174426
+                  MapZoomMode: MANUAL
+              ColumnHierarchies: []
+              Actions: []
+          - TableVisual:
+              VisualId: 36949c41-d145-4c87-98eb-6f710e420bc9
+              Title:
+                Visibility: VISIBLE
+                FormatText:
+                  RichText: "<visual-title>Event Details</visual-title>"
+              Subtitle:
+                Visibility: VISIBLE
+              ChartConfiguration:
+                FieldWells:
+                  TableAggregatedFieldWells:
+                    GroupBy:
+                    - CategoricalDimensionField:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.service.0.1683501457253
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: service
+                    - CategoricalDimensionField:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.account.1.1683501458515
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: account
+                    - CategoricalDimensionField:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventRegion.2.1683501482351
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: eventRegion
+                    - CategoricalDimensionField:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventTypeCategory.3.1683501517677
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: eventTypeCategory
+                    - DateDimensionField:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.startTime.4.1683501539232
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: startTime
+                    - DateDimensionField:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.endTime.5.1683501542503
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: endTime
+                    - DateDimensionField:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.lastUpdatedTime.6.1683501542503
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: lastUpdatedTime
+                    - CategoricalDimensionField:
+                        FieldId: 0b236e72-c6f6-43d7-809c-4572a2178870.7.1683501689380
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: Status
+                    - CategoricalDimensionField:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventDescription.8.1683501691236
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: eventDescription
+                    - CategoricalDimensionField:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventArn.9.1683563397883
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: eventArn
+                    Values: []
+                SortConfiguration:
+                  PaginationConfiguration:
+                    PageSize: 10000
+                    PageNumber: 1
+                TableOptions:
+                  CellStyle:
+                    Height: 25
+                TotalOptions:
+                  TotalsVisibility: VISIBLE
+                  Placement: END
+                  ScrollStatus: SCROLLED
+              Actions: []
+          - PieChartVisual:
+              VisualId: 732f058d-4bd2-473b-bdd8-8891b2783605
+              Title:
+                Visibility: VISIBLE
+                FormatText:
+                  RichText: "<visual-title>Event by Type</visual-title>"
+              Subtitle:
+                Visibility: VISIBLE
+              ChartConfiguration:
+                FieldWells:
+                  PieChartAggregatedFieldWells:
+                    Category:
+                    - CategoricalDimensionField:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventTypeCategory.0.1683487801849
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: eventTypeCategory
+                    Values: []
+                SortConfiguration:
+                  CategoryItemsLimit:
+                    OtherCategories: INCLUDE
+                  SmallMultiplesLimitConfiguration:
+                    OtherCategories: INCLUDE
+                DonutOptions:
+                  ArcOptions:
+                    ArcThickness: MEDIUM
+                Legend:
+                  Visibility: HIDDEN
+                DataLabels:
+                  Visibility: VISIBLE
+                  Overlap: DISABLE_OVERLAP
+                Tooltip:
+                  TooltipVisibility: VISIBLE
+                  SelectedTooltipType: DETAILED
+                  FieldBasedTooltip:
+                    AggregationVisibility: HIDDEN
+                    TooltipTitleType: PRIMARY_VALUE
+                    TooltipFields:
+                    - FieldTooltipItem:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventTypeCategory.0.1683487801849
+                        Visibility: VISIBLE
+                    - FieldTooltipItem:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventTypeCategory.0.1683487801849
+                        Visibility: VISIBLE
+              Actions: []
+              ColumnHierarchies: []
+          - PieChartVisual:
+              VisualId: ef5bcdbc-52e8-42c4-969b-76a5cf0cc6e7
+              Title:
+                Visibility: VISIBLE
+                FormatText:
+                  RichText: "<visual-title>Event by Account</visual-title>"
+              Subtitle:
+                Visibility: VISIBLE
+              ChartConfiguration:
+                FieldWells:
+                  PieChartAggregatedFieldWells:
+                    Category:
+                    - CategoricalDimensionField:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.account.0.1683501583618
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: account
+                    Values: []
+                SortConfiguration:
+                  CategoryItemsLimit:
+                    OtherCategories: INCLUDE
+                  SmallMultiplesLimitConfiguration:
+                    OtherCategories: INCLUDE
+                DonutOptions:
+                  ArcOptions:
+                    ArcThickness: MEDIUM
+                Legend:
+                  Visibility: HIDDEN
+                DataLabels:
+                  Visibility: VISIBLE
+                  Overlap: DISABLE_OVERLAP
+                Tooltip:
+                  TooltipVisibility: VISIBLE
+                  SelectedTooltipType: DETAILED
+                  FieldBasedTooltip:
+                    AggregationVisibility: HIDDEN
+                    TooltipTitleType: PRIMARY_VALUE
+                    TooltipFields:
+                    - FieldTooltipItem:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.account.0.1683501583618
+                        Visibility: VISIBLE
+                    - FieldTooltipItem:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.account.0.1683501583618
+                        Visibility: VISIBLE
+              Actions: []
+              ColumnHierarchies: []
+          - PieChartVisual:
+              VisualId: c1d17a70-8f52-41d1-9062-c5432d58c17e
+              Title:
+                Visibility: VISIBLE
+                FormatText:
+                  RichText: "<visual-title>Event by Regions</visual-title>"
+              Subtitle:
+                Visibility: VISIBLE
+              ChartConfiguration:
+                FieldWells:
+                  PieChartAggregatedFieldWells:
+                    Category:
+                    - CategoricalDimensionField:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventRegion.0.1683487615968
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: eventRegion
+                    Values: []
+                SortConfiguration:
+                  CategoryItemsLimit:
+                    OtherCategories: INCLUDE
+                  SmallMultiplesLimitConfiguration:
+                    OtherCategories: INCLUDE
+                DonutOptions:
+                  ArcOptions:
+                    ArcThickness: MEDIUM
+                Legend:
+                  Visibility: HIDDEN
+                DataLabels:
+                  Visibility: VISIBLE
+                  Overlap: DISABLE_OVERLAP
+                Tooltip:
+                  TooltipVisibility: VISIBLE
+                  SelectedTooltipType: DETAILED
+                  FieldBasedTooltip:
+                    AggregationVisibility: HIDDEN
+                    TooltipTitleType: PRIMARY_VALUE
+                    TooltipFields:
+                    - FieldTooltipItem:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventRegion.0.1683487615968
+                        Visibility: VISIBLE
+                    - FieldTooltipItem:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventRegion.0.1683487615968
+                        Visibility: VISIBLE
+              Actions: []
+              ColumnHierarchies: []
+          - PieChartVisual:
+              VisualId: 6abab0b5-6f68-4320-9a0e-1754862ea030
+              Title:
+                Visibility: VISIBLE
+                FormatText:
+                  RichText: "<visual-title>Event by Service</visual-title>"
+              Subtitle:
+                Visibility: VISIBLE
+              ChartConfiguration:
+                FieldWells:
+                  PieChartAggregatedFieldWells:
+                    Category:
+                    - CategoricalDimensionField:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.service.0.1683487486674
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: service
+                    Values: []
+                SortConfiguration:
+                  CategoryItemsLimit:
+                    OtherCategories: INCLUDE
+                  SmallMultiplesLimitConfiguration:
+                    OtherCategories: INCLUDE
+                DonutOptions:
+                  ArcOptions:
+                    ArcThickness: MEDIUM
+                Legend:
+                  Visibility: HIDDEN
+                DataLabels:
+                  Visibility: VISIBLE
+                  Overlap: DISABLE_OVERLAP
+                Tooltip:
+                  TooltipVisibility: VISIBLE
+                  SelectedTooltipType: DETAILED
+                  FieldBasedTooltip:
+                    AggregationVisibility: HIDDEN
+                    TooltipTitleType: PRIMARY_VALUE
+                    TooltipFields:
+                    - FieldTooltipItem:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.service.0.1683487486674
+                        Visibility: VISIBLE
+                    - FieldTooltipItem:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.service.0.1683487486674
+                        Visibility: VISIBLE
+              Actions: []
+              ColumnHierarchies: []
+          Layouts:
+          - Configuration:
+              GridLayout:
+                Elements:
+                - ElementId: 6abab0b5-6f68-4320-9a0e-1754862ea030
+                  ElementType: VISUAL
+                  ColumnIndex: 0
+                  ColumnSpan: 8
+                  RowIndex: 0
+                  RowSpan: 6
+                - ElementId: c1d17a70-8f52-41d1-9062-c5432d58c17e
+                  ElementType: VISUAL
+                  ColumnIndex: 8
+                  ColumnSpan: 7
+                  RowIndex: 0
+                  RowSpan: 6
+                - ElementId: ef5bcdbc-52e8-42c4-969b-76a5cf0cc6e7
+                  ElementType: VISUAL
+                  ColumnIndex: 15
+                  ColumnSpan: 8
+                  RowIndex: 0
+                  RowSpan: 6
+                - ElementId: 732f058d-4bd2-473b-bdd8-8891b2783605
+                  ElementType: VISUAL
+                  ColumnIndex: 23
+                  ColumnSpan: 8
+                  RowIndex: 0
+                  RowSpan: 6
+                - ElementId: 36949c41-d145-4c87-98eb-6f710e420bc9
+                  ElementType: VISUAL
+                  ColumnSpan: 31
+                  RowSpan: 7
+                - ElementId: 1c5f1d76-a417-4f50-a136-161e621072ea
+                  ElementType: VISUAL
+                  ColumnSpan: 31
+                  RowSpan: 7
+                CanvasSizeOptions:
+                  ScreenCanvasSizeOptions:
+                    ResizeOption: FIXED
+                    OptimizedViewPortWidth: 1600px
+          ContentType: INTERACTIVE
+        - SheetId: 0a590c53-98fe-47fd-a199-e0782cc142bf
+          Name: HistoricalEvents
+          Visuals:
+          - GeospatialMapVisual:
+              VisualId: 268e6ed2-c752-4b0a-a6c2-568862540314
+              Title:
+                Visibility: VISIBLE
+                FormatText:
+                  RichText: "<visual-title>GeoLocation</visual-title>"
+              Subtitle:
+                Visibility: VISIBLE
+              ChartConfiguration:
+                FieldWells:
+                  GeospatialMapAggregatedFieldWells:
+                    Geospatial:
+                    - CategoricalDimensionField:
+                        FieldId: 11765d00-e55d-4974-9278-c0a49783a5a9.1.1683488808189
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: location
+                    Values: []
+                    Colors:
+                    - CategoricalDimensionField:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventTypeCategory.0.1683487801849
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: eventTypeCategory
+                Legend:
+                  Visibility: HIDDEN
+                Tooltip:
+                  TooltipVisibility: VISIBLE
+                  SelectedTooltipType: DETAILED
+                  FieldBasedTooltip:
+                    AggregationVisibility: HIDDEN
+                    TooltipTitleType: PRIMARY_VALUE
+                    TooltipFields:
+                    - FieldTooltipItem:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventTypeCategory.0.1683487801849
+                        Visibility: VISIBLE
+                    - FieldTooltipItem:
+                        FieldId: 11765d00-e55d-4974-9278-c0a49783a5a9.1.1683488808189
+                        Visibility: VISIBLE
+                    - FieldTooltipItem:
+                        FieldId: 11765d00-e55d-4974-9278-c0a49783a5a9.1.1683488808189
+                        Visibility: VISIBLE
+                WindowOptions:
+                  Bounds:
+                    North: 53.14944584971619
+                    South: 25.182315778066837
+                    West: -200.77816308215176
+                    East: 14.006067954174426
+                  MapZoomMode: MANUAL
+              ColumnHierarchies: []
+              Actions: []
+          - TableVisual:
+              VisualId: 72e479d3-28d8-4462-b46e-73ee9396ae55
+              Title:
+                Visibility: VISIBLE
+                FormatText:
+                  RichText: "<visual-title>Event Details</visual-title>"
+              Subtitle:
+                Visibility: VISIBLE
+              ChartConfiguration:
+                FieldWells:
+                  TableAggregatedFieldWells:
+                    GroupBy:
+                    - CategoricalDimensionField:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.service.0.1683501457253
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: service
+                    - CategoricalDimensionField:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.account.1.1683501458515
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: account
+                    - CategoricalDimensionField:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventRegion.2.1683501482351
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: eventRegion
+                    - CategoricalDimensionField:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventTypeCategory.3.1683501517677
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: eventTypeCategory
+                    - DateDimensionField:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.startTime.4.1683501539232
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: startTime
+                    - DateDimensionField:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.endTime.5.1683501542503
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: endTime
+                    - DateDimensionField:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.lastUpdatedTime.6.1683501543858
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: lastUpdatedTime
+                    - CategoricalDimensionField:
+                        FieldId: 0b236e72-c6f6-43d7-809c-4572a2178870.8.1683501933617
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: Status
+                    - CategoricalDimensionField:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventDescription.8.1683501955605
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: eventDescription
+                    - CategoricalDimensionField:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventArn.9.1683563428645
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: eventArn
+                    Values: []
+                SortConfiguration: {}
+                TableOptions:
+                  CellStyle:
+                    Height: 25
+              Actions: []
+          - PieChartVisual:
+              VisualId: e9807f01-b958-4083-8f4c-2ece18561e3b
+              Title:
+                Visibility: VISIBLE
+                FormatText:
+                  RichText: "<visual-title>Event by Type</visual-title>"
+              Subtitle:
+                Visibility: VISIBLE
+              ChartConfiguration:
+                FieldWells:
+                  PieChartAggregatedFieldWells:
+                    Category:
+                    - CategoricalDimensionField:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventTypeCategory.0.1683487801849
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: eventTypeCategory
+                    Values: []
+                SortConfiguration:
+                  CategoryItemsLimit:
+                    OtherCategories: INCLUDE
+                  SmallMultiplesLimitConfiguration:
+                    OtherCategories: INCLUDE
+                DonutOptions:
+                  ArcOptions:
+                    ArcThickness: MEDIUM
+                Legend:
+                  Visibility: HIDDEN
+                DataLabels:
+                  Visibility: VISIBLE
+                  Overlap: DISABLE_OVERLAP
+                Tooltip:
+                  TooltipVisibility: VISIBLE
+                  SelectedTooltipType: DETAILED
+                  FieldBasedTooltip:
+                    AggregationVisibility: HIDDEN
+                    TooltipTitleType: PRIMARY_VALUE
+                    TooltipFields:
+                    - FieldTooltipItem:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventTypeCategory.0.1683487801849
+                        Visibility: VISIBLE
+                    - FieldTooltipItem:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventTypeCategory.0.1683487801849
+                        Visibility: VISIBLE
+              Actions: []
+              ColumnHierarchies: []
+          - PieChartVisual:
+              VisualId: 07e1a590-d937-428e-8a95-45a4f381b4d1
+              Title:
+                Visibility: VISIBLE
+                FormatText:
+                  RichText: "<visual-title>Event by Account</visual-title>"
+              Subtitle:
+                Visibility: VISIBLE
+              ChartConfiguration:
+                FieldWells:
+                  PieChartAggregatedFieldWells:
+                    Category:
+                    - CategoricalDimensionField:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.account.0.1683501583618
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: account
+                    Values: []
+                SortConfiguration:
+                  CategoryItemsLimit:
+                    OtherCategories: INCLUDE
+                  SmallMultiplesLimitConfiguration:
+                    OtherCategories: INCLUDE
+                DonutOptions:
+                  ArcOptions:
+                    ArcThickness: MEDIUM
+                Legend:
+                  Visibility: HIDDEN
+                DataLabels:
+                  Visibility: VISIBLE
+                  Overlap: DISABLE_OVERLAP
+                Tooltip:
+                  TooltipVisibility: VISIBLE
+                  SelectedTooltipType: DETAILED
+                  FieldBasedTooltip:
+                    AggregationVisibility: HIDDEN
+                    TooltipTitleType: PRIMARY_VALUE
+                    TooltipFields:
+                    - FieldTooltipItem:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.account.0.1683501583618
+                        Visibility: VISIBLE
+                    - FieldTooltipItem:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.account.0.1683501583618
+                        Visibility: VISIBLE
+              Actions: []
+              ColumnHierarchies: []
+          - PieChartVisual:
+              VisualId: 66a24873-8e69-44fa-ad0d-65ba41b93896
+              Title:
+                Visibility: VISIBLE
+                FormatText:
+                  RichText: "<visual-title>Event by Regions</visual-title>"
+              Subtitle:
+                Visibility: VISIBLE
+              ChartConfiguration:
+                FieldWells:
+                  PieChartAggregatedFieldWells:
+                    Category:
+                    - CategoricalDimensionField:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventRegion.0.1683487615968
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: eventRegion
+                    Values: []
+                SortConfiguration:
+                  CategoryItemsLimit:
+                    OtherCategories: INCLUDE
+                  SmallMultiplesLimitConfiguration:
+                    OtherCategories: INCLUDE
+                DonutOptions:
+                  ArcOptions:
+                    ArcThickness: MEDIUM
+                Legend:
+                  Visibility: HIDDEN
+                DataLabels:
+                  Visibility: VISIBLE
+                  Overlap: DISABLE_OVERLAP
+                Tooltip:
+                  TooltipVisibility: VISIBLE
+                  SelectedTooltipType: DETAILED
+                  FieldBasedTooltip:
+                    AggregationVisibility: HIDDEN
+                    TooltipTitleType: PRIMARY_VALUE
+                    TooltipFields:
+                    - FieldTooltipItem:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventRegion.0.1683487615968
+                        Visibility: VISIBLE
+                    - FieldTooltipItem:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventRegion.0.1683487615968
+                        Visibility: VISIBLE
+              Actions: []
+              ColumnHierarchies: []
+          - PieChartVisual:
+              VisualId: 9dabf87c-f212-4622-a17c-93ac574160e6
+              Title:
+                Visibility: VISIBLE
+                FormatText:
+                  RichText: "<visual-title>Event by Service</visual-title>"
+              Subtitle:
+                Visibility: VISIBLE
+              ChartConfiguration:
+                FieldWells:
+                  PieChartAggregatedFieldWells:
+                    Category:
+                    - CategoricalDimensionField:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.service.0.1683487486674
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: service
+                    Values: []
+                SortConfiguration:
+                  CategoryItemsLimit:
+                    OtherCategories: INCLUDE
+                  SmallMultiplesLimitConfiguration:
+                    OtherCategories: INCLUDE
+                DonutOptions:
+                  ArcOptions:
+                    ArcThickness: MEDIUM
+                Legend:
+                  Visibility: HIDDEN
+                DataLabels:
+                  Visibility: VISIBLE
+                  Overlap: DISABLE_OVERLAP
+                Tooltip:
+                  TooltipVisibility: VISIBLE
+                  SelectedTooltipType: DETAILED
+                  FieldBasedTooltip:
+                    AggregationVisibility: HIDDEN
+                    TooltipTitleType: PRIMARY_VALUE
+                    TooltipFields:
+                    - FieldTooltipItem:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.service.0.1683487486674
+                        Visibility: VISIBLE
+                    - FieldTooltipItem:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.service.0.1683487486674
+                        Visibility: VISIBLE
+              Actions: []
+              ColumnHierarchies: []
+          Layouts:
+          - Configuration:
+              GridLayout:
+                Elements:
+                - ElementId: 9dabf87c-f212-4622-a17c-93ac574160e6
+                  ElementType: VISUAL
+                  ColumnIndex: 0
+                  ColumnSpan: 8
+                  RowIndex: 0
+                  RowSpan: 6
+                - ElementId: 66a24873-8e69-44fa-ad0d-65ba41b93896
+                  ElementType: VISUAL
+                  ColumnIndex: 8
+                  ColumnSpan: 7
+                  RowIndex: 0
+                  RowSpan: 6
+                - ElementId: 07e1a590-d937-428e-8a95-45a4f381b4d1
+                  ElementType: VISUAL
+                  ColumnIndex: 15
+                  ColumnSpan: 8
+                  RowIndex: 0
+                  RowSpan: 6
+                - ElementId: e9807f01-b958-4083-8f4c-2ece18561e3b
+                  ElementType: VISUAL
+                  ColumnIndex: 23
+                  ColumnSpan: 8
+                  RowIndex: 0
+                  RowSpan: 6
+                - ElementId: 72e479d3-28d8-4462-b46e-73ee9396ae55
+                  ElementType: VISUAL
+                  ColumnSpan: 31
+                  RowSpan: 7
+                - ElementId: 268e6ed2-c752-4b0a-a6c2-568862540314
+                  ElementType: VISUAL
+                  ColumnSpan: 31
+                  RowSpan: 7
+                CanvasSizeOptions:
+                  ScreenCanvasSizeOptions:
+                    ResizeOption: FIXED
+                    OptimizedViewPortWidth: 1600px
+          ContentType: INTERACTIVE
+        - SheetId: cfc94477-b437-4333-8e40-cc03f1f969fa
+          Name: UpcomingEvents
+          Visuals:
+          - GeospatialMapVisual:
+              VisualId: 409491ae-258a-4526-ac86-43dd3a58fa21
+              Title:
+                Visibility: VISIBLE
+                FormatText:
+                  RichText: "<visual-title>GeoLocation</visual-title>"
+              Subtitle:
+                Visibility: VISIBLE
+              ChartConfiguration:
+                FieldWells:
+                  GeospatialMapAggregatedFieldWells:
+                    Geospatial:
+                    - CategoricalDimensionField:
+                        FieldId: 11765d00-e55d-4974-9278-c0a49783a5a9.1.1683488808189
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: location
+                    Values: []
+                    Colors:
+                    - CategoricalDimensionField:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventTypeCategory.0.1683487801849
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: eventTypeCategory
+                Legend:
+                  Visibility: HIDDEN
+                Tooltip:
+                  TooltipVisibility: VISIBLE
+                  SelectedTooltipType: DETAILED
+                  FieldBasedTooltip:
+                    AggregationVisibility: HIDDEN
+                    TooltipTitleType: PRIMARY_VALUE
+                    TooltipFields:
+                    - FieldTooltipItem:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventTypeCategory.0.1683487801849
+                        Visibility: VISIBLE
+                    - FieldTooltipItem:
+                        FieldId: 11765d00-e55d-4974-9278-c0a49783a5a9.1.1683488808189
+                        Visibility: VISIBLE
+                    - FieldTooltipItem:
+                        FieldId: 11765d00-e55d-4974-9278-c0a49783a5a9.1.1683488808189
+                        Visibility: VISIBLE
+                WindowOptions:
+                  Bounds:
+                    North: 65.83701131408424
+                    South: 14.28827200294289
+                    West: -276.82892153252374
+                    East: 152.7395405401275
+                  MapZoomMode: MANUAL
+              ColumnHierarchies: []
+              Actions: []
+          - TableVisual:
+              VisualId: 1949b97b-97bf-4e04-863a-0db5f32e5548
+              Title:
+                Visibility: VISIBLE
+                FormatText:
+                  RichText: "<visual-title>Event Details</visual-title>"
+              Subtitle:
+                Visibility: VISIBLE
+              ChartConfiguration:
+                FieldWells:
+                  TableAggregatedFieldWells:
+                    GroupBy:
+                    - CategoricalDimensionField:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.service.0.1683493435042
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: service
+                    - CategoricalDimensionField:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventRegion.1.1683493453861
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: eventRegion
+                    - CategoricalDimensionField:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventTypeCategory.2.1683493459606
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: eventTypeCategory
+                    - DateDimensionField:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.startTime.3.1683493472640
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: startTime
+                    - DateDimensionField:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.endTime.4.1683493476237
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: endTime
+                    - DateDimensionField:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.lastUpdatedTime.5.1683493479592
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: lastUpdatedTime
+                    - CategoricalDimensionField:
+                        FieldId: 0b236e72-c6f6-43d7-809c-4572a2178870.6.1683493603993
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: Status
+                    - CategoricalDimensionField:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventDescription.7.1683493670757
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: eventDescription
+                    - CategoricalDimensionField:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventTypeCode.8.1683496396396
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: eventTypeCode
+                    - CategoricalDimensionField:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.affectedEntities.9.1683496412479
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: affectedEntities
+                    - CategoricalDimensionField:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventArn.10.1683563435994
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: eventArn
+                    Values: []
+                SortConfiguration: {}
+                TableOptions:
+                  HeaderStyle:
+                    TextWrap: WRAP
+                    Height: 25
+                  CellStyle:
+                    Height: 25
+                FieldOptions:
+                  SelectedFieldOptions:
+                  - FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.service.0.1683493435042
+                    Width: 68px
+                  Order: []
+              Actions: []
+          - PieChartVisual:
+              VisualId: 587d0194-f0bb-46f7-b7ae-dbd8bf6df087
+              Title:
+                Visibility: VISIBLE
+                FormatText:
+                  RichText: "<visual-title>Event by Type</visual-title>"
+              Subtitle:
+                Visibility: VISIBLE
+              ChartConfiguration:
+                FieldWells:
+                  PieChartAggregatedFieldWells:
+                    Category:
+                    - CategoricalDimensionField:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventTypeCategory.0.1683487801849
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: eventTypeCategory
+                    Values: []
+                SortConfiguration:
+                  CategoryItemsLimit:
+                    OtherCategories: INCLUDE
+                  SmallMultiplesLimitConfiguration:
+                    OtherCategories: INCLUDE
+                DonutOptions:
+                  ArcOptions:
+                    ArcThickness: MEDIUM
+                Legend:
+                  Visibility: HIDDEN
+                DataLabels:
+                  Visibility: VISIBLE
+                  Overlap: DISABLE_OVERLAP
+                Tooltip:
+                  TooltipVisibility: VISIBLE
+                  SelectedTooltipType: DETAILED
+                  FieldBasedTooltip:
+                    AggregationVisibility: HIDDEN
+                    TooltipTitleType: PRIMARY_VALUE
+                    TooltipFields:
+                    - FieldTooltipItem:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventTypeCategory.0.1683487801849
+                        Visibility: VISIBLE
+                    - FieldTooltipItem:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventTypeCategory.0.1683487801849
+                        Visibility: VISIBLE
+              Actions: []
+              ColumnHierarchies: []
+          - PieChartVisual:
+              VisualId: d4910c22-4dee-4f8d-9acf-bb78715af39f
+              Title:
+                Visibility: VISIBLE
+                FormatText:
+                  RichText: "<visual-title>Event by Account</visual-title>"
+              Subtitle:
+                Visibility: VISIBLE
+              ChartConfiguration:
+                FieldWells:
+                  PieChartAggregatedFieldWells:
+                    Category:
+                    - CategoricalDimensionField:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.account.0.1683487623829
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: account
+                    Values: []
+                SortConfiguration:
+                  CategoryItemsLimit:
+                    OtherCategories: INCLUDE
+                  SmallMultiplesLimitConfiguration:
+                    OtherCategories: INCLUDE
+                DonutOptions:
+                  ArcOptions:
+                    ArcThickness: MEDIUM
+                Legend:
+                  Visibility: HIDDEN
+                DataLabels:
+                  Visibility: VISIBLE
+                  Overlap: DISABLE_OVERLAP
+                Tooltip:
+                  TooltipVisibility: VISIBLE
+                  SelectedTooltipType: DETAILED
+                  FieldBasedTooltip:
+                    AggregationVisibility: HIDDEN
+                    TooltipTitleType: PRIMARY_VALUE
+                    TooltipFields:
+                    - FieldTooltipItem:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.account.0.1683487623829
+                        Visibility: VISIBLE
+                    - FieldTooltipItem:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.account.0.1683487623829
+                        Visibility: VISIBLE
+              Actions: []
+              ColumnHierarchies: []
+          - PieChartVisual:
+              VisualId: '0899299b-a301-4c1e-94fb-649244e74924'
+              Title:
+                Visibility: VISIBLE
+                FormatText:
+                  RichText: "<visual-title>Event by Regions</visual-title>"
+              Subtitle:
+                Visibility: VISIBLE
+              ChartConfiguration:
+                FieldWells:
+                  PieChartAggregatedFieldWells:
+                    Category:
+                    - CategoricalDimensionField:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventRegion.0.1683487615968
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: eventRegion
+                    Values: []
+                SortConfiguration:
+                  CategoryItemsLimit:
+                    OtherCategories: INCLUDE
+                  SmallMultiplesLimitConfiguration:
+                    OtherCategories: INCLUDE
+                DonutOptions:
+                  ArcOptions:
+                    ArcThickness: MEDIUM
+                Legend:
+                  Visibility: HIDDEN
+                DataLabels:
+                  Visibility: VISIBLE
+                  Overlap: DISABLE_OVERLAP
+                Tooltip:
+                  TooltipVisibility: VISIBLE
+                  SelectedTooltipType: DETAILED
+                  FieldBasedTooltip:
+                    AggregationVisibility: HIDDEN
+                    TooltipTitleType: PRIMARY_VALUE
+                    TooltipFields:
+                    - FieldTooltipItem:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventRegion.0.1683487615968
+                        Visibility: VISIBLE
+                    - FieldTooltipItem:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventRegion.0.1683487615968
+                        Visibility: VISIBLE
+              Actions: []
+              ColumnHierarchies: []
+          - PieChartVisual:
+              VisualId: 87f8cddc-5f57-4b63-89f2-33b648dff74e
+              Title:
+                Visibility: VISIBLE
+                FormatText:
+                  RichText: "<visual-title>Event by Service</visual-title>"
+              Subtitle:
+                Visibility: VISIBLE
+              ChartConfiguration:
+                FieldWells:
+                  PieChartAggregatedFieldWells:
+                    Category:
+                    - CategoricalDimensionField:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.service.0.1683487486674
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                          ColumnName: service
+                    Values: []
+                SortConfiguration:
+                  CategoryItemsLimit:
+                    OtherCategories: INCLUDE
+                  SmallMultiplesLimitConfiguration:
+                    OtherCategories: INCLUDE
+                DonutOptions:
+                  ArcOptions:
+                    ArcThickness: MEDIUM
+                Legend:
+                  Visibility: HIDDEN
+                DataLabels:
+                  Visibility: VISIBLE
+                  Overlap: DISABLE_OVERLAP
+                Tooltip:
+                  TooltipVisibility: VISIBLE
+                  SelectedTooltipType: DETAILED
+                  FieldBasedTooltip:
+                    AggregationVisibility: HIDDEN
+                    TooltipTitleType: PRIMARY_VALUE
+                    TooltipFields:
+                    - FieldTooltipItem:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.service.0.1683487486674
+                        Visibility: VISIBLE
+                    - FieldTooltipItem:
+                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.service.0.1683487486674
+                        Visibility: VISIBLE
+              Actions: []
+              ColumnHierarchies: []
+          Layouts:
+          - Configuration:
+              GridLayout:
+                Elements:
+                - ElementId: 87f8cddc-5f57-4b63-89f2-33b648dff74e
+                  ElementType: VISUAL
+                  ColumnIndex: 0
+                  ColumnSpan: 8
+                  RowIndex: 0
+                  RowSpan: 6
+                - ElementId: '0899299b-a301-4c1e-94fb-649244e74924'
+                  ElementType: VISUAL
+                  ColumnIndex: 8
+                  ColumnSpan: 7
+                  RowIndex: 0
+                  RowSpan: 6
+                - ElementId: d4910c22-4dee-4f8d-9acf-bb78715af39f
+                  ElementType: VISUAL
+                  ColumnIndex: 15
+                  ColumnSpan: 8
+                  RowIndex: 0
+                  RowSpan: 6
+                - ElementId: 587d0194-f0bb-46f7-b7ae-dbd8bf6df087
+                  ElementType: VISUAL
+                  ColumnIndex: 23
+                  ColumnSpan: 8
+                  RowIndex: 0
+                  RowSpan: 6
+                - ElementId: 1949b97b-97bf-4e04-863a-0db5f32e5548
+                  ElementType: VISUAL
+                  ColumnSpan: 31
+                  RowSpan: 7
+                - ElementId: 409491ae-258a-4526-ac86-43dd3a58fa21
+                  ElementType: VISUAL
+                  ColumnSpan: 31
+                  RowSpan: 7
+                CanvasSizeOptions:
+                  ScreenCanvasSizeOptions:
+                    ResizeOption: FIXED
+                    OptimizedViewPortWidth: 1600px
+          ContentType: INTERACTIVE
+        CalculatedFields: []
+        ParameterDeclarations:
+        - StringParameterDeclaration:
+            ParameterValueType: SINGLE_VALUED
+            Name: Location
+            DefaultValues:
+              StaticValues: []
+            ValueWhenUnset:
+              ValueWhenUnsetOption: RECOMMENDED_VALUE
+        FilterGroups:
+        - FilterGroupId: 4d902ddf-01da-4b86-98bf-4bdfbcac8191
+          Filters:
+          - CategoryFilter:
+              FilterId: dadd3324-6904-4825-9ffc-3cff5f104236
+              Column:
+                DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                ColumnName: Status
+              Configuration:
+                FilterListConfiguration:
+                  MatchOperator: CONTAINS
+                  CategoryValues:
+                  - Open
+          ScopeConfiguration:
+            SelectedSheets:
+              SheetVisualScopingConfigurations:
+              - SheetId: fb07dc95-b53c-4830-95b0-ab8441a3c3fd
+                Scope: SELECTED_VISUALS
+                VisualIds:
+                - 36949c41-d145-4c87-98eb-6f710e420bc9
+                - 732f058d-4bd2-473b-bdd8-8891b2783605
+                - ef5bcdbc-52e8-42c4-969b-76a5cf0cc6e7
+                - c1d17a70-8f52-41d1-9062-c5432d58c17e
+                - 6abab0b5-6f68-4320-9a0e-1754862ea030
+                - 1c5f1d76-a417-4f50-a136-161e621072ea
+          Status: ENABLED
+          CrossDataset: SINGLE_DATASET
+        - FilterGroupId: d4b0e160-c317-4776-bec5-4a23ac877651
+          Filters:
+          - CategoryFilter:
+              FilterId: c8716b43-5c36-4443-9154-58262d8c7557
+              Column:
+                DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                ColumnName: Status
+              Configuration:
+                FilterListConfiguration:
+                  MatchOperator: CONTAINS
+                  CategoryValues:
+                  - Closed
+                  - Archived
+          ScopeConfiguration:
+            SelectedSheets:
+              SheetVisualScopingConfigurations:
+              - SheetId: 0a590c53-98fe-47fd-a199-e0782cc142bf
+                Scope: SELECTED_VISUALS
+                VisualIds:
+                - 72e479d3-28d8-4462-b46e-73ee9396ae55
+                - e9807f01-b958-4083-8f4c-2ece18561e3b
+                - 07e1a590-d937-428e-8a95-45a4f381b4d1
+                - 66a24873-8e69-44fa-ad0d-65ba41b93896
+                - 9dabf87c-f212-4622-a17c-93ac574160e6
+                - 268e6ed2-c752-4b0a-a6c2-568862540314
+          Status: ENABLED
+          CrossDataset: SINGLE_DATASET
+        - FilterGroupId: 11ad1cae-543d-4d96-9479-655115411db2
+          Filters:
+          - CategoryFilter:
+              FilterId: 95962e4a-b8d9-4802-ac76-bab01b1effb6
+              Column:
+                DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
+                ColumnName: Status
+              Configuration:
+                FilterListConfiguration:
+                  MatchOperator: CONTAINS
+                  CategoryValues:
+                  - Upcoming
+          ScopeConfiguration:
+            SelectedSheets:
+              SheetVisualScopingConfigurations:
+              - SheetId: cfc94477-b437-4333-8e40-cc03f1f969fa
+                Scope: ALL_VISUALS
+          Status: ENABLED
+          CrossDataset: SINGLE_DATASET
+        AnalysisDefaults:
+          DefaultNewSheetConfiguration:
+            InteractiveLayoutConfiguration:
+              Grid:
+                CanvasSizeOptions:
+                  ScreenCanvasSizeOptions:
+                    ResizeOption: FIXED
+                    OptimizedViewPortWidth: 1600px
+            SheetContentType: INTERACTIVE
+      Permissions:
+      - Principal: !Sub "arn:aws:quicksight:us-east-1:${AWS::AccountId}:user/default/${QuickSightUser}"
+        Actions:
+          - quicksight:RestoreAnalysis
+          - quicksight:UpdateAnalysisPermissions
+          - quicksight:DeleteAnalysis
+          - quicksight:QueryAnalysis
+          - quicksight:DescribeAnalysisPermissions
+          - quicksight:DescribeAnalysis
+          - quicksight:UpdateAnalysis

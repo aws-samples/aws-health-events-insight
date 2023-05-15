@@ -1,0 +1,122 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  DynamoDBName:
+    Type: String
+    Description: Enter the Name of dynamoDB for healthevents. You can get this from output of awshealth-management stack.
+  DynamoDBArn:
+    Type: String
+    Description: Enter the ARN of dynamoDB for healthevents. You can get this from output of awshealth-management stack.
+
+Resources:
+  EventHealthLambdaForDDBInitialLoadRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub EventHealthLambdaForDDBInitialLoadRole-${AWS::AccountId}
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole 
+      Policies:
+        - PolicyName: cloudwatch-logs-access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: "*"
+        - PolicyName: AwshealtheventDDB-access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:*
+                Resource: !Ref DynamoDBArn
+        - PolicyName: Healthapiaccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - health:*
+                Resource: "*"
+  AWSLambdatoInitialEventsLoad:              
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+          ZipFile: |
+            import boto3
+            import json
+            from datetime import datetime
+            import cfnresponse
+            import os
+            dynamodb = boto3.resource('dynamodb')
+            health_client = boto3.client('health')
+            # Specify the name of the DynamoDB table to store the events in
+            table = dynamodb.Table(os.environ['DynamoDBName'])
+
+            def lambda_handler(event, context):
+                events = []
+                next_token = None
+                # Retrieve all events from the AWS Health API, handling pagination
+                try:
+                  while True:
+                      kwargs = {}
+                      if next_token and len(next_token) >= 4:
+                          kwargs['nextToken'] = next_token
+                      events_response = health_client.describe_events(filter={}, **kwargs)
+                      events += events_response['events']
+                      if 'nextToken' in events_response:
+                          next_token = events_response['nextToken']
+                      else:
+                          break
+                  # Store each event in DynamoDB
+                  for awsevent in events:
+                      # Retrieve the detailed information for the event
+                      event_details_response = health_client.describe_event_details(eventArns=[awsevent['arn']])
+                      print(event_details_response)
+                      successful_set = event_details_response.get('successfulSet')
+                      if not successful_set:
+                          continue
+                      event_details = successful_set[0]['event']
+                      eventDescription = successful_set[0]['eventDescription']
+                      event_data = {
+                          'eventArn': event_details['arn'],
+                          'service': event_details.get('service', ''),
+                          'eventScopeCode': event_details.get('eventScopeCode', ''),
+                          'lastUpdatedTime': event_details.get('lastUpdatedTime', '').strftime('%d/%m/%Y %H:%M:%S'),
+                          'eventRegion': event_details.get('region', ''),
+                          'eventTypeCode': event_details.get('eventTypeCode', ''),
+                          'eventTypeCategory': event_details.get('eventTypeCategory', ''),
+                          'startTime': event_details.get('startTime', '').strftime('%d/%m/%Y %H:%M:%S'),
+                          'eventDescription': eventDescription.get('latestDescription'),
+                          'affectedEntities': ', '.join([entity['entityValue'] for entity in event_details.get('affectedEntities', [])]),
+                      }
+                      if event_details.get('endTime'):
+                          event_data['endTime'] = event_details.get('endTime').strftime('%d/%m/%Y %H:%M:%S')
+                      event_data['account']= context.invoked_function_arn.split(":")[4]
+                      # Store the event in DynamoDB
+                      table.put_item(Item=event_data)
+                  print(event)
+                  cfnresponse.send(event, context, cfnresponse.SUCCESS, {}, None)
+                except Exception as e:
+                  cfnresponse.send(event, context, cfnresponse.FAILED, {}, None)
+                  print(e)
+      Handler: index.lambda_handler
+      Runtime: python3.8
+      Timeout: 900
+      Role: !GetAtt EventHealthLambdaForDDBInitialLoadRole.Arn
+      Environment:
+        Variables:
+          DynamoDBName: !Ref DynamoDBName
+
+  MyLambdaInvoker:
+    Type: Custom::MyLambdaInvoker
+    Properties:
+      ServiceToken: !GetAtt AWSLambdatoInitialEventsLoad.Arn

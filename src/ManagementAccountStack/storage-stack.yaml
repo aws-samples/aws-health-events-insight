@@ -1,0 +1,24 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Resources:
+  EventHealthDDBTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "EventHealthDDBTable-${AWS::AccountId}"
+      AttributeDefinitions:
+        - AttributeName: eventArn
+          AttributeType: S
+      KeySchema:
+        - AttributeName: eventArn
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+
+Outputs:
+  EventHealthDDBTable:
+    Value: !Ref EventHealthDDBTable
+    Export:
+      Name: EventHealthDDBTable
+  EventHealthDDBTableArn:
+    Value: !GetAtt EventHealthDDBTable.Arn
+    Export:
+      Name:  EventHealthDDBTableArn

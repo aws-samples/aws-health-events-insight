@@ -1,0 +1,82 @@
+Parameters:
+  EventHealthBucket:
+    Type: String
+    Description: The name of the bucket that contains the ManagementAccountStackset YAML files
+  PrincipalOrgID:
+    Type: String
+    Description: The AWS organization ID of the principal that is allowed to put events on the custom health event bus.
+  QuickSightUser:
+    Type: String
+    Description: The QuickSight User that is allowed configure and manage the QS dashboard. e.g. Admin/sample-isgr, quicksightuser etc.
+  QuicksightServiceRole:
+    Type: String
+    Default: aws-quicksight-service-role-v0
+    Description: The Quicksight Service role attached to QS, Default is aws-quicksight-service-role-v0
+
+Resources:
+  HealtheventStorageStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://${EventHealthBucket}.s3.amazonaws.com/ManagementAccountStack/storage-stack.yaml
+
+  BackfillStack:
+     Type: AWS::CloudFormation::Stack
+     Properties:
+       TemplateURL: !Sub https://${EventHealthBucket}.s3.amazonaws.com/backfillStack/backfillEvents.yaml
+       Parameters:
+        DynamoDBArn: !GetAtt  HealtheventStorageStack.Outputs.EventHealthDDBTableArn
+        DynamoDBName: !GetAtt  HealtheventStorageStack.Outputs.EventHealthDDBTable
+
+  HealtheventEventBusStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: HealtheventStorageStack
+    Properties: 
+      TemplateURL: !Sub https://${EventHealthBucket}.s3.amazonaws.com/ManagementAccountStack/awseventbus-stack.yaml
+      Parameters:
+        POrgID: !Ref PrincipalOrgID
+  
+  IngestionStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://${EventHealthBucket}.s3.amazonaws.com/ManagementAccountStack/ingestion-stack.yaml
+      Parameters:
+        DynamoDBArn: !GetAtt  HealtheventStorageStack.Outputs.EventHealthDDBTableArn
+        DynamoDBName: !GetAtt  HealtheventStorageStack.Outputs.EventHealthDDBTable
+        EventHealthBusName: !GetAtt HealtheventEventBusStack.Outputs.EventHealthBusName
+        EventHealthBusArn: !GetAtt HealtheventEventBusStack.Outputs.EventHealthBusArn
+
+  ConnectorStack:
+    DependsOn: HealtheventEventBusStack
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://${EventHealthBucket}.s3.amazonaws.com/ManagementAccountStack/connector-stack.yaml
+      Parameters:
+        DynamoDBArn: !GetAtt  HealtheventStorageStack.Outputs.EventHealthDDBTableArn
+        EventHealthBucket: !Ref EventHealthBucket
+        
+  QuickSightStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://${EventHealthBucket}.s3.amazonaws.com/ManagementAccountStack/quicksight-stack.yaml
+      Parameters:
+        AWSHealthEventDataCatalog: !GetAtt  ConnectorStack.Outputs.AWSHealthEventDataCatalog
+        QuickSightUser: !Ref QuickSightUser
+        DynamoDBName: !GetAtt  HealtheventStorageStack.Outputs.EventHealthDDBTable
+        DDBConnectorARN: !GetAtt ConnectorStack.Outputs.DDBConnectorARN
+        QuicksightServiceRole: !Ref QuicksightServiceRole
+        EventHealthBucket: !Ref EventHealthBucket
+  
+  QuickSightAnalysisStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://${EventHealthBucket}.s3.amazonaws.com/ManagementAccountStack/quicksight-analysis-stack.yaml
+      Parameters:
+        QuickSightUser: !Ref QuickSightUser
+        AWSHealthEventQSDataSetArn: !GetAtt  QuickSightStack.Outputs.AWSHealthEventQSDataSetArn
+
+Outputs:
+  OrgEventHealthBusArn:
+    Value: !GetAtt HealtheventEventBusStack.Outputs.EventHealthBusArn
+    Export:
+      Name: OrgEventHealthBusArn
+ 

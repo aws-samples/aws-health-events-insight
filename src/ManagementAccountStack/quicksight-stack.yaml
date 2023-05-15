@@ -1,0 +1,171 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  AWSHealthEventDataCatalog:
+    Type: String
+    Description: AWSHealthEventDataCatalog
+  EventHealthBucket:
+    Type: String
+    Description: EventHealthBucket
+  QuickSightUser:
+    Type: String
+    Description: The QuickSight User that is allowed configure and manage the QS dashboard.
+  DynamoDBName:
+    Type: String
+    Description: DynamoDB name to store the 
+  DDBConnectorARN:
+    Type: String
+    Description: DDBConnectorARN
+  QuicksightServiceRole:
+    Type: String
+    Description: The Quicksight Service role attached to QS, Default is aws-quicksight-service-role-v0
+  
+Resources:
+  QuicksightFederatedPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: AWSQuickSightHealthEventPolicy
+      Description: "Grants Amazon QuickSight to run awshealthevent federated query"
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Action:
+              - lambda:ListFunctions
+              - s3:ListAllMyBuckets
+            Resource: "*"
+          - Effect: "Allow"
+            Action:
+              - "lambda:*"
+            Resource: !Ref DDBConnectorARN
+          - Effect: "Allow"
+            Action:
+              - s3:*
+            Resource: 
+              - !Sub arn:aws:s3:::${EventHealthBucket}
+              - !Sub arn:aws:s3:::${EventHealthBucket}/*
+      Roles: 
+       - !Ref QuicksightServiceRole
+
+  AWSHealthEventQSDataSource:
+    Type: AWS::QuickSight::DataSource
+    DependsOn: QuicksightFederatedPolicy
+    Properties:
+      DataSourceId: !Sub "EventHealth-${AWS::AccountId}"
+      AwsAccountId: !Sub ${AWS::AccountId}
+      Name: !Sub "EventHealth-${AWS::AccountId}"
+      Type: ATHENA
+      DataSourceParameters:
+        AthenaParameters:
+          WorkGroup: primary
+      SslProperties:
+        DisableSsl: true
+
+  AWSHealthEventQSDataSet:
+    Type: AWS::QuickSight::DataSet
+    Properties:
+      AwsAccountId: !Sub ${AWS::AccountId}
+      ImportMode: SPICE
+      DataSetId: !Sub "EventHealth-${AWS::AccountId}"
+      Name: !Sub "EventHealth-${AWS::AccountId}"
+      PhysicalTableMap:
+        "AWSHealthQSPT":
+          RelationalTable:
+            DataSourceArn: !GetAtt AWSHealthEventQSDataSource.Arn
+            Catalog: !Ref AWSHealthEventDataCatalog
+            Schema: "default"
+            Name: !Ref DynamoDBName
+            InputColumns:
+              - Name: eventArn
+                Type: STRING
+              - Name: eventTypeCode
+                Type: STRING
+              - Name: service
+                Type: STRING
+              - Name: eventDescription
+                Type: STRING
+              - Name: eventScopeCode
+                Type: STRING
+              - Name: lastUpdatedTime
+                Type: STRING
+              - Name: startTime
+                Type: STRING
+              - Name: eventRegion
+                Type: STRING
+              - Name: endTime
+                Type: STRING
+              - Name: eventTypeCategory
+                Type: STRING
+              - Name: affectedEntities
+                Type: STRING
+              - Name: account
+                Type: STRING
+      LogicalTableMap:
+        "AWSHealthQSLT":
+          Alias: !Sub "EventHealth-${AWS::AccountId}"
+          Source:
+            PhysicalTableId: "AWSHealthQSPT"
+          DataTransforms:
+            - CastColumnTypeOperation:
+                ColumnName: startTime
+                NewColumnType: DATETIME
+                Format: "dd/MM/yyyy HH:mm:ss"
+            - CastColumnTypeOperation:
+                ColumnName: lastUpdatedTime
+                NewColumnType: DATETIME
+                Format: "dd/MM/yyyy HH:mm:ss"
+            - CastColumnTypeOperation:
+                ColumnName: endTime
+                NewColumnType: DATETIME
+                Format: "dd/MM/yyyy HH:mm:ss"
+            - CreateColumnsOperation:
+                Columns:
+                  - ColumnName: location
+                    ColumnId: "location"
+                    Expression: "ifelse({eventRegion}=\"us-east-1\",\"N.Virginia\",{eventRegion}=\"us-east-2\",\"Ohio\",{eventRegion}=\"us-west-1\",\"California\",{eventRegion}=\"us-west-2\",\"Oregon\",\"others\")"
+            - CreateColumnsOperation:
+                Columns:
+                  - ColumnName: Status
+                    ColumnId: "Status"
+                    Expression: |
+                      ifelse({endTime}>now(), "Upcoming",
+                      isNull({endTime}) and {eventTypeCategory}="scheduledChange", "Upcoming",
+                      addDateTime(7, 'DD', {startTime})<now() and {eventTypeCategory}="accountNotification" and isNull({endTime}), "Archived",
+                      isNull({endTime}), "Open", "Closed")
+            - TagColumnOperation:
+                ColumnName: location
+                Tags:
+                  - ColumnGeographicRole: STATE
+            - ProjectOperation:
+                ProjectedColumns:
+                  - eventArn
+                  - eventTypeCode
+                  - service
+                  - eventDescription
+                  - eventScopeCode
+                  - lastUpdatedTime
+                  - startTime
+                  - eventRegion
+                  - endTime
+                  - location
+                  - Status
+                  - account
+                  - eventTypeCategory
+                  - affectedEntities
+      Permissions:
+      - Principal: !Sub "arn:aws:quicksight:us-east-1:${AWS::AccountId}:user/default/${QuickSightUser}"
+        Actions:
+          - quicksight:DescribeDataSet
+          - quicksight:DescribeDataSetPermissions
+          - quicksight:PassDataSet
+          - quicksight:DescribeIngestion
+          - quicksight:ListIngestions
+          - quicksight:UpdateDataSet
+          - quicksight:DeleteDataSet
+          - quicksight:CreateIngestion
+          - quicksight:CancelIngestion
+          - quicksight:UpdateDataSetPermissions
+Outputs:
+  AWSHealthEventQSDataSetArn:
+    Value: !GetAtt AWSHealthEventQSDataSet.Arn
+    Export:
+      Name: AWSHealthEventQSDataSetArn

@@ -1,0 +1,42 @@
+Parameters:
+  EventHealthBus:
+    Type: String
+    Description: Event Health Bus Arn from Management Account(You can get this from HealthEventDashboardStack stack output).
+
+Resources:
+  EventHealthBusPutEventOrgRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "EventHealthBusPutEventOrgRole-${AWS::AccountId}-${AWS::Region}"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+            Action: sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: !Sub "EventBridge-PutEvents-${AWS::AccountId}-${AWS::Region}"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "events:PutEvents"
+                Resource: !Ref EventHealthBus
+
+  AWSHealthEventRuleDefaultBus:
+    Type: "AWS::Events::Rule"
+    Properties:
+      Name: !Sub "EventHealthRuleDefaultBus-${AWS::AccountId}-${AWS::Region}"
+      Description: "EventBridge default rule for aws.health events"
+      EventBusName: "default"
+      EventPattern:
+        source:
+          - "aws.health"
+          - "awshealthtest"
+      Targets:
+        - Arn: !Ref EventHealthBus
+          Id: "EventHealthBusTarget"
+          RoleArn: !GetAtt EventHealthBusPutEventOrgRole.Arn
