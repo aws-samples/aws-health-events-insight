@@ -19,7 +19,7 @@ qsusernames = [user['UserName'] for user in response['UserList']]
 bucket_name = "awseventhealth-{}".format(account_id)
 
 # Get input parameters from user
-region_name = input("Enter region name: (Hit enter to use default us-east-1): ") or "us-east-1"
+region = input("Enter region name: (Hit enter to use default us-east-1): ") or "us-east-1"
 bucket_name = input("Enter S3 bucket name: (Hit enter to use default : {}): ".format(bucket_name)) or bucket_name
 principal_org_id = input("Enter AWS organization ID of the principal (Hit enter to use default {}): ".format(PrincipalOrgID)) or PrincipalOrgID
 quicksight_service_role = input("Enter QuickSight Service Role (Hit enter to use default aws-quicksight-service-role-v0): ") or "aws-quicksight-service-role-v0"
@@ -33,33 +33,34 @@ if quicksight_user not in qsusernames:
     print("Invalid QuickSight username. Exiting script.")
     exit()
 
-
-s3_client = boto3.client('s3')
 try:
     # Check if the bucket exists
+    s3_client = boto3.client('s3')
     s3_client.head_bucket(Bucket=bucket_name)
     print("S3 bucket {} already exists".format(bucket_name))
 except ClientError as e:
-    # If the bucket does not exist, create it
-    if e.response['Error']['Code'] == '404':
-        print("S3 bucket {} does not exist. Creating...".format(bucket_name))
+    if region == 'us-east-1':
+        s3_client = boto3.client('s3')
         s3_client.create_bucket(Bucket=bucket_name)
         # Wait for the bucket to finish creation
         s3_client.get_waiter("bucket_exists").wait(Bucket=bucket_name)
         print(f"S3 bucket {bucket_name} has been created")
     else:
-        # Handle other errors
-        raise
+        s3_client = boto3.client('s3', region_name=region)
+        location = {'LocationConstraint': region}
+        s3_client.create_bucket(Bucket=bucket_name,
+                                CreateBucketConfiguration=location)
+        # Wait for the bucket to finish creation
+        s3_client.get_waiter("bucket_exists").wait(Bucket=bucket_name)
+        print(f"S3 bucket {bucket_name} has been created")       
 
-# Upload CloudFormation template to S3 bucket
-s3_client = boto3.client("s3",region_name)
 # Sync src directory with S3 bucket
 aws_sync_command = "aws s3 sync src s3://{}/".format(bucket_name)
 subprocess.call(aws_sync_command.split())
 
 # Initialize CloudFormation stack
 stack_name = "HealthEventDashboardStack"
-cfn_client = boto3.client("cloudformation", region_name)
+cfn_client = boto3.client("cloudformation", region)
 
 stacks = cfn_client.list_stacks(StackStatusFilter=["CREATE_FAILED"])
 response = None
