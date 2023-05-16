@@ -42,9 +42,9 @@ In this section, we go through the steps to set up permissions for StackSets in 
 
     3. Go to cloudformation and wait until Status changes to CREATE_COMPLETE (roughly 5-10 minutes). Once status is CREATE_COMPLETE, go to quicksight dashboard and verify analysis. At this point, you must have atleast one event in analysis under historical tab.
 
-2. **Child Account Setup:** Cloufdormation template in ![src/ChildAccountStack](https://gitlab.aws.dev/bajwkanw/awshealtheventsqs/-/tree/main/src/ChildAccountStack) will set up all the necessary components required to send health events from management accounts. You can also use stacksets to deploy into multiple accounts and regions.
+2. **Child Account Setup:** Cloufdormation template in ![src/ChildAccountStack](https://github.com/aws-samples/aws-health-events-insight/blob/main/src/ChildAccountStack) will set up all the necessary components required to send health events from management accounts. You can also use stacksets to deploy into multiple accounts and regions.
 
-    1. In CloudFormation Console create a stack with new resources from the template file ![Childaccount-Stack.yaml](https://gitlab.aws.dev/bajwkanw/awshealtheventsqs/-/tree/main/src/ChildAccountStack/childaccount-stack.yaml) .
+    1. In CloudFormation Console create a stack with new resources from the template file ![Childaccount-Stack.yaml](https://github.com/aws-samples/aws-health-events-insight/blob/main/src/ChildAccountStack/childaccount-stack.yaml) .
     2. Input HealthBus ARN. Go to aws cloudformation console and get this information from output of stack(HealthEventDashboardStack).
     3. Launch the stack.
 
@@ -53,7 +53,7 @@ In this section, we go through the steps to set up permissions for StackSets in 
 
     1. Go to Amazon EventBridge console and chose default event bus. (You can chose any account or region) and select send events.
     2. **Important** Put Event source as "awshealthtest" , otherwise EB rule will discard this event.
-    3. Copy json from ![MockEvent.Json](https://gitlab.aws.dev/bajwkanw/awshealtheventsqs/-/blob/main/src/MockEvent.json) and paste in events hit send
+    3. Copy json from ![MockEvent.json](https://github.com/aws-samples/aws-health-events-insight/blob/main/src/MockEvent.json) and paste in events hit send
     4. You will see event in dynamoDB. For event to reflect in AWS analysis, make sure you refresh the quicksight dataset.
 
 # Performance Test
