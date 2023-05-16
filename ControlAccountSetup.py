@@ -9,8 +9,11 @@ PrincipalOrgID = org_client.describe_organization()['Organization']['Id']
 # Get the username details for the specified AWS account
 sts_client = boto3.client("sts")
 account_id = sts_client.get_caller_identity().get("Account")
-username = sts_client.get_caller_identity().get("Arn").split("/")[-2:]
-username = "/".join(username)
+
+# List QS users to choose from
+quicksight_client = boto3.client('quicksight','us-east-1')
+response = quicksight_client.list_users(AwsAccountId=account_id, Namespace='default', MaxResults=100)
+qsusernames = [user['UserName'] for user in response['UserList']]
 
 # Create bucket name
 bucket_name = "awseventhealth-{}".format(account_id)
@@ -18,12 +21,20 @@ bucket_name = "awseventhealth-{}".format(account_id)
 # Get input parameters from user
 region_name = input("Enter region name: (Hit enter to use default us-east-1): ") or "us-east-1"
 bucket_name = input("Enter S3 bucket name: (Hit enter to use default : {}): ".format(bucket_name)) or bucket_name
-quicksight_user = input("Enter QuickSight Username(This can't be arn):(Hit enter to use default {}): ".format(username)) or username
 principal_org_id = input("Enter AWS organization ID of the principal (Hit enter to use default {}): ".format(PrincipalOrgID)) or PrincipalOrgID
 quicksight_service_role = input("Enter QuickSight Service Role (Hit enter to use default aws-quicksight-service-role-v0): ") or "aws-quicksight-service-role-v0"
+print()
+print("Available QuickSight Users")
+for i, qsusername in enumerate(qsusernames, 1):
+    print("{}. {}".format(i, qsusername))
+print()
+quicksight_user = input("Enter QuickSight Username from this list): ".format(qsusername))
+if quicksight_user not in qsusernames:
+    print("Invalid QuickSight username. Exiting script.")
+    exit()
+
 
 s3_client = boto3.client('s3')
-# Check if the bucket already exists
 try:
     # Check if the bucket exists
     s3_client.head_bucket(Bucket=bucket_name)
