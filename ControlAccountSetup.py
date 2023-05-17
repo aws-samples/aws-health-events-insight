@@ -10,24 +10,29 @@ PrincipalOrgID = org_client.describe_organization()['Organization']['Id']
 sts_client = boto3.client("sts")
 account_id = sts_client.get_caller_identity().get("Account")
 
-# Retrieve the list of namespaces and corresponding usernames
-quicksight_client = boto3.client('quicksight', 'us-east-1')
-response = quicksight_client.list_namespaces(AwsAccountId=account_id)
-namespaces = [namespace['Name'] for namespace in response['Namespaces']]
-
-qsusernames = []
-for namespace in namespaces:
-    response = quicksight_client.list_users(AwsAccountId=account_id, Namespace=namespace, MaxResults=100)
-    qsusernames.extend([user['Arn'] for user in response['UserList']])
-
 # Create bucket name
 bucket_name = "awseventhealth-{}".format(account_id)
-
 # Get input parameters from user
 region = input("Enter region name: (Hit enter to use default us-east-1): ") or "us-east-1"
-bucket_name = input("Enter S3 bucket name: (Hit enter to use default : {}): ".format(bucket_name)) or bucket_name
+bucket_name = input("Enter S3 bucket name (Hit enter to use default : {}): ".format(bucket_name)) or bucket_name
 principal_org_id = input("Enter AWS organization ID of the principal (Hit enter to use default {}): ".format(PrincipalOrgID)) or PrincipalOrgID
 quicksight_service_role = input("Enter QuickSight Service Role (Hit enter to use default aws-quicksight-service-role-v0): ") or "aws-quicksight-service-role-v0"
+qsidregion = input("Enter your QuickSight Identity region (Hit enter to use default us-east-1): ") or "us-east-1"
+
+# Retrieve the list of namespaces and corresponding usernames
+quicksight_client = boto3.client('quicksight', qsidregion)
+response = quicksight_client.list_namespaces(AwsAccountId=account_id)
+namespaces = [namespace['Name'] for namespace in response['Namespaces']]
+qsusernames = []
+try:
+    for namespace in namespaces:
+        response = quicksight_client.list_users(AwsAccountId=account_id, Namespace=namespace, MaxResults=100)
+        qsusernames.extend([user['Arn'] for user in response['UserList']])
+except ClientError as q:
+    print("Wrong QuickSight Identity region ")
+    print(q)
+    exit()
+
 print()
 print("Available QuickSight Users")
 for i, qsusername in enumerate(qsusernames, 1):
