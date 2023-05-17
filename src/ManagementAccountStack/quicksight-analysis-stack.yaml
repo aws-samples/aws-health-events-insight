@@ -1181,7 +1181,7 @@ Resources:
                     OptimizedViewPortWidth: 1600px
             SheetContentType: INTERACTIVE
       Permissions:
-      - Principal: !Sub "arn:aws:quicksight:us-east-1:${AWS::AccountId}:user/default/${QuickSightUser}"
+      - Principal: !Sub "${QuickSightUser}"
         Actions:
           - quicksight:RestoreAnalysis
           - quicksight:UpdateAnalysisPermissions

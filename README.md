@@ -41,21 +41,23 @@ In this section, we will go through the steps to set up permissions for StackSet
 
     3. Go to cloudformation and wait until Status changes to CREATE_COMPLETE (roughly 5-10 minutes). Once status is CREATE_COMPLETE, go to quicksight dashboard and verify analysis. At this point, you must have atleast one event in analysis under historical tab.
 
+    **TIP**: If cloudformation failed due to wrong parameters(such as wrong quicksight principal etc), rerun step 2 with correct parameters, This would update failed stack.
+
 2. **Child Account Setup:** Cloufdormation template in ![src/ChildAccountStack](https://github.com/aws-samples/aws-health-events-insight/blob/main/src/ChildAccountStack) will set up all the necessary components required to send health events from management accounts. You can also use stacksets to deploy into multiple accounts and regions.
 
     1. In CloudFormation Console create a stack with new resources from the template file ![Childaccount-Stack.yaml](https://github.com/aws-samples/aws-health-events-insight/blob/main/src/ChildAccountStack/childaccount-stack.yaml) .
     2. Input the HealthBus ARN. Go to the AWS CloudFormation console and get this information from output of the stack(HealthEventDashboardStack).
     3. Launch the stack.
 
-3. **Setup QS data refresh interval** You must setup QS dataset refresh in order to visualize latest data.
+3. **Setup QS data refresh interval** By default Quicksight dataset will refresh every hour. if you can edit this schedule to meet your need.
 
     1. Go to Datasets in QuickSight dashboard and add new schedule.
-    2. Create refresh schedule and frequency based on your need.
+    2. Create/Edit refresh schedule and frequency based on your need.
 
 4. **Testing:** Send Mockevent to test eventpipeline
 
     1. Go to Amazon EventBridge console and chose default event bus. (You can chose any account or region) and select send events.
-    2. **Important** Put the event source as "awshealthtest" , otherwise the EB rule will discard this event.
+    2. **Important** Put the event source and Detail Type as "awshealthtest" , otherwise the EB rule will discard mock event.
     3. Copy the json from ![MockEvent.json](https://github.com/aws-samples/aws-health-events-insight/blob/main/src/MockEvent.json) and paste it in the events field, hit send
     4. You will see the event in DynamoDB. For event to reflect in AWS analysis, make sure you refresh the quicksight dataset.
 

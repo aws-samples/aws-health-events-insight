@@ -10,10 +10,15 @@ PrincipalOrgID = org_client.describe_organization()['Organization']['Id']
 sts_client = boto3.client("sts")
 account_id = sts_client.get_caller_identity().get("Account")
 
-# List QS users to choose from
-quicksight_client = boto3.client('quicksight','us-east-1')
-response = quicksight_client.list_users(AwsAccountId=account_id, Namespace='default', MaxResults=100)
-qsusernames = [user['UserName'] for user in response['UserList']]
+# Retrieve the list of namespaces and corresponding usernames
+quicksight_client = boto3.client('quicksight', 'us-east-1')
+response = quicksight_client.list_namespaces(AwsAccountId=account_id)
+namespaces = [namespace['Name'] for namespace in response['Namespaces']]
+
+qsusernames = []
+for namespace in namespaces:
+    response = quicksight_client.list_users(AwsAccountId=account_id, Namespace=namespace, MaxResults=100)
+    qsusernames.extend([user['Arn'] for user in response['UserList']])
 
 # Create bucket name
 bucket_name = "awseventhealth-{}".format(account_id)
@@ -28,9 +33,11 @@ print("Available QuickSight Users")
 for i, qsusername in enumerate(qsusernames, 1):
     print("{}. {}".format(i, qsusername))
 print()
-quicksight_user = input("Enter QuickSight Username from this list): ".format(qsusername))
-if quicksight_user not in qsusernames:
-    print("Invalid QuickSight username. Exiting script.")
+quicksight_number = input("Enter the number corresponding to the QuickSight Username from the list: ")
+quicksight_user = qsusernames[int(quicksight_number) - 1] if quicksight_number.isdigit() and 1 <= int(quicksight_number) <= len(qsusernames) else None
+
+if not quicksight_user:
+    print("Invalid input. Exiting script.")
     exit()
 
 try:
@@ -62,7 +69,7 @@ subprocess.call(aws_sync_command.split())
 stack_name = "HealthEventDashboardStack"
 cfn_client = boto3.client("cloudformation", region)
 
-stacks = cfn_client.list_stacks(StackStatusFilter=["CREATE_FAILED"])
+stacks = cfn_client.list_stacks(StackStatusFilter=["CREATE_FAILED","UPDATE_FAILED"])
 response = None
 for stack in stacks.get("StackSummaries"):
     if stack.get("StackName") == stack_name:

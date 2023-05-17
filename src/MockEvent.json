@@ -1,24 +1,23 @@
 
 {
-   "eventArn":"arn:aws:health:us-east-1::event/WORKSPACES/AWS_WORKSPACES_MAINTENANCE_SCHEDULED/AWS_WORKSPACES_MAINTENANCE_SCHEDULED_1683120594424",
+   "eventArn":"MockEvent",
    "service":"WORKSPACES",
    "eventScopeCode":"ACCOUNT_SPECIFIC",
    "communicationId":"8f7ef91f0c9f2f3e3f68dffd0fa34fe299e56f323f06154df1de185d0e3f49bf",
    "lastUpdatedTime":"Wed, 3 May 2023 13:30:55 GMT",
    "eventRegion":"us-east-1",
-   "eventTypeCode":"AWS_WORKSPACES_MAINTENANCE_SCHEDULED",
-   "eventTypeCategory":"scheduledChange",
+   "eventTypeCode":"EC2",
+   "eventTypeCategory":"issue",
    "startTime":"Wed, 3 May 2023 11:00:00 GMT",
-   "endTime":"Wed, 10 May 2023 14:00:00 GMT",
    "eventDescription":[
       {
          "language":"en_US",
-         "latestDescription":"This is a test AWS Health Event AWS_WORKSPACES_MAINTENANCE_SCHEDULED\n"
+         "latestDescription":"MockEvent\n"
       }
    ],
    "affectedEntities":[
       {
-         "entityValue":"test-resource"
+         "entityValue":"i-mockevent"
       }
    ]
 }

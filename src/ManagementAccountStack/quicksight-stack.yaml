@@ -152,7 +152,7 @@ Resources:
                   - eventTypeCategory
                   - affectedEntities
       Permissions:
-      - Principal: !Sub "arn:aws:quicksight:us-east-1:${AWS::AccountId}:user/default/${QuickSightUser}"
+      - Principal: !Sub "${QuickSightUser}"
         Actions:
           - quicksight:DescribeDataSet
           - quicksight:DescribeDataSetPermissions
@@ -164,6 +164,19 @@ Resources:
           - quicksight:CreateIngestion
           - quicksight:CancelIngestion
           - quicksight:UpdateDataSetPermissions
+
+  AWSHealthEventQSDataSetRefresh:
+    Type: AWS::QuickSight::RefreshSchedule
+    DependsOn: AWSHealthEventQSDataSet
+    Properties: 
+      AwsAccountId: !Sub ${AWS::AccountId}
+      DataSetId: !Sub "EventHealth-${AWS::AccountId}"
+      Schedule:
+        RefreshType: FULL_REFRESH
+        ScheduleFrequency:
+          Interval: HOURLY
+        ScheduleId: !Sub EventHealth-${AWS::AccountId}-datarefresh
+
 Outputs:
   AWSHealthEventQSDataSetArn:
     Value: !GetAtt AWSHealthEventQSDataSet.Arn

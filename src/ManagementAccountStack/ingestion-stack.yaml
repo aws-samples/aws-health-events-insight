@@ -132,7 +132,7 @@ Resources:
             def lambda_handler(event, context):
               try:
                 event_data = {
-                              "eventArn":"arn:aws:health:us-east-1::event/WORKSPACES/AWS_WORKSPACES_MAINTENANCE_SCHEDULED/AWS_WORKSPACES_MAINTENANCE_SCHEDULED_1683120594424",
+                              "eventArn":"arn:aws:health:us-east-1::event/WORKSPACES/AWS_WORKSPACES_MAINTENANCE_SCHEDULED/AWS_WORKSPACES_MAINTENANCE_SCHEDULED_TEST",
                               "service":"WORKSPACES",
                               "eventScopeCode":"ACCOUNT_SPECIFIC",
                               "communicationId":"8f7ef91f0c9f2f3e3f68dffd0fa34fe299e56f323f06154df1de185d0e3f49bf",
