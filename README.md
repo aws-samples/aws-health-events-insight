@@ -49,7 +49,7 @@ In this section, we will go through the steps to set up permissions for StackSet
     2. Input the HealthBus ARN. Go to the AWS CloudFormation console and get this information from output of the stack(HealthEventDashboardStack).
     3. Launch the stack.
 
-3. **Setup QS data refresh interval** By default Quicksight dataset will refresh every hour. if you can edit this schedule to meet your need.
+3. **Setup QS data refresh interval** By default Quicksight dataset will refresh every hour. you can edit this schedule to meet your need.
 
     1. Go to Datasets in QuickSight dashboard and add new schedule.
     2. Create/Edit refresh schedule and frequency based on your need.
