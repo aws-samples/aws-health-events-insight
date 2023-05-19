@@ -27,11 +27,11 @@ In this section, we will go through the steps to set up permissions for StackSet
 
 1. **Control Account Setup:** The setup script provided in this repo will set up all the necessary components required to receive AWS health events from other accounts. This can be payer or any other regular account which would receive AWS Health data from all other accounts and regions. 
 
-    1. To start, clone AWShealtheventqs repo
+    1. To start, clone aws-health-events-insight repo
 
     `git clone https://github.com/aws-samples/aws-health-events-insight.git`
 
-    2. Go to AWShealtheventqs directory and run ControlAccountSetup.py and provide account specific inputs.
+    2. Go to aws-health-events-insight directory and run ControlAccountSetup.py and provide account specific inputs.
 
     `cd aws-health-events-insight`
 
@@ -39,19 +39,19 @@ In this section, we will go through the steps to set up permissions for StackSet
 
     **Note:** if you're running this script from your local machine, ensure that you have set up AWS credentials properly and have `boto3` , `subprocess` and `botocore.exceptions`  modules. Alternatively, you can use CloudShell, which automatically inherits the login role and have all the required modules with python3.
 
-    3. Go to cloudformation and wait until Status changes to CREATE_COMPLETE (roughly 5-10 minutes). Once status is CREATE_COMPLETE, go to quicksight dashboard and verify analysis. At this point, you must have atleast one event in analysis under historical tab.
+    3. Go to cloudformation and wait until Status changes to CREATE_COMPLETE (roughly 5-10 minutes). Once status is CREATE_COMPLETE, go to Amazon QuickSight dashboard and verify analysis. At this point, you must have atleast one event in analysis under historical tab.
 
-    **TIP**: If cloudformation failed due to wrong parameters(such as wrong quicksight principal etc), rerun step 2 with correct parameters, This would update failed stack.
+    **TIP**: If cloudformation failed due to wrong parameters(such as wrong Amazon QuickSight principal etc), rerun step 2 with correct parameters, This would update failed stack.
 
-2. **Child Account Setup:** Cloufdormation template in ![src/ChildAccountStack](https://github.com/aws-samples/aws-health-events-insight/blob/main/src/ChildAccountStack) will set up all the necessary components required to send health events from management accounts. You can also use stacksets to deploy into multiple accounts and regions.
+2. **Child Account Setup:** Cloudformation template in ![src/ChildAccountStack](https://github.com/aws-samples/aws-health-events-insight/blob/main/src/ChildAccountStack) will set up all the necessary components required to send health events to management account. You can also use stacksets to deploy to multiple accounts and regions.
 
     1. In CloudFormation Console create a stack with new resources from the template file ![Childaccount-Stack.yaml](https://github.com/aws-samples/aws-health-events-insight/blob/main/src/ChildAccountStack/childaccount-stack.yaml) .
     2. Input the HealthBus ARN. Go to the AWS CloudFormation console and get this information from output of the stack(HealthEventDashboardStack).
     3. Launch the stack.
 
-3. **Setup QS data refresh interval** By default Quicksight dataset will refresh every hour. you can edit this schedule to meet your need.
+3. **Setup QS data refresh interval** By default Amazon QuickSight dataset will refresh every hour. you can edit this schedule to meet your need.
 
-    1. Go to Datasets in QuickSight dashboard and add new schedule.
+    1. Go to Datasets in Amazon QuickSight dashboard and add new schedule.
     2. Create/Edit refresh schedule and frequency based on your need.
 
 4. **Testing:** Send Mockevent to test eventpipeline
@@ -59,10 +59,10 @@ In this section, we will go through the steps to set up permissions for StackSet
     1. Go to Amazon EventBridge console and chose default event bus. (You can chose any account or region) and select send events.
     2. **Important** Put the event source and Detail Type as "awshealthtest" , otherwise the EB rule will discard mock event.
     3. Copy the json from ![MockEvent.json](https://github.com/aws-samples/aws-health-events-insight/blob/main/src/MockEvent.json) and paste it in the events field, hit send
-    4. You will see the event in DynamoDB. For event to reflect in AWS analysis, make sure you refresh the quicksight dataset.
+    4. You will see the event in DynamoDB. For event to reflect in AWS analysis, make sure you refresh the Amazon QuickSight dataset.
 
 # Performance Test
 
-This solution has two lambds. One to put event in DynamoDB and another as part of fedrated query package. We stress test against lambda for fedrated query. This lambda must read dynamodb and retrun results to quicksight in less than 60 secs.
+This solution has two lambds. One to put event in DynamoDB and another as part of fedrated query package. We stress test against lambda for fedrated query. This lambda must read dynamodb and retrun results to Amazon QuickSight in less than 60 secs.
 
 Event count: 108,666 TIme to refresh: 47secs.
