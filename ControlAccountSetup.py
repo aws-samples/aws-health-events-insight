@@ -2,6 +2,10 @@ import boto3
 import subprocess
 from botocore.exceptions import ClientError
 
+# Get the default region
+session = boto3.Session()
+default_region = session.region_name
+
 # Get the organization details for the specified AWS account
 org_client = boto3.client('organizations')
 PrincipalOrgID = org_client.describe_organization()['Organization']['Id']
@@ -11,7 +15,7 @@ sts_client = boto3.client("sts")
 account_id = sts_client.get_caller_identity().get("Account")
 
 # Get input parameters from user
-region = input("Enter region name: (Hit enter to use default us-east-1): ") or "us-east-1"
+region = input("Enter region name: (Hit enter to use default: {}): ".format(default_region)) or default_region
 
 # Create bucket name
 bucket_name = "awseventhealth-{}-{}".format(account_id,region)
@@ -20,8 +24,6 @@ bucket_name = input("Enter S3 bucket name (Hit enter to use default : {}): ".for
 principal_org_id = input("Enter AWS organization ID (Hit enter to use default {}): ".format(PrincipalOrgID)) or PrincipalOrgID
 quicksight_service_role = input("Enter QuickSight Service Role (Hit enter to use default aws-quicksight-service-role-v0): ") or "aws-quicksight-service-role-v0"
 qsidregion = input("Enter your QuickSight Identity region (Hit enter to use default us-east-1): ") or "us-east-1"
-
-
 
 # Retrieve the list of namespaces and corresponding usernames
 try:
@@ -61,8 +63,8 @@ try:
     print("S3 bucket {} already exists".format(bucket_name))
 except ClientError as e:
     if region == 'us-east-1':
-        s3_client = boto3.client('s3')
-        s3_client.create_bucket(Bucket=bucket_name)
+        s3_client = boto3.client('s3',region_name=region)
+        s3_client.create_bucket(Bucket=bucket_name,)
         # Wait for the bucket to finish creation
         s3_client.get_waiter("bucket_exists").wait(Bucket=bucket_name)
         print(f"S3 bucket {bucket_name} has been created")
