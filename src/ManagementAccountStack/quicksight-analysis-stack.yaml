@@ -15,28 +15,19 @@ Resources:
       Name: !Sub "EventHealth-Analysis-${AWS::AccountId}"
       AnalysisId: !Sub "cfn-integration-EventHealth-Analysis-${AWS::AccountId}"
       Definition: 
-        FilterGroups: [ ]
-        AnalysisDefaults:
-          DefaultNewSheetConfiguration:
-            SheetContentType: INTERACTIVE
-            InteractiveLayoutConfiguration:
-              Grid:
-                CanvasSizeOptions:
-                  ScreenCanvasSizeOptions:
-                    ResizeOption: RESPONSIVE
         DataSetIdentifierDeclarations:
         - Identifier: !Sub "EventHealth-${AWS::AccountId}"
           DataSetArn: !Ref AWSHealthEventQSDataSetArn
         Sheets:
         - SheetId: fb07dc95-b53c-4830-95b0-ab8441a3c3fd
-          Name: "<<$Location>>ActiveEvents"
+          Name: "ActiveEvents"
           Visuals:
           - GeospatialMapVisual:
-              VisualId: 1c5f1d76-a417-4f50-a136-161e621072ea
+              VisualId: b7b85f61-fec3-4192-acdf-15fa53cc00bc
               Title:
                 Visibility: VISIBLE
                 FormatText:
-                  RichText: "<visual-title>GeoLocation</visual-title>"
+                  RichText: "<visual-title>Region</visual-title>"
               Subtitle:
                 Visibility: VISIBLE
               ChartConfiguration:
@@ -44,42 +35,22 @@ Resources:
                   GeospatialMapAggregatedFieldWells:
                     Geospatial:
                     - CategoricalDimensionField:
-                        FieldId: 11765d00-e55d-4974-9278-c0a49783a5a9.1.1683488808189
+                        FieldId: location.1.1684674266747
                         Column:
                           DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
                           ColumnName: location
                     Values: []
-                    Colors:
-                    - CategoricalDimensionField:
-                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventTypeCategory.0.1683487801849
-                        Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
-                          ColumnName: eventTypeCategory
-                Legend:
-                  Visibility: HIDDEN
+                    Colors: []
                 Tooltip:
                   TooltipVisibility: VISIBLE
-                  SelectedTooltipType: DETAILED
+                  SelectedTooltipType: BASIC
                   FieldBasedTooltip:
                     AggregationVisibility: HIDDEN
                     TooltipTitleType: PRIMARY_VALUE
                     TooltipFields:
                     - FieldTooltipItem:
-                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventTypeCategory.0.1683487801849
+                        FieldId: location.1.1684674266747
                         Visibility: VISIBLE
-                    - FieldTooltipItem:
-                        FieldId: 11765d00-e55d-4974-9278-c0a49783a5a9.1.1683488808189
-                        Visibility: VISIBLE
-                    - FieldTooltipItem:
-                        FieldId: 11765d00-e55d-4974-9278-c0a49783a5a9.1.1683488808189
-                        Visibility: VISIBLE
-                WindowOptions:
-                  Bounds:
-                    North: 53.14944584971619
-                    South: 25.182315778066837
-                    West: -200.77816308215176
-                    East: 14.006067954174426
-                  MapZoomMode: MANUAL
               ColumnHierarchies: []
               Actions: []
           - TableVisual:
@@ -201,7 +172,18 @@ Resources:
                     - FieldTooltipItem:
                         FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventTypeCategory.0.1683487801849
                         Visibility: VISIBLE
-              Actions: []
+              Actions:
+              - CustomActionId: d0fa1dea-5ebd-4739-9783-0b697c4c127d
+                Name: Action 1
+                Status: ENABLED
+                Trigger: DATA_POINT_CLICK
+                ActionOperations:
+                - FilterOperation:
+                    SelectedFieldsConfiguration:
+                      SelectedFieldOptions: ALL_FIELDS
+                    TargetVisualsConfiguration:
+                      SameSheetTargetVisualConfiguration:
+                        TargetVisualOptions: ALL_VISUALS
               ColumnHierarchies: []
           - PieChartVisual:
               VisualId: ef5bcdbc-52e8-42c4-969b-76a5cf0cc6e7
@@ -247,7 +229,18 @@ Resources:
                     - FieldTooltipItem:
                         FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.account.0.1683501583618
                         Visibility: VISIBLE
-              Actions: []
+              Actions:
+              - CustomActionId: 7fe6189e-22b7-4280-804c-227c141b558b
+                Name: Action 1
+                Status: ENABLED
+                Trigger: DATA_POINT_CLICK
+                ActionOperations:
+                - FilterOperation:
+                    SelectedFieldsConfiguration:
+                      SelectedFieldOptions: ALL_FIELDS
+                    TargetVisualsConfiguration:
+                      SameSheetTargetVisualConfiguration:
+                        TargetVisualOptions: ALL_VISUALS
               ColumnHierarchies: []
           - PieChartVisual:
               VisualId: c1d17a70-8f52-41d1-9062-c5432d58c17e
@@ -293,7 +286,18 @@ Resources:
                     - FieldTooltipItem:
                         FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventRegion.0.1683487615968
                         Visibility: VISIBLE
-              Actions: []
+              Actions:
+              - CustomActionId: 926646d2-ea12-499e-88a7-2e73b0f12229
+                Name: Action 1
+                Status: ENABLED
+                Trigger: DATA_POINT_CLICK
+                ActionOperations:
+                - FilterOperation:
+                    SelectedFieldsConfiguration:
+                      SelectedFieldOptions: ALL_FIELDS
+                    TargetVisualsConfiguration:
+                      SameSheetTargetVisualConfiguration:
+                        TargetVisualOptions: ALL_VISUALS
               ColumnHierarchies: []
           - PieChartVisual:
               VisualId: 6abab0b5-6f68-4320-9a0e-1754862ea030
@@ -308,7 +312,7 @@ Resources:
                   PieChartAggregatedFieldWells:
                     Category:
                     - CategoricalDimensionField:
-                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.service.0.1683487486674
+                        FieldId: AWSHealthQSLT.service.0.1684674312475
                         Column:
                           DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
                           ColumnName: service
@@ -334,12 +338,20 @@ Resources:
                     TooltipTitleType: PRIMARY_VALUE
                     TooltipFields:
                     - FieldTooltipItem:
-                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.service.0.1683487486674
+                        FieldId: AWSHealthQSLT.service.0.1684674312475
                         Visibility: VISIBLE
-                    - FieldTooltipItem:
-                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.service.0.1683487486674
-                        Visibility: VISIBLE
-              Actions: []
+              Actions:
+              - CustomActionId: 1623e693-d54b-4b57-96d8-2461f6524df2
+                Name: Action 1
+                Status: ENABLED
+                Trigger: DATA_POINT_CLICK
+                ActionOperations:
+                - FilterOperation:
+                    SelectedFieldsConfiguration:
+                      SelectedFieldOptions: ALL_FIELDS
+                    TargetVisualsConfiguration:
+                      SameSheetTargetVisualConfiguration:
+                        TargetVisualOptions: ALL_VISUALS
               ColumnHierarchies: []
           Layouts:
           - Configuration:
@@ -373,7 +385,7 @@ Resources:
                   ElementType: VISUAL
                   ColumnSpan: 31
                   RowSpan: 7
-                - ElementId: 1c5f1d76-a417-4f50-a136-161e621072ea
+                - ElementId: b7b85f61-fec3-4192-acdf-15fa53cc00bc
                   ElementType: VISUAL
                   ColumnSpan: 31
                   RowSpan: 7
@@ -386,11 +398,11 @@ Resources:
           Name: HistoricalEvents
           Visuals:
           - GeospatialMapVisual:
-              VisualId: 268e6ed2-c752-4b0a-a6c2-568862540314
+              VisualId: a5b0ef23-0236-442a-a641-51dd24873e2d
               Title:
                 Visibility: VISIBLE
                 FormatText:
-                  RichText: "<visual-title>GeoLocation</visual-title>"
+                  RichText: "<visual-title>Region</visual-title>"
               Subtitle:
                 Visibility: VISIBLE
               ChartConfiguration:
@@ -398,42 +410,22 @@ Resources:
                   GeospatialMapAggregatedFieldWells:
                     Geospatial:
                     - CategoricalDimensionField:
-                        FieldId: 11765d00-e55d-4974-9278-c0a49783a5a9.1.1683488808189
+                        FieldId: location.1.1684674283489
                         Column:
                           DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
                           ColumnName: location
                     Values: []
-                    Colors:
-                    - CategoricalDimensionField:
-                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventTypeCategory.0.1683487801849
-                        Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
-                          ColumnName: eventTypeCategory
-                Legend:
-                  Visibility: HIDDEN
+                    Colors: []
                 Tooltip:
                   TooltipVisibility: VISIBLE
-                  SelectedTooltipType: DETAILED
+                  SelectedTooltipType: BASIC
                   FieldBasedTooltip:
                     AggregationVisibility: HIDDEN
                     TooltipTitleType: PRIMARY_VALUE
                     TooltipFields:
                     - FieldTooltipItem:
-                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventTypeCategory.0.1683487801849
+                        FieldId: location.1.1684674283489
                         Visibility: VISIBLE
-                    - FieldTooltipItem:
-                        FieldId: 11765d00-e55d-4974-9278-c0a49783a5a9.1.1683488808189
-                        Visibility: VISIBLE
-                    - FieldTooltipItem:
-                        FieldId: 11765d00-e55d-4974-9278-c0a49783a5a9.1.1683488808189
-                        Visibility: VISIBLE
-                WindowOptions:
-                  Bounds:
-                    North: 53.14944584971619
-                    South: 25.182315778066837
-                    West: -200.77816308215176
-                    East: 14.006067954174426
-                  MapZoomMode: MANUAL
               ColumnHierarchies: []
               Actions: []
           - TableVisual:
@@ -548,7 +540,18 @@ Resources:
                     - FieldTooltipItem:
                         FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventTypeCategory.0.1683487801849
                         Visibility: VISIBLE
-              Actions: []
+              Actions:
+              - CustomActionId: 799e351f-606a-439c-beb8-10500ee415b8
+                Name: Action 1
+                Status: ENABLED
+                Trigger: DATA_POINT_CLICK
+                ActionOperations:
+                - FilterOperation:
+                    SelectedFieldsConfiguration:
+                      SelectedFieldOptions: ALL_FIELDS
+                    TargetVisualsConfiguration:
+                      SameSheetTargetVisualConfiguration:
+                        TargetVisualOptions: ALL_VISUALS
               ColumnHierarchies: []
           - PieChartVisual:
               VisualId: 07e1a590-d937-428e-8a95-45a4f381b4d1
@@ -594,7 +597,18 @@ Resources:
                     - FieldTooltipItem:
                         FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.account.0.1683501583618
                         Visibility: VISIBLE
-              Actions: []
+              Actions:
+              - CustomActionId: 92027bc8-3a84-46a0-9bd4-914b9681498e
+                Name: Action 1
+                Status: ENABLED
+                Trigger: DATA_POINT_CLICK
+                ActionOperations:
+                - FilterOperation:
+                    SelectedFieldsConfiguration:
+                      SelectedFieldOptions: ALL_FIELDS
+                    TargetVisualsConfiguration:
+                      SameSheetTargetVisualConfiguration:
+                        TargetVisualOptions: ALL_VISUALS
               ColumnHierarchies: []
           - PieChartVisual:
               VisualId: 66a24873-8e69-44fa-ad0d-65ba41b93896
@@ -640,7 +654,18 @@ Resources:
                     - FieldTooltipItem:
                         FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventRegion.0.1683487615968
                         Visibility: VISIBLE
-              Actions: []
+              Actions:
+              - CustomActionId: a40da3a2-6e45-4cd6-9bfc-a789b144f18a
+                Name: Action 1
+                Status: ENABLED
+                Trigger: DATA_POINT_CLICK
+                ActionOperations:
+                - FilterOperation:
+                    SelectedFieldsConfiguration:
+                      SelectedFieldOptions: ALL_FIELDS
+                    TargetVisualsConfiguration:
+                      SameSheetTargetVisualConfiguration:
+                        TargetVisualOptions: ALL_VISUALS
               ColumnHierarchies: []
           - PieChartVisual:
               VisualId: 9dabf87c-f212-4622-a17c-93ac574160e6
@@ -655,7 +680,7 @@ Resources:
                   PieChartAggregatedFieldWells:
                     Category:
                     - CategoricalDimensionField:
-                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.service.0.1683487486674
+                        FieldId: AWSHealthQSLT.service.0.1684674318154
                         Column:
                           DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
                           ColumnName: service
@@ -681,12 +706,20 @@ Resources:
                     TooltipTitleType: PRIMARY_VALUE
                     TooltipFields:
                     - FieldTooltipItem:
-                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.service.0.1683487486674
+                        FieldId: AWSHealthQSLT.service.0.1684674318154
                         Visibility: VISIBLE
-                    - FieldTooltipItem:
-                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.service.0.1683487486674
-                        Visibility: VISIBLE
-              Actions: []
+              Actions:
+              - CustomActionId: 85e072af-1641-4662-a727-d377ab0a2f8b
+                Name: Action 1
+                Status: ENABLED
+                Trigger: DATA_POINT_CLICK
+                ActionOperations:
+                - FilterOperation:
+                    SelectedFieldsConfiguration:
+                      SelectedFieldOptions: ALL_FIELDS
+                    TargetVisualsConfiguration:
+                      SameSheetTargetVisualConfiguration:
+                        TargetVisualOptions: ALL_VISUALS
               ColumnHierarchies: []
           Layouts:
           - Configuration:
@@ -720,7 +753,7 @@ Resources:
                   ElementType: VISUAL
                   ColumnSpan: 31
                   RowSpan: 7
-                - ElementId: 268e6ed2-c752-4b0a-a6c2-568862540314
+                - ElementId: a5b0ef23-0236-442a-a641-51dd24873e2d
                   ElementType: VISUAL
                   ColumnSpan: 31
                   RowSpan: 7
@@ -733,11 +766,11 @@ Resources:
           Name: UpcomingEvents
           Visuals:
           - GeospatialMapVisual:
-              VisualId: 409491ae-258a-4526-ac86-43dd3a58fa21
+              VisualId: e2cfecfc-457d-428a-833c-5067ddf1738f
               Title:
                 Visibility: VISIBLE
                 FormatText:
-                  RichText: "<visual-title>GeoLocation</visual-title>"
+                  RichText: "<visual-title>Region</visual-title>"
               Subtitle:
                 Visibility: VISIBLE
               ChartConfiguration:
@@ -745,42 +778,22 @@ Resources:
                   GeospatialMapAggregatedFieldWells:
                     Geospatial:
                     - CategoricalDimensionField:
-                        FieldId: 11765d00-e55d-4974-9278-c0a49783a5a9.1.1683488808189
+                        FieldId: location.1.1684674290225
                         Column:
                           DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
                           ColumnName: location
                     Values: []
-                    Colors:
-                    - CategoricalDimensionField:
-                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventTypeCategory.0.1683487801849
-                        Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
-                          ColumnName: eventTypeCategory
-                Legend:
-                  Visibility: HIDDEN
+                    Colors: []
                 Tooltip:
                   TooltipVisibility: VISIBLE
-                  SelectedTooltipType: DETAILED
+                  SelectedTooltipType: BASIC
                   FieldBasedTooltip:
                     AggregationVisibility: HIDDEN
                     TooltipTitleType: PRIMARY_VALUE
                     TooltipFields:
                     - FieldTooltipItem:
-                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventTypeCategory.0.1683487801849
+                        FieldId: location.1.1684674290225
                         Visibility: VISIBLE
-                    - FieldTooltipItem:
-                        FieldId: 11765d00-e55d-4974-9278-c0a49783a5a9.1.1683488808189
-                        Visibility: VISIBLE
-                    - FieldTooltipItem:
-                        FieldId: 11765d00-e55d-4974-9278-c0a49783a5a9.1.1683488808189
-                        Visibility: VISIBLE
-                WindowOptions:
-                  Bounds:
-                    North: 65.83701131408424
-                    South: 14.28827200294289
-                    West: -276.82892153252374
-                    East: 152.7395405401275
-                  MapZoomMode: MANUAL
               ColumnHierarchies: []
               Actions: []
           - TableVisual:
@@ -908,7 +921,18 @@ Resources:
                     - FieldTooltipItem:
                         FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventTypeCategory.0.1683487801849
                         Visibility: VISIBLE
-              Actions: []
+              Actions:
+              - CustomActionId: bb4d04fa-bf1a-4a41-87ad-5b8f54e00518
+                Name: Action 1
+                Status: ENABLED
+                Trigger: DATA_POINT_CLICK
+                ActionOperations:
+                - FilterOperation:
+                    SelectedFieldsConfiguration:
+                      SelectedFieldOptions: ALL_FIELDS
+                    TargetVisualsConfiguration:
+                      SameSheetTargetVisualConfiguration:
+                        TargetVisualOptions: ALL_VISUALS
               ColumnHierarchies: []
           - PieChartVisual:
               VisualId: d4910c22-4dee-4f8d-9acf-bb78715af39f
@@ -954,7 +978,18 @@ Resources:
                     - FieldTooltipItem:
                         FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.account.0.1683487623829
                         Visibility: VISIBLE
-              Actions: []
+              Actions:
+              - CustomActionId: a82467cc-1e13-46de-ba42-aeafcac4c9d7
+                Name: Action 1
+                Status: ENABLED
+                Trigger: DATA_POINT_CLICK
+                ActionOperations:
+                - FilterOperation:
+                    SelectedFieldsConfiguration:
+                      SelectedFieldOptions: ALL_FIELDS
+                    TargetVisualsConfiguration:
+                      SameSheetTargetVisualConfiguration:
+                        TargetVisualOptions: ALL_VISUALS
               ColumnHierarchies: []
           - PieChartVisual:
               VisualId: '0899299b-a301-4c1e-94fb-649244e74924'
@@ -1000,7 +1035,18 @@ Resources:
                     - FieldTooltipItem:
                         FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventRegion.0.1683487615968
                         Visibility: VISIBLE
-              Actions: []
+              Actions:
+              - CustomActionId: f818b66b-3455-413d-8dc3-e284f8efc2af
+                Name: Action 1
+                Status: ENABLED
+                Trigger: DATA_POINT_CLICK
+                ActionOperations:
+                - FilterOperation:
+                    SelectedFieldsConfiguration:
+                      SelectedFieldOptions: ALL_FIELDS
+                    TargetVisualsConfiguration:
+                      SameSheetTargetVisualConfiguration:
+                        TargetVisualOptions: ALL_VISUALS
               ColumnHierarchies: []
           - PieChartVisual:
               VisualId: 87f8cddc-5f57-4b63-89f2-33b648dff74e
@@ -1015,7 +1061,7 @@ Resources:
                   PieChartAggregatedFieldWells:
                     Category:
                     - CategoricalDimensionField:
-                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.service.0.1683487486674
+                        FieldId: AWSHealthQSLT.service.0.1684674323790
                         Column:
                           DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}"
                           ColumnName: service
@@ -1041,12 +1087,20 @@ Resources:
                     TooltipTitleType: PRIMARY_VALUE
                     TooltipFields:
                     - FieldTooltipItem:
-                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.service.0.1683487486674
+                        FieldId: AWSHealthQSLT.service.0.1684674323790
                         Visibility: VISIBLE
-                    - FieldTooltipItem:
-                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.service.0.1683487486674
-                        Visibility: VISIBLE
-              Actions: []
+              Actions:
+              - CustomActionId: f91df916-c8aa-456f-aafa-600a07a6c39f
+                Name: Action 1
+                Status: ENABLED
+                Trigger: DATA_POINT_CLICK
+                ActionOperations:
+                - FilterOperation:
+                    SelectedFieldsConfiguration:
+                      SelectedFieldOptions: ALL_FIELDS
+                    TargetVisualsConfiguration:
+                      SameSheetTargetVisualConfiguration:
+                        TargetVisualOptions: ALL_VISUALS
               ColumnHierarchies: []
           Layouts:
           - Configuration:
@@ -1080,7 +1134,7 @@ Resources:
                   ElementType: VISUAL
                   ColumnSpan: 31
                   RowSpan: 7
-                - ElementId: 409491ae-258a-4526-ac86-43dd3a58fa21
+                - ElementId: e2cfecfc-457d-428a-833c-5067ddf1738f
                   ElementType: VISUAL
                   ColumnSpan: 31
                   RowSpan: 7
@@ -1122,7 +1176,7 @@ Resources:
                 - ef5bcdbc-52e8-42c4-969b-76a5cf0cc6e7
                 - c1d17a70-8f52-41d1-9062-c5432d58c17e
                 - 6abab0b5-6f68-4320-9a0e-1754862ea030
-                - 1c5f1d76-a417-4f50-a136-161e621072ea
+                - b7b85f61-fec3-4192-acdf-15fa53cc00bc
           Status: ENABLED
           CrossDataset: SINGLE_DATASET
         - FilterGroupId: d4b0e160-c317-4776-bec5-4a23ac877651
@@ -1149,7 +1203,7 @@ Resources:
                 - 07e1a590-d937-428e-8a95-45a4f381b4d1
                 - 66a24873-8e69-44fa-ad0d-65ba41b93896
                 - 9dabf87c-f212-4622-a17c-93ac574160e6
-                - 268e6ed2-c752-4b0a-a6c2-568862540314
+                - a5b0ef23-0236-442a-a641-51dd24873e2d
           Status: ENABLED
           CrossDataset: SINGLE_DATASET
         - FilterGroupId: 11ad1cae-543d-4d96-9479-655115411db2
