@@ -79,6 +79,7 @@ Resources:
                   'affectedEntities': ', '.join([entity['entityValue'] for entity in event_detail.get('affectedEntities', [])])
               }
               event_data['account'] = event.get('account')
+              event_data['ingestionTime'] = datetime.strptime(event.get('time'), '%Y-%m-%dT%H:%M:%SZ').strftime('%d/%m/%Y %H:%M:%S')
               if event_detail.get('endTime'):
                   event_data['endTime'] = datetime.strptime(event_detail['endTime'], '%a, %d %b %Y %H:%M:%S %Z').strftime('%d/%m/%Y %H:%M:%S')
               if event_detail.get('lastUpdatedTime'):
@@ -142,6 +143,8 @@ Resources:
                               "eventTypeCategory":"scheduledChange",
                               "startTime":"Wed, 3 May 2023 11:00:00 GMT",
                               "endTime":"Wed, 10 May 2023 14:00:00 GMT",
+                              "account":"1234567890",
+                              "ingestionTime":"2023-05-22T00:07:57Z",
                               "eventDescription":[
                                   {
                                     "language":"en_US",

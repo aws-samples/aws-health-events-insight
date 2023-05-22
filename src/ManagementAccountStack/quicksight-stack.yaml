@@ -99,6 +99,8 @@ Resources:
                 Type: STRING
               - Name: account
                 Type: STRING
+              - Name: ingestionTime
+                Type: STRING
       LogicalTableMap:
         "AWSHealthQSLT":
           Alias: !Sub "EventHealth-${AWS::AccountId}"
@@ -115,6 +117,10 @@ Resources:
                 Format: "dd/MM/yyyy HH:mm:ss"
             - CastColumnTypeOperation:
                 ColumnName: endTime
+                NewColumnType: DATETIME
+                Format: "dd/MM/yyyy HH:mm:ss"
+            - CastColumnTypeOperation:
+                ColumnName: ingestionTime
                 NewColumnType: DATETIME
                 Format: "dd/MM/yyyy HH:mm:ss"
             - CreateColumnsOperation:
@@ -151,6 +157,7 @@ Resources:
                   - account
                   - eventTypeCategory
                   - affectedEntities
+                  - ingestionTime
       Permissions:
       - Principal: !Sub "${QuickSightUser}"
         Actions:

@@ -101,6 +101,7 @@ Resources:
                       if event_details.get('endTime'):
                           event_data['endTime'] = event_details.get('endTime').strftime('%d/%m/%Y %H:%M:%S')
                       event_data['account']= context.invoked_function_arn.split(":")[4]
+                      event_data['ingestionTime'] = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
                       # Store the event in DynamoDB
                       table.put_item(Item=event_data)
                   print(event)
