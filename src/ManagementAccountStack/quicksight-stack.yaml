@@ -35,14 +35,30 @@ Resources:
             Resource: "*"
           - Effect: "Allow"
             Action:
-              - "lambda:*"
+              - "lambda:InvokeFunction"
             Resource: !Ref DDBConnectorARN
           - Effect: "Allow"
             Action:
-              - s3:*
+              - "s3:GetBucketLocation"
+              - "s3:GetObject"
+              - "s3:ListBucket"
+              - "s3:ListBucketMultipartUploads"
+              - "s3:AbortMultipartUpload"
+              - "s3:PutObject"
+              - "s3:ListMultipartUploadParts"
             Resource: 
               - !Sub arn:aws:s3:::${EventHealthBucket}
               - !Sub arn:aws:s3:::${EventHealthBucket}/*
+              - arn:aws:s3:::aws-athena-query-results-*
+              - arn:aws:s3:::aws-athena-query-results-*/*
+          - Effect: "Allow"
+            Action:
+              - athena:ListDataCatalogs
+              - athena:StartQueryExecution
+              - athena:GetQueryExecution
+              - athena:GetQueryResultsStream
+              - athena:GetDataCatalog
+            Resource: "*"
       Roles: 
        - !Ref QuicksightServiceRole
 
