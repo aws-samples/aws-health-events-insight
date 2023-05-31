@@ -21,7 +21,8 @@ region = input("Enter region name: (Hit enter to use default: {}): ".format(defa
 bucket_name = "awseventhealth-{}-{}".format(account_id,region)
 bucket_name = input("Enter S3 bucket name (Hit enter to use default : {}): ".format(bucket_name)) or bucket_name
 
-principal_org_id = input("Enter AWS organization ID (Hit enter to use default {}): ".format(PrincipalOrgID)) or PrincipalOrgID
+#principal_org_id = input("Enter AWS organization ID (Hit enter to use default {}): ".format(PrincipalOrgID)) or PrincipalOrgID
+principal_org_id = PrincipalOrgID
 quicksight_service_role = input("Enter QuickSight Service Role (Hit enter to use default aws-quicksight-service-role-v0): ") or "aws-quicksight-service-role-v0"
 qsidregion = input("Enter your QuickSight Identity region (Hit enter to use default us-east-1): ") or "us-east-1"
 
@@ -32,7 +33,7 @@ try:
     namespaces = [namespace['Name'] for namespace in response['Namespaces']]
     qsusernames = []
 except:
-    print("Invalid QuickSight region")
+    print("Error while listing namespace, check if quicksight is enterprise plan")
     exit()
 
 try:
@@ -78,8 +79,12 @@ except ClientError as e:
         print(f"S3 bucket {bucket_name} has been created")       
 
 # Sync src directory with S3 bucket
-aws_sync_command = "aws s3 sync src s3://{}/".format(bucket_name)
-subprocess.call(aws_sync_command.split())
+try:
+    aws_sync_command = "aws s3 sync src s3://{}/".format(bucket_name)
+    subprocess.call(aws_sync_command.split())
+except ClientError as e:
+    print("Error while syncing S3, Check if deployer role has required S3 and KMS permissions")
+    exit()
 
 # Initialize CloudFormation stack
 stack_name = "HealthEventDashboardStack{}".format(account_id)
