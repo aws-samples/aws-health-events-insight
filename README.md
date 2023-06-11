@@ -31,6 +31,8 @@ In this section, we will go through the steps to set up permissions for StackSet
 
     `git clone https://github.com/aws-samples/aws-health-events-insight.git`
 
+    **TIP**: If you are deploying setup in in ca-central-1, quicksight-stack.yaml would fail. This is due to the fact that CFN property AWS::QuickSight::RefreshSchedule doesn't exist in this region yet. You can comment AWSHealthEventQSDataSetRefresh in quicksight-stack.yaml and setup refresh schedule from quicksight console.
+
     2. Go to aws-health-events-insight directory and run ControlAccountSetup.py and provide account specific inputs.
 
     `cd aws-health-events-insight`
