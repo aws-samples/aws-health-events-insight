@@ -12,6 +12,9 @@ Parameters:
     Type: String
     Default: aws-quicksight-service-role-v0
     Description: The Quicksight Service role attached to QS, Default is aws-quicksight-service-role-v0
+  SageMakerEndpoint:
+    Type: String
+    Description: Sagemaker endpoint for summarization model
 
 Resources:
   HealtheventStorageStack:
@@ -25,7 +28,7 @@ Resources:
        TemplateURL: !Sub https://${EventHealthBucket}.s3.amazonaws.com/backfillStack/backfillEvents.yaml
        Parameters:
         DynamoDBArn: !GetAtt  HealtheventStorageStack.Outputs.EventHealthDDBTableArn
-        DynamoDBName: !GetAtt  HealtheventStorageStack.Outputs.EventHealthDDBTable
+        SageMakerEndpoint: !Ref SageMakerEndpoint
 
   HealtheventEventBusStack:
     Type: AWS::CloudFormation::Stack
@@ -41,9 +44,8 @@ Resources:
       TemplateURL: !Sub https://${EventHealthBucket}.s3.amazonaws.com/ManagementAccountStack/ingestion-stack.yaml
       Parameters:
         DynamoDBArn: !GetAtt  HealtheventStorageStack.Outputs.EventHealthDDBTableArn
-        DynamoDBName: !GetAtt  HealtheventStorageStack.Outputs.EventHealthDDBTable
-        EventHealthBusName: !GetAtt HealtheventEventBusStack.Outputs.EventHealthBusName
         EventHealthBusArn: !GetAtt HealtheventEventBusStack.Outputs.EventHealthBusArn
+        SageMakerEndpoint: !Ref SageMakerEndpoint
 
   ConnectorStack:
     DependsOn: HealtheventEventBusStack

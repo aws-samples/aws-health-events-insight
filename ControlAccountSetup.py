@@ -1,6 +1,7 @@
 import boto3
 import subprocess
 from botocore.exceptions import ClientError
+import re
 
 # Get the default region
 session = boto3.Session()
@@ -16,6 +17,25 @@ account_id = sts_client.get_caller_identity().get("Account")
 
 # Get input parameters from user
 region = input("Enter region name: (Hit enter to use default: {}): ".format(default_region)) or default_region
+
+# Prompt the user to include a SageMaker ML model
+# Toggled 
+# include_model = input("Include SageMaker ML model? (yes/no): ").lower()
+include_model = "No"
+
+if include_model == "yes":
+    # Prompt the user to supply a SageMaker endpoint
+    SageMakerEndpoint = input("Enter the SageMaker endpoint ARN: ")
+    arn_pattern = r"^arn:aws:sagemaker:[a-z0-9\-]+:\d{12}:endpoint\/[a-zA-Z0-9]([a-zA-Z0-9\-])*[a-zA-Z0-9]$"
+    # Match the ARN against the pattern
+    if not re.match(arn_pattern, SageMakerEndpoint):
+        print("Invalid arn Format")
+        exit()
+    print("SageMaker ML model included")
+else:
+    SageMakerEndpoint = "arn:aws:sagemaker:{}:{}:endpoint/placeholder".format(region,account_id)
+    #print("SageMaker ML model not included")
+
 
 # Create bucket name
 bucket_name = "awseventhealth-{}-{}".format(account_id,region)
@@ -90,7 +110,7 @@ except ClientError as e:
 stack_name = "HealthEventDashboardStack{}".format(account_id)
 cfn_client = boto3.client("cloudformation", region)
 
-stacks = cfn_client.list_stacks(StackStatusFilter=["CREATE_FAILED","UPDATE_FAILED"])
+stacks = cfn_client.list_stacks(StackStatusFilter=["CREATE_FAILED","UPDATE_FAILED","CREATE_COMPLETE","UPDATE_COMPLETE"])
 response = None
 for stack in stacks.get("StackSummaries"):
     if stack.get("StackName") == stack_name:
@@ -101,6 +121,7 @@ for stack in stacks.get("StackSummaries"):
                 {"ParameterKey": "EventHealthBucket", "ParameterValue": bucket_name},
                 {"ParameterKey": "PrincipalOrgID", "ParameterValue": principal_org_id},
                 {"ParameterKey": "QuickSightUser", "ParameterValue": quicksight_user},
+                {"ParameterKey": "SageMakerEndpoint", "ParameterValue": SageMakerEndpoint},
                 {"ParameterKey": "QuicksightServiceRole", "ParameterValue": quicksight_service_role or "aws-quicksight-service-role-v0"}
             ],
             Capabilities=["CAPABILITY_NAMED_IAM","CAPABILITY_AUTO_EXPAND"],
@@ -117,11 +138,10 @@ if response is None:
             {"ParameterKey": "EventHealthBucket", "ParameterValue": bucket_name},
             {"ParameterKey": "PrincipalOrgID", "ParameterValue": principal_org_id},
             {"ParameterKey": "QuickSightUser", "ParameterValue": quicksight_user},
+            {"ParameterKey": "SageMakerEndpoint", "ParameterValue": SageMakerEndpoint},
             {"ParameterKey": "QuicksightServiceRole", "ParameterValue": quicksight_service_role or "aws-quicksight-service-role-v0"}
         ],
         Capabilities=["CAPABILITY_NAMED_IAM","CAPABILITY_AUTO_EXPAND"],
         DisableRollback=True
     )
     print(f"Stack creation initiated: {response.get('StackId')}")
-
-print(response)

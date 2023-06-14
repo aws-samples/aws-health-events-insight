@@ -3,15 +3,12 @@ Parameters:
   DynamoDBArn:
     Type: String
     Description: DDB arn
-  DynamoDBName:
-    Type: String
-    Description: DDB Name
-  EventHealthBusName:
-    Type: String
-    Description: HealthEventHealthBusName
   EventHealthBusArn:
     Type: String
     Description: EventHealthBusArn
+  SageMakerEndpoint:
+    Type: String
+    Description: Sagemaker endpoint for summarization model
 
 Resources:
   EventHealthLambdaForDDBRole:
@@ -52,6 +49,15 @@ Resources:
                 Action:
                   - "events:PutEvents"
                 Resource: !Ref EventHealthBusArn
+        - PolicyName: SagemakerModelAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "sagemaker:InvokeEndpoint"
+                  - "sagemaker:InvokeEndpointAsync"
+                Resource: !Ref SageMakerEndpoint
   
   EventHealthLambdaForDDB:
     Type: AWS::Lambda::Function
@@ -96,14 +102,15 @@ Resources:
       Role: !GetAtt EventHealthLambdaForDDBRole.Arn
       Environment:
         Variables:
-          DynamoDBName: !Ref DynamoDBName
+          DynamoDBName: !Select [1, !Split ["/", !Ref DynamoDBArn]]
+          SageMakerEndpoint: !Select [1, !Split ["/", !Ref SageMakerEndpoint]]
   
   EventHealthtRuleEventHealthBus:
     Type: "AWS::Events::Rule"
     Properties:
       Name: !Sub EventHealthtRuleEventHealthBus-${AWS::AccountId}
       Description: "Event Health bus rule for aws.health events"
-      EventBusName: !Ref EventHealthBusName
+      EventBusName: !Select [1, !Split ["/", !Ref EventHealthBusArn]]
       EventPattern:
         source:
           - "aws.health"
@@ -179,7 +186,7 @@ Resources:
       Role: !GetAtt EventHealthLambdaForDDBRole.Arn
       Environment:
         Variables:
-          EventHealthBusName: !Ref EventHealthBusName
+          EventHealthBusName: !Select [1, !Split ["/", !Ref EventHealthBusArn]]
 
   MyLambdaInvoker:
     Type: AWS::CloudFormation::CustomResource

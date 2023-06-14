@@ -1,11 +1,11 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Parameters:
-  DynamoDBName:
-    Type: String
-    Description: Enter the Name of dynamoDB for healthevents. You can get this from output of awshealth-management stack.
   DynamoDBArn:
     Type: String
     Description: Enter the ARN of dynamoDB for healthevents. You can get this from output of awshealth-management stack.
+  SageMakerEndpoint:
+    Type: String
+    Description: Sagemaker endpoint for summarization model
 
 Resources:
   EventHealthLambdaForDDBInitialLoadRole:
@@ -46,6 +46,16 @@ Resources:
                 Action:
                   - health:*
                 Resource: "*"
+        - PolicyName: SagemakerModelAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "sagemaker:InvokeEndpoint"
+                  - "sagemaker:InvokeEndpointAsync"
+                Resource: !Ref SageMakerEndpoint
+
   AWSLambdatoInitialEventsLoad:              
     Type: AWS::Lambda::Function
     Properties:
@@ -115,7 +125,8 @@ Resources:
       Role: !GetAtt EventHealthLambdaForDDBInitialLoadRole.Arn
       Environment:
         Variables:
-          DynamoDBName: !Ref DynamoDBName
+          DynamoDBName: !Select [1, !Split ["/", !Ref DynamoDBArn]]
+          SageMakerEndpoint: !Select [1, !Split ["/", !Ref SageMakerEndpoint]]
 
   MyLambdaInvoker:
     Type: Custom::MyLambdaInvoker

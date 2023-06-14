@@ -6,7 +6,7 @@ AWS Health serves as the primary means to inform users of service degradation, p
 
 This solution offers a centralized approach to store and analyze AWS Health events. The automation of capturing and storing events using Amazon EventBridge and Lambda function reduces the effort required to access different accounts, regions and organizations. Furthermore, the use of Amazon QuickSight to visualize the consolidated AWS Health events stored in Amazon DynamoDB provides engineers with a robust tool to monitor the health of their AWS resources. 
 
-![ALT](img/sampleHistorical.jpeg)
+![ALT](img/sampleHistorical.png)
 
 # Architecture
 
