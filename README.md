@@ -45,11 +45,24 @@ In this section, we will go through the steps to set up permissions for StackSet
 
     **TIP**: If cloudformation failed due to wrong parameters(such as wrong Amazon QuickSight principal etc), rerun step 2 with correct parameters, This would update failed stack.
 
-2. **Child Account Setup:** Cloudformation template in ![src/ChildAccountStack](https://github.com/aws-samples/aws-health-events-insight/blob/main/src/ChildAccountStack) will set up all the necessary components required to send health events to management account. You can also use stacksets to deploy to multiple accounts and regions.
+2. **Child Account Setup:** Cloudformation template in ![src/ChildAccountStack](https://github.com/aws-samples/aws-health-events-insight/blob/main/src/ChildAccountStack) will set up all the necessary components required to send health events to management account. You can use stacksets to deploy to multiple accounts and regions.
 
-    1. In CloudFormation Console create a stack with new resources from the template file ![Childaccount-Stack.yaml](https://github.com/aws-samples/aws-health-events-insight/blob/main/src/ChildAccountStack/childaccount-stack.yaml) .
+    Option 1:
+
+    1. Setup AWS credntials for desired Account and Regions.
+    2. Go to aws-health-events-insight directory and run link-Account-RegionSetup.py and provide necessary inputs. 
+
+    `cd aws-health-events-insight`
+
+    `python3 link-Account-RegionSetup.py`
+
+    Option 2(Bulk deployment via stackset):
+
+    1. In CloudFormation Console create a stackset with new resources from the template file ![Childaccount-Stack.yaml](https://github.com/aws-samples/aws-health-events-insight/blob/main/src/ChildAccountStack/childaccount-stack.yaml) .
     2. Input the HealthBus ARN. Go to the AWS CloudFormation console and get this information from output of the stack(HealthEventDashboardStack).
-    3. Launch the stack.
+    3. Select deployment targets(Deploy to OU or deploy to organization)
+    4. Select regions to deploy
+    5. Summit.
 
 3. **Setup QS data refresh interval** By default Amazon QuickSight dataset will refresh every hour. you can edit this schedule to meet your need.
 

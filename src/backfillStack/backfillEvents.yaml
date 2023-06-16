@@ -2,10 +2,10 @@ AWSTemplateFormatVersion: '2010-09-09'
 Parameters:
   DynamoDBArn:
     Type: String
-    Description: Enter the ARN of dynamoDB for healthevents. You can get this from output of awshealth-management stack.
+    Description: Enter the ARN of DynamoDB for health events. You can get this from the output of the awshealth-management stack.
   SageMakerEndpoint:
     Type: String
-    Description: Sagemaker endpoint for summarization model
+    Description: Sagemaker endpoint for the summarization model
 
 Resources:
   EventHealthLambdaForDDBInitialLoadRole:
@@ -18,7 +18,7 @@ Resources:
           - Effect: Allow
             Principal:
               Service: lambda.amazonaws.com
-            Action: sts:AssumeRole 
+            Action: sts:AssumeRole
       Policies:
         - PolicyName: cloudwatch-logs-access
           PolicyDocument:
@@ -46,15 +46,18 @@ Resources:
                 Action:
                   - health:*
                 Resource: "*"
-        - PolicyName: SagemakerModelAccess
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - "sagemaker:InvokeEndpoint"
-                  - "sagemaker:InvokeEndpointAsync"
-                Resource: !Ref SageMakerEndpoint
+        - !If
+          - SageMakerEndpoint
+          - PolicyName: SagemakerModelAccess
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - "sagemaker:InvokeEndpoint"
+                    - "sagemaker:InvokeEndpointAsync"
+                  Resource: !Ref SageMakerEndpoint
+          - !Ref "AWS::NoValue"
 
   AWSLambdatoInitialEventsLoad:              
     Type: AWS::Lambda::Function
@@ -64,61 +67,77 @@ Resources:
             import boto3
             import json
             from datetime import datetime
-            import cfnresponse
             import os
+            import cfnresponse
+
             dynamodb = boto3.resource('dynamodb')
             health_client = boto3.client('health')
-            # Specify the name of the DynamoDB table to store the events in
             table = dynamodb.Table(os.environ['DynamoDBName'])
+            sagemaker_runtime = boto3.client('sagemaker-runtime')  # Initialize SageMaker client
 
             def lambda_handler(event, context):
                 events = []
                 next_token = None
-                # Retrieve all events from the AWS Health API, handling pagination
+
                 try:
-                  while True:
-                      kwargs = {}
-                      if next_token and len(next_token) >= 4:
-                          kwargs['nextToken'] = next_token
-                      events_response = health_client.describe_events(filter={}, **kwargs)
-                      events += events_response['events']
-                      if 'nextToken' in events_response:
-                          next_token = events_response['nextToken']
-                      else:
-                          break
-                  # Store each event in DynamoDB
-                  for awsevent in events:
-                      # Retrieve the detailed information for the event
-                      event_details_response = health_client.describe_event_details(eventArns=[awsevent['arn']])
-                      print(event_details_response)
-                      successful_set = event_details_response.get('successfulSet')
-                      if not successful_set:
-                          continue
-                      event_details = successful_set[0]['event']
-                      eventDescription = successful_set[0]['eventDescription']
-                      event_data = {
-                          'eventArn': event_details['arn'],
-                          'service': event_details.get('service', ''),
-                          'eventScopeCode': event_details.get('eventScopeCode', ''),
-                          'lastUpdatedTime': event_details.get('lastUpdatedTime', '').strftime('%d/%m/%Y %H:%M:%S'),
-                          'eventRegion': event_details.get('region', ''),
-                          'eventTypeCode': event_details.get('eventTypeCode', ''),
-                          'eventTypeCategory': event_details.get('eventTypeCategory', ''),
-                          'startTime': event_details.get('startTime', '').strftime('%d/%m/%Y %H:%M:%S'),
-                          'eventDescription': eventDescription.get('latestDescription'),
-                          'affectedEntities': ', '.join([entity['entityValue'] for entity in event_details.get('affectedEntities', [])]),
-                      }
-                      if event_details.get('endTime'):
-                          event_data['endTime'] = event_details.get('endTime').strftime('%d/%m/%Y %H:%M:%S')
-                      event_data['account']= context.invoked_function_arn.split(":")[4]
-                      event_data['ingestionTime'] = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
-                      # Store the event in DynamoDB
-                      table.put_item(Item=event_data)
-                  print(event)
-                  cfnresponse.send(event, context, cfnresponse.SUCCESS, {}, None)
+                    while True:
+                        kwargs = {}
+                        if next_token and len(next_token) >= 4:
+                            kwargs['nextToken'] = next_token
+                        events_response = health_client.describe_events(filter={}, **kwargs)
+                        events += events_response['events']
+                        if 'nextToken' in events_response:
+                            next_token = events_response['nextToken']
+                        else:
+                            break
+
+                    for awsevent in events:
+                        event_details_response = health_client.describe_event_details(eventArns=[awsevent['arn']])
+                        successful_set = event_details_response.get('successfulSet')
+                        if not successful_set:
+                            continue
+                        event_details = successful_set[0]['event']
+                        eventDescription = successful_set[0]['eventDescription']
+                        event_data = {
+                            'eventArn': event_details['arn'],
+                            'service': event_details.get('service', ''),
+                            'eventScopeCode': event_details.get('eventScopeCode', ''),
+                            'lastUpdatedTime': event_details.get('lastUpdatedTime', '').strftime('%d/%m/%Y %H:%M:%S'),
+                            'eventRegion': event_details.get('region', ''),
+                            'eventTypeCode': event_details.get('eventTypeCode', ''),
+                            'eventTypeCategory': event_details.get('eventTypeCategory', ''),
+                            'startTime': event_details.get('startTime', '').strftime('%d/%m/%Y %H:%M:%S'),
+                            'eventDescription': eventDescription.get('latestDescription'),
+                            'affectedEntities': ', '.join([entity['entityValue'] for entity in event_details.get('affectedEntities', [])]),
+                        }
+                        if event_details.get('endTime'):
+                            event_data['endTime'] = event_details.get('endTime').strftime('%d/%m/%Y %H:%M:%S')
+                        event_data['account'] = context.invoked_function_arn.split(":")[4]
+                        event_data['ingestionTime'] = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+                        
+                        try:
+                            if os.environ['SageMakerEndpoint']:
+                                sagemaker_endpoint_arn = os.environ['SageMakerEndpoint']
+                                sagemaker_endpoint_name = sagemaker_endpoint_arn.split('/')[-1]  # Extract the name from the ARN
+                                model_max_length = 1000  # Adjust the desired maximum length
+                                summary_text = sagemaker_runtime.invoke_endpoint(
+                                    EndpointName=sagemaker_endpoint_name,
+                                    Body=bytes(event_data['eventDescription'][:model_max_length], 'utf-8'),
+                                    ContentType='application/x-text'
+                                )['Body'].read().decode('utf-8')
+                                event_data['eventSummary'] = json.loads(summary_text)["summary_text"]
+                            else:
+                                event_data['eventSummary'] = "No LLM model supplied for summarization"
+                        except Exception as e:
+                            event_data['eventSummary'] = "LLM model supplied but not reachable, Failing summarizations silently"
+                          
+                        # Store the event in DynamoDB
+                        table.put_item(Item=event_data)
+                          
+                    cfnresponse.send(event, context, cfnresponse.SUCCESS, {}, None)
                 except Exception as e:
-                  cfnresponse.send(event, context, cfnresponse.FAILED, {}, None)
-                  print(e)
+                    cfnresponse.send(event, context, cfnresponse.FAILED, {}, None)
+                    print(e)
       Handler: index.lambda_handler
       Runtime: python3.8
       Timeout: 900
@@ -126,9 +145,12 @@ Resources:
       Environment:
         Variables:
           DynamoDBName: !Select [1, !Split ["/", !Ref DynamoDBArn]]
-          SageMakerEndpoint: !Select [1, !Split ["/", !Ref SageMakerEndpoint]]
+          SageMakerEndpoint: !Ref SageMakerEndpoint
 
   MyLambdaInvoker:
     Type: Custom::MyLambdaInvoker
     Properties:
       ServiceToken: !GetAtt AWSLambdatoInitialEventsLoad.Arn
+
+Conditions:
+  SageMakerEndpoint: !Not [!Equals [!Ref SageMakerEndpoint, ""]]

@@ -49,15 +49,18 @@ Resources:
                 Action:
                   - "events:PutEvents"
                 Resource: !Ref EventHealthBusArn
-        - PolicyName: SagemakerModelAccess
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - "sagemaker:InvokeEndpoint"
-                  - "sagemaker:InvokeEndpointAsync"
-                Resource: !Ref SageMakerEndpoint
+        - !If
+          - SageMakerEndpoint
+          - PolicyName: SagemakerModelAccess
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - "sagemaker:InvokeEndpoint"
+                    - "sagemaker:InvokeEndpointAsync"
+                  Resource: !Ref SageMakerEndpoint
+          - !Ref "AWS::NoValue"
   
   EventHealthLambdaForDDB:
     Type: AWS::Lambda::Function
@@ -67,12 +70,14 @@ Resources:
           import json
           import boto3
           import os
+          
           from datetime import datetime
           dynamodb = boto3.resource('dynamodb')
           def aws_health(event, context):
               event_detail = event['detail']
               table = dynamodb.Table(os.environ['DynamoDBName'])
-              print(event_detail)
+              sagemaker_runtime = boto3.client('sagemaker-runtime')  # Initialize SageMaker client
+
               event_data = {
                   'eventArn': event_detail.get('eventArn'),
                   'service': event_detail.get('service',''),
@@ -92,7 +97,24 @@ Resources:
                   event_data['lastUpdatedTime'] = datetime.strptime(event_detail['lastUpdatedTime'], '%a, %d %b %Y %H:%M:%S %Z').strftime('%d/%m/%Y %H:%M:%S') 
               else:
                   event_data['lastUpdatedTime'] = datetime.strptime(event_detail['startTime'], '%a, %d %b %Y %H:%M:%S %Z').strftime('%d/%m/%Y %H:%M:%S') 
-
+              
+              try:
+                  if os.environ['SageMakerEndpoint']:
+                      sagemaker_endpoint_arn = os.environ['SageMakerEndpoint']
+                      sagemaker_endpoint_name = sagemaker_endpoint_arn.split('/')[-1]  # Extract the name from the ARN
+                      model_max_length = 1000  # Adjust the desired maximum length
+                      summary_text = sagemaker_runtime.invoke_endpoint(
+                          EndpointName=sagemaker_endpoint_name,
+                          Body=bytes(event_data['eventDescription'][:model_max_length], 'utf-8'),
+                          ContentType='application/x-text'
+                      )['Body'].read().decode('utf-8')
+                      event_data['eventSummary'] = json.loads(summary_text)["summary_text"]
+                  else:
+                      event_data['eventSummary'] = "No LLM model supplied for summarization"
+              except Exception as e:
+                  event_data['eventSummary'] = "LLM Supplied but not reachable, Failing Summarizations Silently"
+              
+              #Save in DynamoDB
               table.put_item(Item=event_data)
 
               return {'statusCode': 200, 'body': json.dumps('Successfully inserted item into DynamoDB')}
@@ -103,7 +125,7 @@ Resources:
       Environment:
         Variables:
           DynamoDBName: !Select [1, !Split ["/", !Ref DynamoDBArn]]
-          SageMakerEndpoint: !Select [1, !Split ["/", !Ref SageMakerEndpoint]]
+          SageMakerEndpoint: !Ref SageMakerEndpoint
   
   EventHealthtRuleEventHealthBus:
     Type: "AWS::Events::Rule"
@@ -152,6 +174,7 @@ Resources:
                               "endTime":"Wed, 10 May 2023 14:00:00 GMT",
                               "account":"1234567890",
                               "ingestionTime":"2023-05-22T00:07:57Z",
+                              "eventSummary":"Test Event Summary",
                               "eventDescription":[
                                   {
                                     "language":"en_US",
@@ -207,3 +230,6 @@ Outputs:
     Value: !GetAtt EventHealthtRuleEventHealthBus.Arn
     Export:
       Name: EventHealthtRuleEventHealthBus
+
+Conditions:
+  SageMakerEndpoint: !Not [!Equals [!Ref SageMakerEndpoint, ""]]
