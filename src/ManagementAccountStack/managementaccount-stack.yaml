@@ -22,14 +22,6 @@ Resources:
     Properties:
       TemplateURL: !Sub https://${EventHealthBucket}.s3.amazonaws.com/ManagementAccountStack/storage-stack.yaml
 
-  BackfillStack:
-     Type: AWS::CloudFormation::Stack
-     Properties:
-       TemplateURL: !Sub https://${EventHealthBucket}.s3.amazonaws.com/backfillStack/backfillEvents.yaml
-       Parameters:
-        DynamoDBArn: !GetAtt  HealtheventStorageStack.Outputs.EventHealthDDBTableArn
-        SageMakerEndpoint: !Ref SageMakerEndpoint
-
   HealtheventEventBusStack:
     Type: AWS::CloudFormation::Stack
     DependsOn: HealtheventStorageStack
@@ -46,6 +38,12 @@ Resources:
         DynamoDBArn: !GetAtt  HealtheventStorageStack.Outputs.EventHealthDDBTableArn
         EventHealthBusArn: !GetAtt HealtheventEventBusStack.Outputs.EventHealthBusArn
         SageMakerEndpoint: !Ref SageMakerEndpoint
+  
+  BackfillStack:
+    DependsOn: IngestionStack
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://${EventHealthBucket}.s3.amazonaws.com/backfillStack/backfillEvents.yaml
 
   ConnectorStack:
     DependsOn: HealtheventEventBusStack
@@ -57,6 +55,7 @@ Resources:
         EventHealthBucket: !Ref EventHealthBucket
         
   QuickSightStack:
+    DependsOn: IngestionStack
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Sub https://${EventHealthBucket}.s3.amazonaws.com/ManagementAccountStack/quicksight-stack.yaml

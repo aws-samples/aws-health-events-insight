@@ -41,6 +41,14 @@ Resources:
                 Action:
                   - dynamodb:*
                 Resource: !Ref DynamoDBArn
+        - PolicyName: DescribeAccounts-Access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - organizations:DescribeAccount
+                Resource: "*"
         - PolicyName: AwshealtheventSendEvent-access
           PolicyDocument:
             Version: '2012-10-17'
@@ -70,38 +78,41 @@ Resources:
           import json
           import boto3
           import os
-          
           from datetime import datetime
-          dynamodb = boto3.resource('dynamodb')
-          def aws_health(event, context):
-              event_detail = event['detail']
-              table = dynamodb.Table(os.environ['DynamoDBName'])
-              sagemaker_runtime = boto3.client('sagemaker-runtime')  # Initialize SageMaker client
 
+          dynamodb = boto3.resource('dynamodb')
+
+          def process_event_data(event, event_detail):
               event_data = {
-                  'eventArn': event_detail.get('eventArn'),
-                  'service': event_detail.get('service',''),
-                  'eventScopeCode': event_detail.get('eventScopeCode',''),
-                  'eventRegion': event_detail.get('eventRegion',''),
-                  'eventTypeCode': event_detail.get('eventTypeCode',''),
-                  'eventTypeCategory': event_detail.get('eventTypeCategory',''),
-                  'startTime': datetime.strptime(event_detail.get('startTime', ''), '%a, %d %b %Y %H:%M:%S %Z').strftime('%d/%m/%Y %H:%M:%S')  if event_detail.get('startTime') else '',
-                  'eventDescription': event_detail.get('eventDescription', [{'latestDescription': None}])[0]['latestDescription'],
-                  'affectedEntities': ', '.join([entity['entityValue'] for entity in event_detail.get('affectedEntities', [])])
+                'eventArn': event_detail.get('eventArn'),
+                'service': event_detail.get('service',''),
+                'eventScopeCode': event_detail.get('eventScopeCode',''),
+                'eventRegion': event_detail.get('eventRegion',''),
+                'eventTypeCode': event_detail.get('eventTypeCode',''),
+                'eventTypeCategory': event_detail.get('eventTypeCategory',''),
+                'startTime': datetime.strptime(event_detail.get('startTime', ''), '%a, %d %b %Y %H:%M:%S %Z').strftime('%d/%m/%Y %H:%M:%S')  if event_detail.get('startTime') else '',
+                'eventDescription': event_detail.get('eventDescription', [{'latestDescription': None}])[0]['latestDescription'],
+                'affectedEntities': ', '.join([entity['entityValue'] for entity in event_detail.get('affectedEntities', [])])
               }
               event_data['account'] = event.get('account')
               event_data['ingestionTime'] = datetime.strptime(event.get('time'), '%Y-%m-%dT%H:%M:%SZ').strftime('%d/%m/%Y %H:%M:%S')
               if event_detail.get('endTime'):
-                  event_data['endTime'] = datetime.strptime(event_detail['endTime'], '%a, %d %b %Y %H:%M:%S %Z').strftime('%d/%m/%Y %H:%M:%S')
+                event_data['endTime'] = datetime.strptime(event_detail['endTime'], '%a, %d %b %Y %H:%M:%S %Z').strftime('%d/%m/%Y %H:%M:%S')
               if event_detail.get('lastUpdatedTime'):
-                  event_data['lastUpdatedTime'] = datetime.strptime(event_detail['lastUpdatedTime'], '%a, %d %b %Y %H:%M:%S %Z').strftime('%d/%m/%Y %H:%M:%S') 
+                event_data['lastUpdatedTime'] = datetime.strptime(event_detail['lastUpdatedTime'], '%a, %d %b %Y %H:%M:%S %Z').strftime('%d/%m/%Y %H:%M:%S') 
               else:
-                  event_data['lastUpdatedTime'] = datetime.strptime(event_detail['startTime'], '%a, %d %b %Y %H:%M:%S %Z').strftime('%d/%m/%Y %H:%M:%S') 
-              
+                event_data['lastUpdatedTime'] = datetime.strptime(event_detail['startTime'], '%a, %d %b %Y %H:%M:%S %Z').strftime('%d/%m/%Y %H:%M:%S') 
+
+              return event_data
+
+          def summarize_event_description(event_data):
               try:
-                  if os.environ['SageMakerEndpoint']:
+                  if os.environ.get('SageMakerEndpoint'):
                       sagemaker_endpoint_arn = os.environ['SageMakerEndpoint']
                       sagemaker_endpoint_name = sagemaker_endpoint_arn.split('/')[-1]  # Extract the name from the ARN
+                      sagemaker_endpoint_region = sagemaker_endpoint_arn.split(':')[3]
+                      sagemaker_runtime = boto3.client('sagemaker-runtime', sagemaker_endpoint_region)  # Initialize SageMaker client
+
                       model_max_length = 1000  # Adjust the desired maximum length
                       summary_text = sagemaker_runtime.invoke_endpoint(
                           EndpointName=sagemaker_endpoint_name,
@@ -113,11 +124,29 @@ Resources:
                       event_data['eventSummary'] = "No LLM model supplied for summarization"
               except Exception as e:
                   event_data['eventSummary'] = "LLM Supplied but not reachable, Failing Summarizations Silently"
-              
-              #Save in DynamoDB
+
+          def save_event_data(table, event_data):
               table.put_item(Item=event_data)
 
+          def get_account_name(event, event_data):
+              org_client = boto3.client('organizations')
+              try:
+                  account_id = event.get('account')
+                  event_data['accountName'] = org_client.describe_account(AccountId=account_id).get('Account').get('Name')
+              except Exception as e:
+                  event_data['accountName'] = "CheckPermissions"
+                  print(e)
+
+          def aws_health(event, context):
+              event_detail = event['detail']
+              table = dynamodb.Table(os.environ['DynamoDBName'])
+              event_data = process_event_data(event, event_detail)
+              get_account_name(event, event_data)
+              summarize_event_description(event_data)
+              save_event_data(table, event_data)
+              print(event_data)
               return {'statusCode': 200, 'body': json.dumps('Successfully inserted item into DynamoDB')}
+
       Handler: index.aws_health
       Runtime: python3.8
       Timeout: 60
@@ -173,19 +202,16 @@ Resources:
                               "startTime":"Wed, 3 May 2023 11:00:00 GMT",
                               "endTime":"Wed, 10 May 2023 14:00:00 GMT",
                               "account":"1234567890",
+                              "accountName":"TestAccount",
                               "ingestionTime":"2023-05-22T00:07:57Z",
                               "eventSummary":"Test Event Summary",
-                              "eventDescription":[
-                                  {
+                              "eventDescription":[{
                                     "language":"en_US",
                                     "latestDescription":"This is a test AWS Health Event AWS_WORKSPACES_MAINTENANCE_SCHEDULED\n"
-                                  }
-                              ],
-                              "affectedEntities":[
-                                  {
+                                  }],
+                              "affectedEntities":[{
                                     "entityValue":"test-resource"
-                                  }
-                              ]
+                                  }]
                             }
                 # Send the event to EventBridge
                 eventbridge_client.put_events(

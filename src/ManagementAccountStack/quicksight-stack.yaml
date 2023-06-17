@@ -120,6 +120,8 @@ Resources:
                 Type: STRING
               - Name: eventDescription
                 Type: STRING
+              - Name: eventSummary
+                Type: STRING
               - Name: eventScopeCode
                 Type: STRING
               - Name: lastUpdatedTime
@@ -135,6 +137,8 @@ Resources:
               - Name: affectedEntities
                 Type: STRING
               - Name: account
+                Type: STRING
+              - Name: accountName
                 Type: STRING
               - Name: ingestionTime
                 Type: STRING
@@ -184,6 +188,7 @@ Resources:
                   - eventTypeCode
                   - service
                   - eventDescription
+                  - eventSummary
                   - eventScopeCode
                   - lastUpdatedTime
                   - startTime
@@ -192,6 +197,7 @@ Resources:
                   - location
                   - Status
                   - account
+                  - accountName
                   - eventTypeCategory
                   - affectedEntities
                   - ingestionTime
