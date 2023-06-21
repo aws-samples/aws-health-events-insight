@@ -94,7 +94,10 @@ Resources:
                 'eventDescription': event_detail.get('eventDescription', [{'latestDescription': None}])[0]['latestDescription'],
                 'affectedEntities': ', '.join([entity['entityValue'] for entity in event_detail.get('affectedEntities', [])])
               }
-              event_data['account'] = event.get('account')
+              if event_detail.get('account'):
+                event_data['account'] = event_detail.get('account')
+              else:
+                event_data['account'] = event.get('account')
               event_data['ingestionTime'] = datetime.strptime(event.get('time'), '%Y-%m-%dT%H:%M:%SZ').strftime('%d/%m/%Y %H:%M:%S')
               if event_detail.get('endTime'):
                 event_data['endTime'] = datetime.strptime(event_detail['endTime'], '%a, %d %b %Y %H:%M:%S %Z').strftime('%d/%m/%Y %H:%M:%S')
@@ -124,6 +127,7 @@ Resources:
                       event_data['eventSummary'] = "No LLM model supplied for summarization"
               except Exception as e:
                   event_data['eventSummary'] = "LLM Supplied but not reachable, Failing Summarizations Silently"
+                  
 
           def save_event_data(table, event_data):
               table.put_item(Item=event_data)
@@ -134,7 +138,7 @@ Resources:
                   account_id = event.get('account')
                   event_data['accountName'] = org_client.describe_account(AccountId=account_id).get('Account').get('Name')
               except Exception as e:
-                  event_data['accountName'] = "CheckPermissions"
+                  event_data['accountName'] = account_id
                   print(e)
 
           def aws_health(event, context):
