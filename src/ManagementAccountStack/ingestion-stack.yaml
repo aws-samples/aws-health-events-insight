@@ -9,6 +9,9 @@ Parameters:
   SageMakerEndpoint:
     Type: String
     Description: Sagemaker endpoint for summarization model
+  targetLang:
+    Type: String
+    Description: Target language code(e.g. for English, en )
 
 Resources:
   EventHealthLambdaForDDBRole:
@@ -57,6 +60,14 @@ Resources:
                 Action:
                   - "events:PutEvents"
                 Resource: !Ref EventHealthBusArn
+        - PolicyName: Translate
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - translate:TranslateText
+                Resource: "*"
         - !If
           - SageMakerEndpoint
           - PolicyName: SagemakerModelAccess
@@ -110,12 +121,10 @@ Resources:
 
           def summarize_event_description(event_data):
               try:
-                  if os.environ.get('SageMakerEndpoint'):
                       sagemaker_endpoint_arn = os.environ['SageMakerEndpoint']
                       sagemaker_endpoint_name = sagemaker_endpoint_arn.split('/')[-1]  # Extract the name from the ARN
                       sagemaker_endpoint_region = sagemaker_endpoint_arn.split(':')[3]
                       sagemaker_runtime = boto3.client('sagemaker-runtime', sagemaker_endpoint_region)  # Initialize SageMaker client
-
                       model_max_length = 1000  # Adjust the desired maximum length
                       summary_text = sagemaker_runtime.invoke_endpoint(
                           EndpointName=sagemaker_endpoint_name,
@@ -123,12 +132,23 @@ Resources:
                           ContentType='application/x-text'
                       )['Body'].read().decode('utf-8')
                       event_data['eventSummary'] = json.loads(summary_text)["summary_text"]
-                  else:
-                      event_data['eventSummary'] = "No LLM model supplied for summarization"
               except Exception as e:
                   event_data['eventSummary'] = "LLM Supplied but not reachable, Failing Summarizations Silently"
-                  
 
+          def translate_text(event_data, targetLang):
+              # Create a client for the Amazon Translate service
+              translate = boto3.client('translate')
+              # Translate the text
+              try:
+                  eventDescription = translate.translate_text(Text=event_data['eventDescription'], SourceLanguageCode='en', TargetLanguageCode=targetLang)
+                  event_data['eventDescription'] = eventDescription["TranslatedText"]
+                  if 'eventSummary' in event_data:
+                      eventSummary = translate.translate_text(Text=event_data['eventSummary'], SourceLanguageCode='en', TargetLanguageCode=targetLang)
+                      event_data['eventSummary'] = eventSummary["TranslatedText"]
+              except Exception as e:
+                  print(e)
+                  pass
+                  
           def save_event_data(table, event_data):
               table.put_item(Item=event_data)
 
@@ -146,7 +166,12 @@ Resources:
               table = dynamodb.Table(os.environ['DynamoDBName'])
               event_data = process_event_data(event, event_detail)
               get_account_name(event, event_data)
-              summarize_event_description(event_data)
+              if os.environ['SageMakerEndpoint']:
+                  summarize_event_description(event_data)
+              else:
+                  event_data['eventSummary'] = "No LLM Supplied"
+              if os.environ.get('targetLang'):
+                  translate_text(event_data,os.environ.get('targetLang'))
               save_event_data(table, event_data)
               print(event_data)
               return {'statusCode': 200, 'body': json.dumps('Successfully inserted item into DynamoDB')}
@@ -159,6 +184,7 @@ Resources:
         Variables:
           DynamoDBName: !Select [1, !Split ["/", !Ref DynamoDBArn]]
           SageMakerEndpoint: !Ref SageMakerEndpoint
+          targetLang: !Ref targetLang
   
   EventHealthtRuleEventHealthBus:
     Type: "AWS::Events::Rule"

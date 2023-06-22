@@ -15,6 +15,9 @@ Parameters:
   SageMakerEndpoint:
     Type: String
     Description: Sagemaker endpoint for summarization model
+  targetLang:
+    Type: String
+    Description: Target language code(e.g. for English, en )
 
 Resources:
   HealtheventStorageStack:
@@ -38,6 +41,7 @@ Resources:
         DynamoDBArn: !GetAtt  HealtheventStorageStack.Outputs.EventHealthDDBTableArn
         EventHealthBusArn: !GetAtt HealtheventEventBusStack.Outputs.EventHealthBusArn
         SageMakerEndpoint: !Ref SageMakerEndpoint
+        targetLang: !Ref targetLang
   
   BackfillStack:
     DependsOn: IngestionStack

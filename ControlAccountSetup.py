@@ -94,6 +94,15 @@ def get_sagemaker_endpoint_arn(include_model):
         SageMakerEndpoint = ""
     return SageMakerEndpoint
 
+def translate_text(Include_targetLang):
+    if Include_targetLang == "yes":
+        # Prompt user to enter the SageMaker endpoint ARN
+        print()
+        targetLang = input("Enter the language code: Supported Lang (https://docs.aws.amazon.com/translate/latest/dg/what-is-languages.html): ")
+    else:
+        targetLang = ""
+    return targetLang
+
 def create_or_update_cloudformation_stack(region, stack_name, bucket_name, quicksight_user, SageMakerEndpoint, quicksight_service_role):
     """
     Create or update the CloudFormation stack based on its status.
@@ -112,7 +121,8 @@ def create_or_update_cloudformation_stack(region, stack_name, bucket_name, quick
                     {"ParameterKey": "PrincipalOrgID", "ParameterValue": get_organization_details()},
                     {"ParameterKey": "QuickSightUser", "ParameterValue": quicksight_user},
                     {"ParameterKey": "SageMakerEndpoint", "ParameterValue": SageMakerEndpoint},
-                    {"ParameterKey": "QuicksightServiceRole", "ParameterValue": quicksight_service_role}
+                    {"ParameterKey": "QuicksightServiceRole", "ParameterValue": quicksight_service_role},
+                    {"ParameterKey": "targetLang", "ParameterValue": targetLang}
                 ],
                 Capabilities=["CAPABILITY_NAMED_IAM", "CAPABILITY_AUTO_EXPAND"],
                 DisableRollback=True
@@ -129,7 +139,8 @@ def create_or_update_cloudformation_stack(region, stack_name, bucket_name, quick
                 {"ParameterKey": "PrincipalOrgID", "ParameterValue": get_organization_details()},
                 {"ParameterKey": "QuickSightUser", "ParameterValue": quicksight_user},
                 {"ParameterKey": "SageMakerEndpoint", "ParameterValue": SageMakerEndpoint},
-                {"ParameterKey": "QuicksightServiceRole", "ParameterValue": quicksight_service_role}
+                {"ParameterKey": "QuicksightServiceRole", "ParameterValue": quicksight_service_role},
+                {"ParameterKey": "targetLang", "ParameterValue": targetLang}
             ],
             Capabilities=["CAPABILITY_NAMED_IAM", "CAPABILITY_AUTO_EXPAND"],
             DisableRollback=True
@@ -158,9 +169,13 @@ quicksight_user = get_quicksight_user(account_id, qsidregion)
 
 # Prompt user to include SageMaker ML model
 include_model = input("Do you want to include a SageMaker ML model? (yes/no): ")
-
 # Get the SageMaker endpoint ARN
 SageMakerEndpoint = get_sagemaker_endpoint_arn(include_model)
+
+# Prompt user to include SageMaker ML model
+Include_targetLang = input("Do you want to Translate Events in different language? (yes/no): ")
+# Get response for translation
+targetLang = translate_text(Include_targetLang)
 
 # Create or get the S3 bucket
 create_or_get_s3_bucket(bucket_name, region)
