@@ -11,14 +11,17 @@ To deploy a SageMaker JumpStart text summarization model using the AWS Console, 
 2. Open *SageMaker Studio*. If you haven't had an exisiting SageMaker Studio, follow the prompt to create a SageMaker domain. Consult your administrator on your organization requirements for choosing between quick and standard setups.
 
 3. On the Home page of Amazon SageMaker Studio, click on *JumpStart* and scroll down to the _Text Summarization_ section. Pick a text summarization model of your choice, e.g. Bart Large CNN samsum.
+
 ![ALT](img/sagemakerJumpstart.jpg)
 
 4. On the new tab opened, review the deployment configuration and security settings and make necessary changes before clicking *Deploy*. 
+
 ![ALT](img/sagemakerJumpstartDeployModel.jpg)
 
 **Note:** This solution has been tested on a SageMaker hosting for inference on `ml.m5.large` with the Bart Large CNN samsum model and it performed real-time synchronous inference in about 15-30 seconds per event.
 
 5. Wait for the model endpoint to be _InService_. You can check the status from *Launched JumpStart assets* -> * Model endpoints* and find the name of the endpoint you just deployed. Click on the name and note down the ARN as you will need it as an input to the health dashboard deployment.
+
 ![ALT](img/sagemakerJumpstartEndpoint.jpg)
 
 For more information about SageMaker JumpStart, please refer to the [AWS documentation](https://docs.aws.amazon.com/sagemaker/latest/dg/studio-jumpstart.html).
