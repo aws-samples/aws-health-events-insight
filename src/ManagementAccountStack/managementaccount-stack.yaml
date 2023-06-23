@@ -83,5 +83,5 @@ Outputs:
   OrgEventHealthBusArn:
     Value: !GetAtt HealtheventEventBusStack.Outputs.EventHealthBusArn
     Export:
-      Name: OrgEventHealthBusArn
+      Name: CentralAccountBus
  
