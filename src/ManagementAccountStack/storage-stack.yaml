@@ -1,8 +1,16 @@
 AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  secondaryRegion:
+    Type: String
+    Description: Optional Enter name of secondary region, leave black if its single region deployment
+  isPrimaryRegion:
+    Type: String
+    Description: Is this a primary region (Y/N)
 
 Resources:
   EventHealthDDBTable:
-    Type: AWS::DynamoDB::Table
+    Condition: isPrimaryRegion
+    Type: AWS::DynamoDB::GlobalTable
     Properties:
       TableName: !Sub "EventHealthDDBTable-${AWS::AccountId}"
       AttributeDefinitions:
@@ -12,13 +20,26 @@ Resources:
         - AttributeName: eventArn
           KeyType: HASH
       BillingMode: PAY_PER_REQUEST
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
+      Replicas: 
+        - Region: !Sub "${AWS::Region}"
+        - !If
+          - secondaryRegion
+          - Region: !Ref secondaryRegion
+          - !Ref "AWS::NoValue"
 
 Outputs:
   EventHealthDDBTable:
-    Value: !Ref EventHealthDDBTable
+    Value: !Sub "EventHealthDDBTable-${AWS::AccountId}"
     Export:
       Name: EventHealthDDBTable
   EventHealthDDBTableArn:
-    Value: !GetAtt EventHealthDDBTable.Arn
+    Value: !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/EventHealthDDBTable-${AWS::AccountId}
     Export:
       Name:  EventHealthDDBTableArn
+
+Conditions:
+  isPrimaryRegion: !Equals [!Ref isPrimaryRegion, "Y"]
+  secondaryRegion: !Not [!Equals [!Ref secondaryRegion, ""]]
+

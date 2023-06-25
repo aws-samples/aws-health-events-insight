@@ -1,8 +1,10 @@
 Parameters:
-  EventHealthBus:
+  PrimaryEventHealthBus:
     Type: String
-    Description: Event Health Bus Arn from Management Account(You can get this from HealthEventDashboardStack stack output).
-
+    Description: Primary Event Health Bus Arn(Get it from  primary central account)
+  SecondaryEventHealthBus:
+    Type: String
+    Description: Secondary Event Health Bus Arn (Get it from Secondary central account, Leave blank if its single region deployment)
 Resources:
   EventHealthBusPutEventOrgRole:
     Type: AWS::IAM::Role
@@ -24,12 +26,18 @@ Resources:
               - Effect: Allow
                 Action:
                   - "events:PutEvents"
-                Resource: !Ref EventHealthBus
+                Resource: 
+                  - !Ref PrimaryEventHealthBus
+                  - !If
+                    - SecondaryEventHealthBus
+                    - !Ref SecondaryEventHealthBus
+                    - !Ref "AWS::NoValue"
 
-  AWSHealthEventRuleDefaultBus:
+
+  AWSHealthEventRuleDefaultBusPrimaryRule:
     Type: "AWS::Events::Rule"
     Properties:
-      Name: !Sub "EventHealthRuleDefaultBus-${AWS::AccountId}-${AWS::Region}"
+      Name: !Sub "EventHealthDefaultPrimaryRule-${AWS::AccountId}-${AWS::Region}"
       Description: "EventBridge default rule for aws.health events"
       EventBusName: "default"
       EventPattern:
@@ -37,6 +45,25 @@ Resources:
           - "aws.health"
           - "awshealthtest"
       Targets:
-        - Arn: !Ref EventHealthBus
+        - Arn: !Ref PrimaryEventHealthBus
           Id: "EventHealthBusTarget"
           RoleArn: !GetAtt EventHealthBusPutEventOrgRole.Arn
+
+  AWSHealthEventRuleDefaultBusSecondaryRule:
+    Condition: SecondaryEventHealthBus
+    Type: "AWS::Events::Rule"
+    Properties:
+      Name: !Sub "EventHealthDefaultSecondarRule-${AWS::AccountId}-${AWS::Region}"
+      Description: "EventBridge default rule for aws.health events"
+      EventBusName: "default"
+      EventPattern:
+        source:
+          - "aws.health"
+          - "awshealthtest"
+      Targets:
+        - Arn: !Ref SecondaryEventHealthBus
+          Id: "EventHealthBusTarget"
+          RoleArn: !GetAtt EventHealthBusPutEventOrgRole.Arn
+
+Conditions:
+  SecondaryEventHealthBus: !Not [!Equals [!Ref SecondaryEventHealthBus, ""]]

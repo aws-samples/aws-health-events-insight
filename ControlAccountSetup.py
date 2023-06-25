@@ -103,7 +103,7 @@ def translate_text(Include_targetLang):
         targetLang = ""
     return targetLang
 
-def create_or_update_cloudformation_stack(region, stack_name, bucket_name, quicksight_user, SageMakerEndpoint, quicksight_service_role):
+def create_or_update_cloudformation_stack(region, stack_name, bucket_name, quicksight_user, SageMakerEndpoint, quicksight_service_role, isPrimaryRegion, secondaryRegion):
     """
     Create or update the CloudFormation stack based on its status.
     """
@@ -122,12 +122,14 @@ def create_or_update_cloudformation_stack(region, stack_name, bucket_name, quick
                     {"ParameterKey": "QuickSightUser", "ParameterValue": quicksight_user},
                     {"ParameterKey": "SageMakerEndpoint", "ParameterValue": SageMakerEndpoint},
                     {"ParameterKey": "QuicksightServiceRole", "ParameterValue": quicksight_service_role},
-                    {"ParameterKey": "targetLang", "ParameterValue": targetLang}
+                    {"ParameterKey": "targetLang", "ParameterValue": targetLang},
+                    {"ParameterKey": "primaryRegion", "ParameterValue": primaryRegion},
+                    {"ParameterKey": "secondaryRegion", "ParameterValue": secondaryRegion}
                 ],
                 Capabilities=["CAPABILITY_NAMED_IAM", "CAPABILITY_AUTO_EXPAND"],
                 DisableRollback=True
             )
-            print(f"Stack update initiated: {response.get('StackId')}")
+            print(f"Stack update initiated for {region}: {response.get('StackId')}")
             break
 
     if response is None:
@@ -140,23 +142,35 @@ def create_or_update_cloudformation_stack(region, stack_name, bucket_name, quick
                 {"ParameterKey": "QuickSightUser", "ParameterValue": quicksight_user},
                 {"ParameterKey": "SageMakerEndpoint", "ParameterValue": SageMakerEndpoint},
                 {"ParameterKey": "QuicksightServiceRole", "ParameterValue": quicksight_service_role},
-                {"ParameterKey": "targetLang", "ParameterValue": targetLang}
+                {"ParameterKey": "targetLang", "ParameterValue": targetLang},
+                {"ParameterKey": "isPrimaryRegion", "ParameterValue": isPrimaryRegion},
+                {"ParameterKey": "secondaryRegion", "ParameterValue": secondaryRegion}
             ],
             Capabilities=["CAPABILITY_NAMED_IAM", "CAPABILITY_AUTO_EXPAND"],
             DisableRollback=True
         )
-        print(f"Stack creation initiated: {response.get('StackId')}")
+        print(f"Stack creation initiated for {region}: {response.get('StackId')}")
 
+# Get input for multiRegion Deployment
+multiregion = input(f"Do you want to deploy central accout setup in multiregion (yes/no): ")
 
 # Get the default region or prompt user for a region
 default_region = get_default_region()
-region = input(f"Enter region name (Hit enter to use default: {default_region}): ") or default_region
+region = input(f"Enter Primary region name (Hit enter to use default: {default_region}): ") or default_region
+
+if multiregion == "yes":
+    secondaryRegion = input(f"Enter Secondary region name: ")
+else:
+    secondaryRegion= ""
 
 # Get the AWS account ID
 account_id = get_account_id()
 
 # Get the S3 bucket name or prompt user for a bucket name
-bucket_name = input(f"Enter S3 bucket name (Hit enter to use default: awseventhealth-{account_id}-{region}): ") or f"awseventhealth-{account_id}-{region}"
+bucket_name = input(f"Enter S3 bucket name for Primary Region (Hit enter to use default: awseventhealth-{account_id}-{region}): ") or f"awseventhealth-{account_id}-{region}"
+
+if multiregion == "yes":
+    Secondary_bucket_name = input(f"Enter S3 bucket name for Secondary Region (Hit enter to use default: awseventhealth-{account_id}-{secondaryRegion}): ") or f"awseventhealth-{account_id}-{secondaryRegion}"
 
 # Get the QuickSight service role or use a default value
 quicksight_service_role = input("Enter QuickSight Service Role (Hit enter to use default: aws-quicksight-service-role-v0): ") or "aws-quicksight-service-role-v0"
@@ -179,7 +193,13 @@ targetLang = translate_text(Include_targetLang)
 
 # Create or get the S3 bucket
 create_or_get_s3_bucket(bucket_name, region)
+if multiregion == "yes":
+    create_or_get_s3_bucket(Secondary_bucket_name, secondaryRegion)
 
 # Create or update the CloudFormation stack
-stack_name = f"HealthEventDashboardStack{account_id}"
-create_or_update_cloudformation_stack(region, stack_name, bucket_name, quicksight_user, SageMakerEndpoint, quicksight_service_role)
+stack_name = f"HealthEventDashboardStack{account_id}-{region}"
+create_or_update_cloudformation_stack(region, stack_name, bucket_name, quicksight_user, SageMakerEndpoint, quicksight_service_role,'Y',secondaryRegion,)
+
+if multiregion == "yes":
+    stack_name = f"HealthEventDashboardStack{account_id}-{secondaryRegion}"
+    create_or_update_cloudformation_stack(secondaryRegion, stack_name, Secondary_bucket_name, quicksight_user, SageMakerEndpoint, quicksight_service_role,'N',secondaryRegion)

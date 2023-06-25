@@ -12,7 +12,7 @@ Resources:
   EventHealthLambdaForDDBConnector:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub "EventHealthLambdaForDDBConnector-${AWS::AccountId}"
+      RoleName: !Sub "EventHealthLambdaForDDBConnector-${AWS::AccountId}-${AWS::Region}-Role"
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -64,7 +64,7 @@ Resources:
         SemanticVersion: 2023.18.1
       Parameters: 
         # This is the name of the Athena catalog that will be created. This name must satisfy the pattern ^[a-z0-9-_]{1,64}$
-        AthenaCatalogName: !Sub awshealthddb-${AWS::AccountId}
+        AthenaCatalogName: !Sub awshealthddb-${AWS::AccountId}-${AWS::Region}
         # WARNING: If set to 'true' encryption for spilled data is disabled.
         # DisableSpillEncryption: 'false' # Uncomment to override default value
         # (Optional) By default any data that is spilled to S3 is encrypted using AES-GCM and a randomly generated key. Setting a KMS Key ID allows your Lambda function to use KMS for key generation for a stronger source of encryption keys.
@@ -89,8 +89,8 @@ Resources:
       Type: LAMBDA
       Description: Custom lambda Catalog 
       Parameters:
-        metadata-function: !Sub  "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:awshealthddb-${AWS::AccountId}"
-        record-function: !Sub  "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:awshealthddb-${AWS::AccountId}"
+        metadata-function: !Sub  "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:awshealthddb-${AWS::AccountId}-${AWS::Region}"
+        record-function: !Sub  "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:awshealthddb-${AWS::AccountId}-${AWS::Region}"
   
 Outputs:
   AWSHealthEventDataCatalog:
@@ -98,7 +98,7 @@ Outputs:
     Export:
       Name: AWSHealthEventDataCatalog
   DDBConnectorARN:
-    Value: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:awshealthddb-${AWS::AccountId}"
+    Value: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:awshealthddb-${AWS::AccountId}-${AWS::Region}"
     Export:
       Name: DDBConnectorARN
   

@@ -17,7 +17,7 @@ Resources:
   EventHealthLambdaForDDBRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub "EventHealthLambdaForDDBRole-${AWS::AccountId}"
+      RoleName: !Sub "EventHealthLambdaForDDBRole-${AWS::AccountId}-${AWS::Region}"
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -189,7 +189,7 @@ Resources:
   EventHealthtRuleEventHealthBus:
     Type: "AWS::Events::Rule"
     Properties:
-      Name: !Sub EventHealthtRuleEventHealthBus-${AWS::AccountId}
+      Name: !Sub EventHealthtRuleEventHealthBus-${AWS::AccountId}-${AWS::Region}
       Description: "Event Health bus rule for aws.health events"
       EventBusName: !Select [1, !Split ["/", !Ref EventHealthBusArn]]
       EventPattern:

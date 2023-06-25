@@ -1,4 +1,8 @@
 Parameters:
+  isPrimaryRegion:
+    Type: String
+    Default: "Y"
+    Description: Is this a primary region (Y/N)
   EventHealthBucket:
     Type: String
     Description: The name of the bucket that contains the ManagementAccountStackset YAML files
@@ -14,16 +18,22 @@ Parameters:
     Description: The Quicksight Service role attached to QS, Default is aws-quicksight-service-role-v0
   SageMakerEndpoint:
     Type: String
-    Description: Sagemaker endpoint for summarization model
+    Description: Optional Sagemaker endpoint for summarization model
   targetLang:
     Type: String
-    Description: Target language code(e.g. for English, en )
+    Description: Optional Target language code(e.g. for English, en )
+  secondaryRegion:
+    Type: String
+    Description: Optional Enter name of secondary region, leave black if its single region deployment
 
 Resources:
   HealtheventStorageStack:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Sub https://${EventHealthBucket}.s3.amazonaws.com/ManagementAccountStack/storage-stack.yaml
+      Parameters:
+        secondaryRegion: !Ref secondaryRegion
+        isPrimaryRegion: !Ref isPrimaryRegion
 
   HealtheventEventBusStack:
     Type: AWS::CloudFormation::Stack

@@ -23,7 +23,7 @@ Resources:
   QuicksightFederatedPolicy:
     Type: AWS::IAM::ManagedPolicy
     Properties:
-      ManagedPolicyName: AWSQuickSightHealthEventPolicy
+      ManagedPolicyName: !Sub AWSQuickSightHealthEventPolicy-${AWS::Region}
       Description: "Grants Amazon QuickSight to run awshealthevent federated query"
       PolicyDocument:
         Version: "2012-10-17"
@@ -87,9 +87,9 @@ Resources:
     Type: AWS::QuickSight::DataSource
     DependsOn: QuicksightFederatedPolicy
     Properties:
-      DataSourceId: !Sub "EventHealth-${AWS::AccountId}"
+      DataSourceId: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
       AwsAccountId: !Sub ${AWS::AccountId}
-      Name: !Sub "EventHealth-${AWS::AccountId}"
+      Name: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
       Type: ATHENA
       DataSourceParameters:
         AthenaParameters:
@@ -102,8 +102,8 @@ Resources:
     Properties:
       AwsAccountId: !Sub ${AWS::AccountId}
       ImportMode: SPICE
-      DataSetId: !Sub "EventHealth-${AWS::AccountId}"
-      Name: !Sub "EventHealth-${AWS::AccountId}"
+      DataSetId: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+      Name: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
       PhysicalTableMap:
         "AWSHealthQSPT":
           RelationalTable:
@@ -144,7 +144,7 @@ Resources:
                 Type: STRING
       LogicalTableMap:
         "AWSHealthQSLT":
-          Alias: !Sub "EventHealth-${AWS::AccountId}"
+          Alias: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
           Source:
             PhysicalTableId: "AWSHealthQSPT"
           DataTransforms:
@@ -220,12 +220,12 @@ Resources:
     DependsOn: AWSHealthEventQSDataSet
     Properties: 
       AwsAccountId: !Sub ${AWS::AccountId}
-      DataSetId: !Sub "EventHealth-${AWS::AccountId}"
+      DataSetId: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
       Schedule:
         RefreshType: FULL_REFRESH
         ScheduleFrequency:
           Interval: HOURLY
-        ScheduleId: !Sub EventHealth-${AWS::AccountId}-datarefresh
+        ScheduleId: !Sub EventHealth-${AWS::AccountId}-${AWS::Region}-datarefresh
 
 Outputs:
   AWSHealthEventQSDataSetArn:

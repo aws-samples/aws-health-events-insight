@@ -13,7 +13,14 @@ account_id = sts_client.get_caller_identity().get("Account")
 region = input("Enter region name: (Hit enter to use default: {}): ".format(default_region)) or default_region
 
 # Prompt the user to enter the value for the HealthEventBusArn parameter
-EventHealthBus = input("Enter the value for EventHealthBusArn parameter: ")
+# Get input for multiRegion Deployment
+multiregion = input(f"Do you have multi region deployment for central account (yes/no): ")
+
+PrimaryEventHealthBus = input("Enter the value for Primary EventHealth Bus: ")
+if multiregion == "yes":
+    SecondaryEventHealthBus = input("Enter the value for Secondary EventHealth Bus: ")
+else:
+    SecondaryEventHealthBus = ""
 
 def deploy_cloudformation_template(template_path, parameters):
     cloudformation = boto3.client('cloudformation',region)
@@ -38,6 +45,9 @@ def deploy_cloudformation_template(template_path, parameters):
 template_path = 'src/ChildAccountStack/childaccount-stack.yaml'
 
 # Input parameter values
-parameters = [{'ParameterKey': 'EventHealthBus','ParameterValue': EventHealthBus}]
+parameters = [
+    {'ParameterKey': 'PrimaryEventHealthBus','ParameterValue': PrimaryEventHealthBus},
+    {'ParameterKey': 'SecondaryEventHealthBus','ParameterValue': SecondaryEventHealthBus}
+    ]
 
 deploy_cloudformation_template(template_path, parameters)
