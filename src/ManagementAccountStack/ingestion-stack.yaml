@@ -109,6 +109,7 @@ Resources:
                 event_data['account'] = event_detail.get('account')
               else:
                 event_data['account'] = event.get('account')
+              event_data['eventSource'] = event.get('source')
               event_data['ingestionTime'] = datetime.strptime(event.get('time'), '%Y-%m-%dT%H:%M:%SZ').strftime('%d/%m/%Y %H:%M:%S')
               if event_detail.get('endTime'):
                 event_data['endTime'] = datetime.strptime(event_detail['endTime'], '%a, %d %b %Y %H:%M:%S %Z').strftime('%d/%m/%Y %H:%M:%S')
@@ -235,6 +236,7 @@ Resources:
                               "accountName":"TestAccount",
                               "ingestionTime":"2023-05-22T00:07:57Z",
                               "eventSummary":"Test Event Summary",
+                              "eventSource":"mocktest",
                               "eventDescription":[{
                                     "language":"en_US",
                                     "latestDescription":"This is a test AWS Health Event AWS_WORKSPACES_MAINTENANCE_SCHEDULED\n"

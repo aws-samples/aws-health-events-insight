@@ -1,0 +1,20 @@
+openapi: "3.0.1"
+info:
+  title: "API Gateway HTTP API to EventBridge"
+paths:
+  /:
+    post:
+      responses:
+        default:
+          description: "EventBridge response"
+      x-amazon-apigateway-integration:
+        integrationSubtype: "EventBridge-PutEvents"
+        credentials:
+          Fn::GetAtt: [HealthEventAPIRole, Arn]
+        requestParameters:
+          Detail: "$request.body.Detail"
+          DetailType: "$request.body.DetailType"
+          Source: "$request.body.source"
+        payloadFormatVersion: "1.0"
+        type: "aws_proxy"
+        connectionType: "INTERNET"

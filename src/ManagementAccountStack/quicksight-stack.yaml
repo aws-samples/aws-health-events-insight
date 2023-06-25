@@ -46,6 +46,7 @@ Resources:
               - "s3:AbortMultipartUpload"
               - "s3:PutObject"
               - "s3:ListMultipartUploadParts"
+              - "s3:CreateBucket"
             Resource: 
               - !Sub arn:aws:s3:::${EventHealthBucket}
               - !Sub arn:aws:s3:::${EventHealthBucket}/*
@@ -142,6 +143,8 @@ Resources:
                 Type: STRING
               - Name: ingestionTime
                 Type: STRING
+              - Name: eventSource
+                Type: STRING
       LogicalTableMap:
         "AWSHealthQSLT":
           Alias: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
@@ -201,6 +204,7 @@ Resources:
                   - eventTypeCategory
                   - affectedEntities
                   - ingestionTime
+                  - eventSource
       Permissions:
       - Principal: !Sub "${QuickSightUser}"
         Actions:

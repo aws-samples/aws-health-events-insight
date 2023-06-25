@@ -25,6 +25,11 @@ Parameters:
   secondaryRegion:
     Type: String
     Description: Optional Enter name of secondary region, leave black if its single region deployment
+  webhookSelected:
+    Type: String
+    Description: Optional Webhook Required?, leave black if not
+
+
 
 Resources:
   HealtheventStorageStack:
@@ -88,10 +93,21 @@ Resources:
       Parameters:
         QuickSightUser: !Ref QuickSightUser
         AWSHealthEventQSDataSetArn: !GetAtt  QuickSightStack.Outputs.AWSHealthEventQSDataSetArn
+  
+  WebhookStack:
+    Condition: webhookSelected
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://${EventHealthBucket}.s3.amazonaws.com/webhook/ApiGW-stack.yaml
+      Parameters:
+        EventHealthBusArn: !GetAtt HealtheventEventBusStack.Outputs.EventHealthBusArn
+        EventHealthBucket: !Ref EventHealthBucket
 
 Outputs:
-  OrgEventHealthBusArn:
+  CentralHealthBusArn:
     Value: !GetAtt HealtheventEventBusStack.Outputs.EventHealthBusArn
     Export:
-      Name: CentralAccountBus
- 
+      Name: CentralHealthBusArn
+
+Conditions:
+  webhookSelected: !Equals [!Ref webhookSelected, "yes"]

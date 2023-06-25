@@ -103,7 +103,7 @@ def translate_text(Include_targetLang):
         targetLang = ""
     return targetLang
 
-def create_or_update_cloudformation_stack(region, stack_name, bucket_name, quicksight_user, SageMakerEndpoint, quicksight_service_role, isPrimaryRegion, secondaryRegion):
+def create_or_update_cloudformation_stack(region, stack_name, bucket_name, quicksight_user, SageMakerEndpoint, quicksight_service_role, isPrimaryRegion, secondaryRegion,webhookSelected):
     """
     Create or update the CloudFormation stack based on its status.
     """
@@ -123,8 +123,9 @@ def create_or_update_cloudformation_stack(region, stack_name, bucket_name, quick
                     {"ParameterKey": "SageMakerEndpoint", "ParameterValue": SageMakerEndpoint},
                     {"ParameterKey": "QuicksightServiceRole", "ParameterValue": quicksight_service_role},
                     {"ParameterKey": "targetLang", "ParameterValue": targetLang},
-                    {"ParameterKey": "primaryRegion", "ParameterValue": primaryRegion},
-                    {"ParameterKey": "secondaryRegion", "ParameterValue": secondaryRegion}
+                    {"ParameterKey": "isPrimaryRegion", "ParameterValue": isPrimaryRegion},
+                    {"ParameterKey": "secondaryRegion", "ParameterValue": secondaryRegion},
+                    {"ParameterKey": "webhookSelected", "ParameterValue": webhookSelected}
                 ],
                 Capabilities=["CAPABILITY_NAMED_IAM", "CAPABILITY_AUTO_EXPAND"],
                 DisableRollback=True
@@ -144,7 +145,8 @@ def create_or_update_cloudformation_stack(region, stack_name, bucket_name, quick
                 {"ParameterKey": "QuicksightServiceRole", "ParameterValue": quicksight_service_role},
                 {"ParameterKey": "targetLang", "ParameterValue": targetLang},
                 {"ParameterKey": "isPrimaryRegion", "ParameterValue": isPrimaryRegion},
-                {"ParameterKey": "secondaryRegion", "ParameterValue": secondaryRegion}
+                {"ParameterKey": "secondaryRegion", "ParameterValue": secondaryRegion},
+                {"ParameterKey": "webhookSelected", "ParameterValue": webhookSelected}
             ],
             Capabilities=["CAPABILITY_NAMED_IAM", "CAPABILITY_AUTO_EXPAND"],
             DisableRollback=True
@@ -186,10 +188,17 @@ include_model = input("Do you want to include a SageMaker ML model? (yes/no): ")
 # Get the SageMaker endpoint ARN
 SageMakerEndpoint = get_sagemaker_endpoint_arn(include_model)
 
-# Prompt user to include SageMaker ML model
+# Prompt user to include translation
 Include_targetLang = input("Do you want to Translate Events in different language? (yes/no): ")
 # Get response for translation
 targetLang = translate_text(Include_targetLang)
+
+# Prompt user to include webhook for 3rd party event ingestion
+webhookSelected = input("Do you want setup webhook for 3rd party event ingestion? (yes/no): ")
+# Get response for translation
+if webhookSelected != "yes":
+    webhookSelected = ""
+
 
 # Create or get the S3 bucket
 create_or_get_s3_bucket(bucket_name, region)
@@ -198,8 +207,8 @@ if multiregion == "yes":
 
 # Create or update the CloudFormation stack
 stack_name = f"HealthEventDashboardStack{account_id}-{region}"
-create_or_update_cloudformation_stack(region, stack_name, bucket_name, quicksight_user, SageMakerEndpoint, quicksight_service_role,'Y',secondaryRegion,)
+create_or_update_cloudformation_stack(region, stack_name, bucket_name, quicksight_user, SageMakerEndpoint, quicksight_service_role,'Y',secondaryRegion,webhookSelected)
 
 if multiregion == "yes":
     stack_name = f"HealthEventDashboardStack{account_id}-{secondaryRegion}"
-    create_or_update_cloudformation_stack(secondaryRegion, stack_name, Secondary_bucket_name, quicksight_user, SageMakerEndpoint, quicksight_service_role,'N',secondaryRegion)
+    create_or_update_cloudformation_stack(secondaryRegion, stack_name, Secondary_bucket_name, quicksight_user, SageMakerEndpoint, quicksight_service_role,'N',secondaryRegion,webhookSelected)

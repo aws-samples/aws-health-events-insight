@@ -1,0 +1,47 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: API Gateway HTTP API to EventBridge
+Parameters:
+  EventHealthBucket:
+    Type: String
+    Description: The name of the bucket that contains the ManagementAccountStackset YAML files
+  EventHealthBusArn:
+    Type: String
+    Description: EventHealthBusArn
+  
+
+Resources:
+  # Creates an HTTP API endpoint
+  HealthEventAPI:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      DefinitionBody:
+        'Fn::Transform':
+          Name: 'AWS::Include'
+          Parameters:
+            Location: !Sub 's3://${EventHealthBucket}/webhook/api-definition.yaml' 
+  # Create the role for API Gateway access to EventBridge
+  HealthEventAPIRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service: "apigateway.amazonaws.com"
+            Action: 
+              - "sts:AssumeRole"
+      Policies:
+        - PolicyName: ApiDirectWriteEventBridge
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Action: "events:PutEvents"
+                Effect: "Allow"
+                Resource:
+                  - !Ref EventHealthBusArn
+Outputs:
+  ApiEndpoint:
+    Description: "HTTP API endpoint URL"
+    Value: !Sub "https://${HealthEventAPI}.execute-api.${AWS::Region}.amazonaws.com"
