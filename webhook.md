@@ -2,8 +2,10 @@
 
 This sample solution enables you to ingest third-party events. If you choose to enable the webhook option, CloudFormation (cfn) will deploy an HTTP API on API Gateway and integrate it with EventBridge. You can send events to EventBridge from a third-party source using the following format. You can also bring your own format, you may have to update ingestion lambda in that case.
 
+
 # Sample event format: You can send event to APIGW in EB format.
-**TIP** Sample is designed to ingest from source name awshealthtest and aws.health. If you want to supply different source for third party, you have to update eventbridge rule to add more source type.
+
+The Sample is specifically created to receive data from two sources, namely awshealthtest and aws.health. If you wish to provide a different source for a third party, you need to modify the eventbridge rule and include the additional source type. Additionally, if your JSON payload differs, you may also want to adjust the integration detail for the route in apigw e.g. Detail : "$request.body.data.essentials" for Azure. 
 
 **Warning** To impose access restrictions who can post events to this API, navigate to the API GW console and incorporate an authorizer based on your specific requirements.
 
@@ -35,7 +37,7 @@ This sample solution enables you to ingest third-party events. If you choose to 
 # Sample command to send event
 
 ```json
-curl --location --request POST 'invoke url --header 'Content-Type: application/json' --data-raw '{
+curl --location --request POST 'invoke url' --header 'Content-Type: application/json' --data-raw '{
 "source":"awshealthtest",
 "DetailType": "awshealthtest", 
 "Detail": {
@@ -57,3 +59,5 @@ curl --location --request POST 'invoke url --header 'Content-Type: application/j
     }]
         }   
 }'
+
+
