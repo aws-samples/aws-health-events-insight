@@ -115,7 +115,7 @@ def create_or_update_cloudformation_stack(region, stack_name, bucket_name, quick
         if stack.get("StackName") == stack_name:
             response = cfn_client.update_stack(
                 StackName=stack_name,
-                TemplateURL=f"https://{bucket_name}.s3.amazonaws.com/ManagementAccountStack/managementaccount-stack.yaml",
+                TemplateURL=f"https://{bucket_name}.s3.amazonaws.com/ControlAccountStack/managementaccount-stack.yaml",
                 Parameters=[
                     {"ParameterKey": "EventHealthBucket", "ParameterValue": bucket_name},
                     {"ParameterKey": "PrincipalOrgID", "ParameterValue": get_organization_details()},
@@ -136,7 +136,7 @@ def create_or_update_cloudformation_stack(region, stack_name, bucket_name, quick
     if response is None:
         response = cfn_client.create_stack(
             StackName=stack_name,
-            TemplateURL=f"https://{bucket_name}.s3.amazonaws.com/ManagementAccountStack/managementaccount-stack.yaml",
+            TemplateURL=f"https://{bucket_name}.s3.amazonaws.com/ControlAccountStack/managementaccount-stack.yaml",
             Parameters=[
                 {"ParameterKey": "EventHealthBucket", "ParameterValue": bucket_name},
                 {"ParameterKey": "PrincipalOrgID", "ParameterValue": get_organization_details()},

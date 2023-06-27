@@ -5,7 +5,7 @@ Parameters:
     Description: Is this a primary region (Y/N)
   EventHealthBucket:
     Type: String
-    Description: The name of the bucket that contains the ManagementAccountStackset YAML files
+    Description: The name of the bucket that contains the ControlAccountStack YAML files
   PrincipalOrgID:
     Type: String
     Description: The AWS organization ID of the principal that is allowed to put events on the custom health event bus.
@@ -35,7 +35,7 @@ Resources:
   HealtheventStorageStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub https://${EventHealthBucket}.s3.amazonaws.com/ManagementAccountStack/storage-stack.yaml
+      TemplateURL: !Sub https://${EventHealthBucket}.s3.amazonaws.com/ControlAccountStack/storage-stack.yaml
       Parameters:
         secondaryRegion: !Ref secondaryRegion
         isPrimaryRegion: !Ref isPrimaryRegion
@@ -44,14 +44,14 @@ Resources:
     Type: AWS::CloudFormation::Stack
     DependsOn: HealtheventStorageStack
     Properties: 
-      TemplateURL: !Sub https://${EventHealthBucket}.s3.amazonaws.com/ManagementAccountStack/awseventbus-stack.yaml
+      TemplateURL: !Sub https://${EventHealthBucket}.s3.amazonaws.com/ControlAccountStack/awseventbus-stack.yaml
       Parameters:
         POrgID: !Ref PrincipalOrgID
   
   IngestionStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub https://${EventHealthBucket}.s3.amazonaws.com/ManagementAccountStack/ingestion-stack.yaml
+      TemplateURL: !Sub https://${EventHealthBucket}.s3.amazonaws.com/ControlAccountStack/ingestion-stack.yaml
       Parameters:
         DynamoDBArn: !GetAtt  HealtheventStorageStack.Outputs.EventHealthDDBTableArn
         EventHealthBusArn: !GetAtt HealtheventEventBusStack.Outputs.EventHealthBusArn
@@ -68,7 +68,7 @@ Resources:
     DependsOn: HealtheventEventBusStack
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub https://${EventHealthBucket}.s3.amazonaws.com/ManagementAccountStack/connector-stack.yaml
+      TemplateURL: !Sub https://${EventHealthBucket}.s3.amazonaws.com/ControlAccountStack/connector-stack.yaml
       Parameters:
         DynamoDBArn: !GetAtt  HealtheventStorageStack.Outputs.EventHealthDDBTableArn
         EventHealthBucket: !Ref EventHealthBucket
@@ -77,7 +77,7 @@ Resources:
     DependsOn: IngestionStack
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub https://${EventHealthBucket}.s3.amazonaws.com/ManagementAccountStack/quicksight-stack.yaml
+      TemplateURL: !Sub https://${EventHealthBucket}.s3.amazonaws.com/ControlAccountStack/quicksight-stack.yaml
       Parameters:
         AWSHealthEventDataCatalog: !GetAtt  ConnectorStack.Outputs.AWSHealthEventDataCatalog
         QuickSightUser: !Ref QuickSightUser
@@ -89,7 +89,7 @@ Resources:
   QuickSightAnalysisStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub https://${EventHealthBucket}.s3.amazonaws.com/ManagementAccountStack/quicksight-analysis-stack.yaml
+      TemplateURL: !Sub https://${EventHealthBucket}.s3.amazonaws.com/ControlAccountStack/quicksight-analysis-stack.yaml
       Parameters:
         QuickSightUser: !Ref QuickSightUser
         AWSHealthEventQSDataSetArn: !GetAtt  QuickSightStack.Outputs.AWSHealthEventQSDataSetArn
