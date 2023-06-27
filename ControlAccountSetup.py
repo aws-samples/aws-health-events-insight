@@ -2,6 +2,8 @@ import boto3
 import subprocess
 from botocore.exceptions import ClientError
 import re
+import zipfile
+import os
 
 
 def get_default_region():
@@ -23,6 +25,14 @@ def get_account_id():
     account_id = sts_client.get_caller_identity().get("Account")
     return account_id
 
+def zip_files(source_dir, output_zip):
+    with zipfile.ZipFile(output_zip, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        for root, _, files in os.walk(source_dir):
+            for file in files:
+                file_path = os.path.join(root, file)
+                relative_path = os.path.relpath(file_path, source_dir)
+                zipf.write(file_path, relative_path)
+
 
 def create_or_get_s3_bucket(bucket_name, region):
     #create bucket or upload file if bucket is supplied by user
@@ -40,6 +50,8 @@ def create_or_get_s3_bucket(bucket_name, region):
         print(f"S3 bucket {bucket_name} has been created")
 
     try:
+        #Added Support for Lambda Build PreSync
+        zip_files('src/ingestion-lambda', 'src/lambda.zip')
         aws_sync_command = f"aws s3 sync src s3://{bucket_name}/"
         subprocess.call(aws_sync_command.split())
     except ClientError as e:
@@ -199,11 +211,13 @@ webhookSelected = input("Do you want setup webhook for 3rd party event ingestion
 if webhookSelected != "yes":
     webhookSelected = ""
 
-
 # Create or get the S3 bucket
 create_or_get_s3_bucket(bucket_name, region)
 if multiregion == "yes":
     create_or_get_s3_bucket(Secondary_bucket_name, secondaryRegion)
+
+
+#Zip Up Lambda and write to S3 
 
 # Create or update the CloudFormation stack
 stack_name = f"HealthEventDashboardStack{account_id}-{region}"
