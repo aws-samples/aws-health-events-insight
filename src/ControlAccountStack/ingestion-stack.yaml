@@ -1,5 +1,4 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: (AWS Heidi) Ingestion stack to capture event from event bus and put in dynamodb
 Parameters:
   DynamoDBArn:
     Type: String
@@ -13,6 +12,9 @@ Parameters:
   targetLang:
     Type: String
     Description: Target language code(e.g. for English, en )
+  S3LocationForLambdaSource:
+    Type: String
+    Description: S3 Bucket for ingestion lambda source code
 
 Resources:
   EventHealthLambdaForDDBRole:
@@ -81,103 +83,13 @@ Resources:
                     - "sagemaker:InvokeEndpointAsync"
                   Resource: !Ref SageMakerEndpoint
           - !Ref "AWS::NoValue"
-  
+
   EventHealthLambdaForDDB:
     Type: AWS::Lambda::Function
     Properties:
       Code:
-        ZipFile: |
-          import json
-          import boto3
-          import os
-          from datetime import datetime
-
-          dynamodb = boto3.resource('dynamodb')
-
-          def process_event_data(event, event_detail):
-              event_data = {
-                'eventArn': event_detail.get('eventArn'),
-                'service': event_detail.get('service',''),
-                'eventScopeCode': event_detail.get('eventScopeCode',''),
-                'eventRegion': event_detail.get('eventRegion',''),
-                'eventTypeCode': event_detail.get('eventTypeCode',''),
-                'eventTypeCategory': event_detail.get('eventTypeCategory',''),
-                'startTime': datetime.strptime(event_detail.get('startTime', ''), '%a, %d %b %Y %H:%M:%S %Z').strftime('%d/%m/%Y %H:%M:%S')  if event_detail.get('startTime') else '',
-                'eventDescription': event_detail.get('eventDescription', [{'latestDescription': None}])[0]['latestDescription'],
-                'affectedEntities': ', '.join([entity['entityValue'] for entity in event_detail.get('affectedEntities', [])])
-              }
-              if event_detail.get('account'):
-                event_data['account'] = event_detail.get('account')
-              else:
-                event_data['account'] = event.get('account')
-              event_data['eventSource'] = event.get('source')
-              event_data['ingestionTime'] = datetime.strptime(event.get('time'), '%Y-%m-%dT%H:%M:%SZ').strftime('%d/%m/%Y %H:%M:%S')
-              if event_detail.get('endTime'):
-                event_data['endTime'] = datetime.strptime(event_detail['endTime'], '%a, %d %b %Y %H:%M:%S %Z').strftime('%d/%m/%Y %H:%M:%S')
-              if event_detail.get('lastUpdatedTime'):
-                event_data['lastUpdatedTime'] = datetime.strptime(event_detail['lastUpdatedTime'], '%a, %d %b %Y %H:%M:%S %Z').strftime('%d/%m/%Y %H:%M:%S') 
-              else:
-                event_data['lastUpdatedTime'] = datetime.strptime(event_detail['startTime'], '%a, %d %b %Y %H:%M:%S %Z').strftime('%d/%m/%Y %H:%M:%S') 
-
-              return event_data
-
-          def summarize_event_description(event_data):
-              try:
-                      sagemaker_endpoint_arn = os.environ['SageMakerEndpoint']
-                      sagemaker_endpoint_name = sagemaker_endpoint_arn.split('/')[-1]  # Extract the name from the ARN
-                      sagemaker_endpoint_region = sagemaker_endpoint_arn.split(':')[3]
-                      sagemaker_runtime = boto3.client('sagemaker-runtime', sagemaker_endpoint_region)  # Initialize SageMaker client
-                      model_max_length = 1000  # Adjust the desired maximum length
-                      summary_text = sagemaker_runtime.invoke_endpoint(
-                          EndpointName=sagemaker_endpoint_name,
-                          Body=bytes(event_data['eventDescription'][:model_max_length], 'utf-8'),
-                          ContentType='application/x-text'
-                      )['Body'].read().decode('utf-8')
-                      event_data['eventSummary'] = json.loads(summary_text)["summary_text"]
-              except Exception as e:
-                  event_data['eventSummary'] = "LLM Supplied but not reachable, Failing Summarizations Silently"
-
-          def translate_text(event_data, targetLang):
-              # Create a client for the Amazon Translate service
-              translate = boto3.client('translate')
-              # Translate the text
-              try:
-                  eventDescription = translate.translate_text(Text=event_data['eventDescription'], SourceLanguageCode='en', TargetLanguageCode=targetLang)
-                  event_data['eventDescription'] = eventDescription["TranslatedText"]
-                  if 'eventSummary' in event_data:
-                      eventSummary = translate.translate_text(Text=event_data['eventSummary'], SourceLanguageCode='en', TargetLanguageCode=targetLang)
-                      event_data['eventSummary'] = eventSummary["TranslatedText"]
-              except Exception as e:
-                  print(e)
-                  pass
-                  
-          def save_event_data(table, event_data):
-              table.put_item(Item=event_data)
-
-          def get_account_name(event, event_data):
-              org_client = boto3.client('organizations')
-              try:
-                  account_id = event.get('account')
-                  event_data['accountName'] = org_client.describe_account(AccountId=account_id).get('Account').get('Name')
-              except Exception as e:
-                  event_data['accountName'] = account_id
-                  print(e)
-
-          def aws_health(event, context):
-              event_detail = event['detail']
-              table = dynamodb.Table(os.environ['DynamoDBName'])
-              event_data = process_event_data(event, event_detail)
-              get_account_name(event, event_data)
-              if os.environ['SageMakerEndpoint']:
-                  summarize_event_description(event_data)
-              else:
-                  event_data['eventSummary'] = "No LLM Supplied"
-              if os.environ.get('targetLang'):
-                  translate_text(event_data,os.environ.get('targetLang'))
-              save_event_data(table, event_data)
-              print(event_data)
-              return {'statusCode': 200, 'body': json.dumps('Successfully inserted item into DynamoDB')}
-
+        S3Bucket: !Ref LambdaSourceS3Bucket
+        S3Key: !Sub "ingestion_lambda.zip"
       Handler: index.aws_health
       Runtime: python3.8
       Timeout: 60
@@ -187,6 +99,7 @@ Resources:
           DynamoDBName: !Select [1, !Split ["/", !Ref DynamoDBArn]]
           SageMakerEndpoint: !Ref SageMakerEndpoint
           targetLang: !Ref targetLang
+  
   
   EventHealthtRuleEventHealthBus:
     Type: "AWS::Events::Rule"
