@@ -1,4 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
+Description: (AWS Heidi) Storage stack to create dynamodb table
 Parameters:
   secondaryRegion:
     Type: String

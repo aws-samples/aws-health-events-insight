@@ -1,4 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
+Description: (AWS Heidi) Ingestion stack to capture event from event bus and put in dynamodb
 Parameters:
   DynamoDBArn:
     Type: String

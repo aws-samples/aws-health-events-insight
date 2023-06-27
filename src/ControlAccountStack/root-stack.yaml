@@ -1,3 +1,6 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: (AWS Heidi) Root stack
+
 Parameters:
   isPrimaryRegion:
     Type: String
@@ -98,10 +101,9 @@ Resources:
     Condition: webhookSelected
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub https://${EventHealthBucket}.s3.amazonaws.com/webhook/ApiGW-stack.yaml
+      TemplateURL: !Sub https://${EventHealthBucket}.s3.amazonaws.com/webhook/restApiWebhook-stack.yaml
       Parameters:
         EventHealthBusArn: !GetAtt HealtheventEventBusStack.Outputs.EventHealthBusArn
-        EventHealthBucket: !Ref EventHealthBucket
 
 Outputs:
   CentralHealthBusArn:

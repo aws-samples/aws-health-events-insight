@@ -1,4 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
+Description: (AWS Heidi) Eventbus stack to enable link account to send data to central bus 
 Parameters:
   POrgID:
     Type: String

@@ -1,4 +1,5 @@
 Parameters:
+Description: (AWS Heidi) Child stack for AWS Heidi
   PrimaryEventHealthBus:
     Type: String
     Description: Primary Event Health Bus Arn(Get it from  primary central account)
