@@ -51,7 +51,7 @@ def create_or_get_s3_bucket(bucket_name, region):
 
     try:
         #Added Support for Lambda Build PreSync
-        zip_files('src/ingestion-lambda', 'src/lambda.zip')
+        zip_files('src/lambda-source-code', 'src/lambda.zip')
         aws_sync_command = f"aws s3 sync src s3://{bucket_name}/"
         subprocess.call(aws_sync_command.split())
     except ClientError as e:
