@@ -4,7 +4,7 @@ import json
 import boto3
 import os
 from datetime import datetime
-from utils import summarize_event_description, translate_text, get_account_name, validate_event, log_entry_exit
+from utils import summarize_event_description, translate_text, get_account_name, log_entry_exit
 
 dynamodb = boto3.resource('dynamodb')
 
@@ -62,25 +62,23 @@ def aws_health(event, context):
     """
     The main Lambda function handler.
     """
-    if validate_event(event):
-        event_detail = event['detail']
-        table = dynamodb.Table(os.environ['DynamoDBName'])
-        event_data = process_event_data(event, event_detail)
+    event_detail = event['detail']
+    table = dynamodb.Table(os.environ['DynamoDBName'])
+    event_data = process_event_data(event, event_detail)
 
-        get_account_name(event, event_data)
+    get_account_name(event, event_data)
 
-        sagemaker_endpoint = os.environ.get('SageMakerEndpoint')
-        if sagemaker_endpoint:
-            summarize_event_description(event_data, sagemaker_endpoint)
-        else:
-            event_data['eventSummary'] = "No LLM Supplied"
-
-        target_lang = os.environ.get('targetLang')
-        if target_lang:
-            translate_text(event_data, target_lang)
-
-        save_event_data(table, event_data)
-
-        return {'statusCode': 200, 'body': json.dumps('Successfully inserted item into DynamoDB')}
+    sagemaker_endpoint = os.environ.get('SageMakerEndpoint')
+    if sagemaker_endpoint:
+        summarize_event_description(event_data, sagemaker_endpoint)
     else:
-        return {'statusCode': 500, 'body': json.dumps('Invalid Event Object')}
+        event_data['eventSummary'] = "No LLM Supplied"
+
+    target_lang = os.environ.get('targetLang')
+    if target_lang:
+        translate_text(event_data, target_lang)
+
+    save_event_data(table, event_data)
+
+    return {'statusCode': 200, 'body': json.dumps('Successfully inserted item into DynamoDB')}
+    
