@@ -59,6 +59,7 @@ Resources:
         DynamoDBArn: !GetAtt  HealtheventStorageStack.Outputs.EventHealthDDBTableArn
         EventHealthBusArn: !GetAtt HealtheventEventBusStack.Outputs.EventHealthBusArn
         SageMakerEndpoint: !Ref SageMakerEndpoint
+        LambdaSourceS3Bucket: !Ref EventHealthBucket
         targetLang: !Ref targetLang
   
   BackfillStack:
