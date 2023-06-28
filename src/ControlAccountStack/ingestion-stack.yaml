@@ -12,9 +12,9 @@ Parameters:
   targetLang:
     Type: String
     Description: Target language code(e.g. for English, en )
-  LambdaSourceS3Bucket:
+  EventHealthBucket:
     Type: String
-    Description: S3 Bucket for ingestion lambda source code
+    Description: S3 Bucket for ingestion lambda source code 
 
 Resources:
   EventHealthLambdaForDDBRole:
@@ -88,8 +88,8 @@ Resources:
     Type: AWS::Lambda::Function
     Properties:
       Code:
-        S3Bucket: !Ref LambdaSourceS3Bucket
-        S3Key: !Sub "lambda.zip"
+        S3Bucket: !Ref EventHealthBucket
+        S3Key: "lambda-source-code/lambda.zip"
       Handler: ingestion_lambda.aws_health
       Runtime: python3.8
       Timeout: 60
@@ -127,8 +127,8 @@ Resources:
     Type: AWS::Lambda::Function
     Properties:
       Code:
-        S3Bucket: !Ref LambdaSourceS3Bucket
-        S3Key: !Sub "lambda.zip"
+        S3Bucket: !Ref EventHealthBucket
+        S3Key: "lambda-source-code/lambda.zip"
       Handler: inject_testdata_lambda.lambda_handler
       Runtime: python3.8
       Timeout: 10

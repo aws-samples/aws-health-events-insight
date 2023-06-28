@@ -45,4 +45,5 @@ def lambda_handler(event, context):
         cfnresponse.send(event, context, cfnresponse.SUCCESS, {}, None)
         return {'statusCode': 200, 'body': 'Success'}
     except Exception as e:
+        cfnresponse.send(event, context, cfnresponse.Fail, {}, None)
         return {'statusCode': 500, 'body': 'Fail'}

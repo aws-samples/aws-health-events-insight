@@ -50,7 +50,7 @@ In this section, we will go through the steps to set up permissions for StackSet
 
     2. Go to aws-health-events-insight directory and run ControlAccountSetup.py and provide account specific inputs.
 
-    `cd aws-health-events-insight`
+    `cd OneClickSetup/aws-health-events-insight`
 
     `python3 ControlAccountSetup.py`
 

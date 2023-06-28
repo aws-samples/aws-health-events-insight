@@ -51,8 +51,8 @@ def create_or_get_s3_bucket(bucket_name, region):
 
     try:
         #Added Support for Lambda Build PreSync
-        zip_files('src/lambda-source-code', 'src/lambda.zip')
-        aws_sync_command = f"aws s3 sync src s3://{bucket_name}/"
+        zip_files('../src/lambda-source-code', '../src/lambda-source-code/lambda.zip')
+        aws_sync_command = f"aws s3 sync ../src s3://{bucket_name}/"
         subprocess.call(aws_sync_command.split())
     except ClientError as e:
         print("Error while syncing S3. Check if deployer role has required S3 and KMS permissions.")
