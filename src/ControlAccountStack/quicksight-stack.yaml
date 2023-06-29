@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: (AWS Heidi) QuickSight stack to create DataSet 
+Description: (AWS Heidi)QuickSight stack to create DataSet 
 Parameters:
   AWSHealthEventDataCatalog:
     Type: String
@@ -114,38 +114,38 @@ Resources:
             Schema: "default"
             Name: !Ref DynamoDBName
             InputColumns:
-              - Name: eventArn
-                Type: STRING
-              - Name: eventTypeCode
-                Type: STRING
-              - Name: service
-                Type: STRING
-              - Name: eventDescription
-                Type: STRING
-              - Name: eventSummary
-                Type: STRING
-              - Name: eventScopeCode
-                Type: STRING
-              - Name: lastUpdatedTime
-                Type: STRING
-              - Name: startTime
-                Type: STRING
-              - Name: eventRegion
-                Type: STRING
-              - Name: endTime
-                Type: STRING
-              - Name: eventTypeCategory
-                Type: STRING
-              - Name: affectedEntities
-                Type: STRING
-              - Name: account
-                Type: STRING
-              - Name: accountName
-                Type: STRING
-              - Name: ingestionTime
-                Type: STRING
-              - Name: eventSource
-                Type: STRING
+            - Name: eventTypeCode
+              Type: STRING
+            - Name: eventSummary
+              Type: STRING
+            - Name: accountName
+              Type: STRING
+            - Name: eventSource
+              Type: STRING
+            - Name: eventScopeCode
+              Type: STRING
+            - Name: eventTypeCategory
+              Type: STRING
+            - Name: affectedEntities
+              Type: STRING
+            - Name: eventArn
+              Type: STRING
+            - Name: ingestionTime
+              Type: STRING
+            - Name: service
+              Type: STRING
+            - Name: eventDescription
+              Type: STRING
+            - Name: lastUpdatedTime
+              Type: STRING
+            - Name: startTime
+              Type: STRING
+            - Name: eventRegion
+              Type: STRING
+            - Name: endTime
+              Type: STRING
+            - Name: account
+              Type: STRING
       LogicalTableMap:
         "AWSHealthQSLT":
           Alias: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
@@ -153,59 +153,65 @@ Resources:
             PhysicalTableId: "AWSHealthQSPT"
           DataTransforms:
             - CastColumnTypeOperation:
-                ColumnName: startTime
+                ColumnName: ingestionTime
                 NewColumnType: DATETIME
-                Format: "dd/MM/yyyy HH:mm:ss"
+                Format: dd/MM/yyyy HH:mm:ss
             - CastColumnTypeOperation:
                 ColumnName: lastUpdatedTime
                 NewColumnType: DATETIME
-                Format: "dd/MM/yyyy HH:mm:ss"
+                Format: dd/MM/yyyy HH:mm:ss
+            - CastColumnTypeOperation:
+                ColumnName: startTime
+                NewColumnType: DATETIME
+                Format: dd/MM/yyyy HH:mm:ss
             - CastColumnTypeOperation:
                 ColumnName: endTime
                 NewColumnType: DATETIME
-                Format: "dd/MM/yyyy HH:mm:ss"
-            - CastColumnTypeOperation:
-                ColumnName: ingestionTime
-                NewColumnType: DATETIME
-                Format: "dd/MM/yyyy HH:mm:ss"
+                Format: dd/MM/yyyy HH:mm:ss
             - CreateColumnsOperation:
                 Columns:
-                  - ColumnName: location
-                    ColumnId: "location"
-                    Expression: "ifelse({eventRegion}=\"us-east-1\",\"N.Virginia\",{eventRegion}=\"us-east-2\",\"Ohio\",{eventRegion}=\"us-west-1\",\"California\",{eventRegion}=\"us-west-2\",\"Oregon\",\"others\")"
+                - ColumnName: location
+                  ColumnId: location
+                  Expression: ifelse({eventRegion}="us-east-1","N.Virginia",{eventRegion}="us-east-2","Ohio",{eventRegion}="us-west-1","California",{eventRegion}="us-west-2","Oregon","others")
             - CreateColumnsOperation:
                 Columns:
-                  - ColumnName: Status
-                    ColumnId: "Status"
-                    Expression: |
-                      ifelse({endTime}>now(), "Upcoming",
-                      isNull({endTime}) and {eventTypeCategory}="scheduledChange", "Upcoming",
-                      addDateTime(7, 'DD', {startTime})<now() and {eventTypeCategory}="accountNotification" and isNull({endTime}), "Archived",
-                      isNull({endTime}), "Open", "Closed")
+                - ColumnName: Status
+                  ColumnId: Status
+                  Expression: |
+                    ifelse({endTime}>now(), "Upcoming",
+                    isNull({endTime}) and {eventTypeCategory}="scheduledChange", "Upcoming",
+                    addDateTime(7, 'DD', {startTime})<now() and {eventTypeCategory}="accountNotification" and isNull({endTime}), "Archived",
+                    isNull({endTime}), "Active", "Archived")
+            - CreateColumnsOperation:
+                Columns:
+                - ColumnName: eventDuration
+                  ColumnId: bcd2978c-5b1a-4eb4-829d-5ad5c66bf06e
+                  Expression: dateDiff({startTime},{endTime},'HH')
             - TagColumnOperation:
                 ColumnName: location
                 Tags:
-                  - ColumnGeographicRole: STATE
+                - ColumnGeographicRole: STATE
             - ProjectOperation:
                 ProjectedColumns:
-                  - eventArn
-                  - eventTypeCode
-                  - service
-                  - eventDescription
-                  - eventSummary
-                  - eventScopeCode
-                  - lastUpdatedTime
-                  - startTime
-                  - eventRegion
-                  - endTime
-                  - location
-                  - Status
-                  - account
-                  - accountName
-                  - eventTypeCategory
-                  - affectedEntities
-                  - ingestionTime
-                  - eventSource
+                - eventTypeCode
+                - eventSummary
+                - accountName
+                - eventSource
+                - eventScopeCode
+                - eventTypeCategory
+                - affectedEntities
+                - eventArn
+                - ingestionTime
+                - service
+                - eventDescription
+                - lastUpdatedTime
+                - startTime
+                - eventRegion
+                - endTime
+                - account
+                - location
+                - Status
+                - eventDuration
       Permissions:
       - Principal: !Sub "${QuickSightUser}"
         Actions:

@@ -1,4 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
+Description: (AWS Heidi) Ingestion stack to put events in dynamoDB 
 Parameters:
   DynamoDBArn:
     Type: String
@@ -99,7 +100,6 @@ Resources:
           DynamoDBName: !Select [1, !Split ["/", !Ref DynamoDBArn]]
           SageMakerEndpoint: !Ref SageMakerEndpoint
           targetLang: !Ref targetLang
-  
   
   EventHealthtRuleEventHealthBus:
     Type: "AWS::Events::Rule"
