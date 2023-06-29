@@ -50,7 +50,7 @@ In this section, we will go through the steps to set up permissions for StackSet
 
     2. Go to aws-health-events-insight directory and run ControlAccountSetup.py and provide account specific inputs.
 
-    `cd OneClickSetup/aws-health-events-insight`
+    `cd aws-health-events-insight/OneClickSetup`
 
     `python3 ControlAccountSetup.py`
 
@@ -67,7 +67,7 @@ In this section, we will go through the steps to set up permissions for StackSet
     1. Setup AWS credntials for desired Account and Regions.
     2. Go to aws-health-events-insight directory and run link-Account-RegionSetup.py and provide necessary inputs. 
 
-    `cd OneClickSetup/aws-health-events-insight`
+    `cd aws-health-events-insight/OneClickSetup`
 
     `python3 link-Account-RegionSetup.py`
 
