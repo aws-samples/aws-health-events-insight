@@ -1,6 +1,4 @@
 {
-   "time":"2023-05-03T11:30:00Z",
-   "detail":{
       "eventArn":"MockEvent",
       "service":"WORKSPACES",
       "eventScopeCode":"ACCOUNT_SPECIFIC",
@@ -21,5 +19,4 @@
             "entityValue":"i-mockevent"
          }
       ]
-   }
 }
