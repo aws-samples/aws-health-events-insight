@@ -21,16 +21,19 @@ Parameters:
     Description: The Quicksight Service role attached to QS, Default is aws-quicksight-service-role-v0
   SageMakerEndpoint:
     Type: String
-    Description: Optional Sagemaker endpoint for summarization model
+    Description: Optional Sagemaker endpoint for summarization model, leave blank if no summarization required.
   targetLang:
     Type: String
-    Description: Optional Target language code(e.g. for English, en )
+    Description: Optional Target language code(e.g. for English, en ), leave blank of no translation required.
   secondaryRegion:
     Type: String
     Description: Optional Enter name of secondary region, leave black if its single region deployment
   webhookSelected:
     Type: String
-    Description: Optional Webhook Required?, leave black if not
+    Description: Optional Webhook Required?, leave black if not required
+  datalakebucket:
+    Type: String
+    Description: Optional S3 bucket for dataLake, leave empty for no datalake setup.
 
 
 
@@ -106,6 +109,14 @@ Resources:
       Parameters:
         EventHealthBusArn: !GetAtt HealtheventEventBusStack.Outputs.EventHealthBusArn
 
+  EventHealthDataLakeStack:
+    Condition: datalakebucket
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://${EventHealthBucket}.s3.amazonaws.com/ControlAccountStack/datalake-stack.yaml
+      Parameters:
+        datalakebucket: !Ref datalakebucket
+
 Outputs:
   CentralHealthBusArn:
     Value: !GetAtt HealtheventEventBusStack.Outputs.EventHealthBusArn
@@ -114,3 +125,4 @@ Outputs:
 
 Conditions:
   webhookSelected: !Equals [!Ref webhookSelected, "yes"]
+  datalakebucket: !Not [!Equals [!Ref datalakebucket, ""]]
