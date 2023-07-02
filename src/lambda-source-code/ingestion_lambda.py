@@ -5,6 +5,7 @@ import boto3
 import os
 from datetime import datetime
 from utils import summarize_event_description, translate_text, get_account_name, log_entry_exit
+from get_cost_impact import get_cost_impact
 
 dynamodb = boto3.resource('dynamodb')
 
@@ -77,6 +78,10 @@ def aws_health(event, context):
     target_lang = os.environ.get('targetLang')
     if target_lang:
         translate_text(event_data, target_lang)
+    
+    costSelected = os.environ.get('costSelected')
+    if costSelected == "yes":
+        get_cost_impact(event, event_data)
 
     save_event_data(table, event_data)
 

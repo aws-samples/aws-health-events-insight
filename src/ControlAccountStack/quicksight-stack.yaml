@@ -146,6 +146,9 @@ Resources:
               Type: STRING
             - Name: account
               Type: STRING
+            - Name: monthlySpend
+              Type: STRING
+
       LogicalTableMap:
         "AWSHealthQSLT":
           Alias: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
@@ -212,6 +215,7 @@ Resources:
                 - location
                 - Status
                 - eventDuration
+                - monthlySpend
       Permissions:
       - Principal: !Sub "${QuickSightUser}"
         Actions:

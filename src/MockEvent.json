@@ -1,5 +1,5 @@
 {
-      "eventArn":"MockEvent",
+      "eventArn":"MockEventCost",
       "service":"WORKSPACES",
       "eventScopeCode":"ACCOUNT_SPECIFIC",
       "communicationId":"8f7ef91f0c9f2f3e3f68dffd0fa34fe299e56f323f06154df1de185d0e3f49bf",

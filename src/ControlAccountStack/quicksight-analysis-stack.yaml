@@ -1,4 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
+Description: (AWS Heidi)QuickSight analysis stack to create Ddashboard/Analysis
 Parameters:
   AWSHealthEventQSDataSetArn:
     Type: String
@@ -294,6 +295,11 @@ Resources:
                                 DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
                                 ColumnName: service
                           - CategoricalDimensionField:
+                              FieldId: AWSHealthQSLT.monthlySpend.13.1688327602727
+                              Column:
+                                DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                                ColumnName: monthlySpend
+                          - CategoricalDimensionField:
                               FieldId: AWSHealthQSLT.accountName.12.1688097043849
                               Column:
                                 DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
@@ -366,7 +372,7 @@ Resources:
                     SortConfiguration:
                       RowSort:
                         - FieldSort:
-                            FieldId: bcd2978c-5b1a-4eb4-829d-5ad5c66bf06e.10.1687996251632
+                            FieldId: AWSHealthQSLT.monthlySpend.13.1688327602727
                             Direction: DESC
                       PaginationConfiguration:
                         PageSize: 10000
@@ -384,12 +390,13 @@ Resources:
                     FieldOptions:
                       SelectedFieldOptions:
                         - FieldId: AWSHealthQSLT.eventSummary.12.1688004360280
-                          Width: 614px
+                          Width: 513px
                         - FieldId: >-
                             b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventDescription.8.1683501691236
                           Width: 747px
                       Order:
                         - b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.service.0.1683501457253
+                        - AWSHealthQSLT.monthlySpend.13.1688327602727
                         - AWSHealthQSLT.accountName.12.1688097043849
                         - >-
                           b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventRegion.2.1683501482351

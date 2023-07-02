@@ -23,6 +23,7 @@ def lambda_handler(event, context):
                         "ingestionTime": "2023-05-22T00:07:57Z",
                         "eventSummary": "Test Event Summary",
                         "eventSource": "mocktest",
+                        "monthlySpend": "0.0",
                         "eventDescription": [{
                             "language": "en_US",
                             "latestDescription": "This is a test AWS Health Event AWS_WORKSPACES_MAINTENANCE_SCHEDULED\n"

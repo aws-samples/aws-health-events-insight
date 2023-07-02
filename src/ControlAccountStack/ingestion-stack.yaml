@@ -13,6 +13,9 @@ Parameters:
   targetLang:
     Type: String
     Description: Target language code(e.g. for English, en )
+  costSelected:
+    Type: String
+    Description: Do you want to include estimated last month cost for the impacted service?(leave empty for no)
   EventHealthBucket:
     Type: String
     Description: S3 Bucket for ingestion lambda source code 
@@ -84,6 +87,17 @@ Resources:
                     - "sagemaker:InvokeEndpointAsync"
                   Resource: !Ref SageMakerEndpoint
           - !Ref "AWS::NoValue"
+        - !If
+          - costSelected
+          - PolicyName: CEAccess
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - "ce:GetCostAndUsage"
+                  Resource: "*"
+          - !Ref "AWS::NoValue"       
 
   EventHealthLambdaForDDB:
     Type: AWS::Lambda::Function
@@ -100,6 +114,7 @@ Resources:
           DynamoDBName: !Select [1, !Split ["/", !Ref DynamoDBArn]]
           SageMakerEndpoint: !Ref SageMakerEndpoint
           targetLang: !Ref targetLang
+          costSelected: !Ref costSelected
   
   EventHealthtRuleEventHealthBus:
     Type: "AWS::Events::Rule"
@@ -159,3 +174,4 @@ Outputs:
 
 Conditions:
   SageMakerEndpoint: !Not [!Equals [!Ref SageMakerEndpoint, ""]]
+  costSelected: !Not [!Equals [!Ref costSelected, ""]]

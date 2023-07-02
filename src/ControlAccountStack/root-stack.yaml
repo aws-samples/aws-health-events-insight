@@ -34,8 +34,9 @@ Parameters:
   datalakebucket:
     Type: String
     Description: Optional S3 bucket for dataLake, leave empty for no datalake setup.
-
-
+  costSelected:
+    Type: String
+    Description: Include last month cost?, leave black if not required.
 
 Resources:
   HealtheventStorageStack:
@@ -64,6 +65,7 @@ Resources:
         SageMakerEndpoint: !Ref SageMakerEndpoint
         EventHealthBucket: !Ref EventHealthBucket
         targetLang: !Ref targetLang
+        costSelected: !Ref costSelected
   
   BackfillStack:
     DependsOn: IngestionStack

@@ -6,70 +6,22 @@ Parameters:
     Description: The AWS Organizations ID for the organization that should be allowed to put events on the event bus.
 
 Resources:
-#   EventHealthBus:
-#     Type: "AWS::Events::EventBus"
-#     Properties:
-#       Name: !Sub EventHealthBus-${AWS::AccountId}
-
   EventHealthBusPolicy:
     Type: AWS::Events::EventBusPolicy
     Properties:
-      #EventBusName: !Ref EventHealthBus
       EventBusName: default
       StatementId: AllowAllAccountsFromOrganizationToPutEvents
       Statement:
             Effect: "Allow"
             Principal: "*"
             Action: "events:PutEvents"
-            #Resource: !GetAtt "EventHealthBus.Arn"
             Resource: !Sub "arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:event-bus/default"
             Condition:
               StringEquals:
                 aws:PrincipalOrgID: !Ref POrgID
-
-#   EventHealthBusPutEventRole:
-#     Type: AWS::IAM::Role
-#     Properties:
-#       RoleName: !Sub "EventHealthBusPutEventRole-${AWS::AccountId}"
-#       AssumeRolePolicyDocument:
-#         Version: "2012-10-17"
-#         Statement:
-#           - Effect: Allow
-#             Principal:
-#               Service: events.amazonaws.com
-#             Action: sts:AssumeRole
-#       Path: "/"
-#       Policies:
-#         - PolicyName: "EventBridge-PutEvents"
-#           PolicyDocument:
-#             Version: "2012-10-17"
-#             Statement:
-#               - Effect: Allow
-#                 Action:
-#                   - "events:PutEvents"
-#                 Resource: !GetAtt "EventHealthBus.Arn"
-
-#   EventHealthRuleDefaultBus:
-#     Type: "AWS::Events::Rule"
-#     Properties:
-#       Name: !Sub "EventHealthRuleDefaultBus-${AWS::AccountId}"
-#       Description: "EventBridge default rule for aws.health events"
-#       EventBusName: "default"
-#       EventPattern:
-#         source:
-#           - "aws.health"
-#           - "awshealthtest"
-#       Targets:
-#         - Arn: !GetAtt "EventHealthBus.Arn"
-#           Id: "EventHealthBusTarget"
-#           RoleArn: !GetAtt "EventHealthBusPutEventRole.Arn"
-          
+                         
 Outputs:
   EventHealthBusArn:
     Value: !Sub "arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:event-bus/default"
     Export:
       Name: EventHealthBusArn
-#   EventHealthBusName:
-#     Value: !Ref EventHealthBus
-#     Export:
-#       Name: EventHealthBusName
