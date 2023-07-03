@@ -108,35 +108,14 @@ def get_cost_impact(event, event_data):
             'Granularity': 'MONTHLY',
             'Filter': {
                 'And': [
-                    {
-                        'Dimensions': {
-                            'Key': 'SERVICE',
-                            'Values': [service]
-                        }
-                    },
-                    {
-                        'Dimensions': {
-                            'Key': 'REGION',
-                            'Values': [region]
-                        }
-                    },
-                    {
-                        'Dimensions': {
-                            'Key': 'LINKED_ACCOUNT',
-                            'Values': [account_id]
-                        }
-                    }
+                    {'Dimensions': {'Key': 'SERVICE','Values': [service] }},
+                    {'Dimensions': {'Key': 'REGION','Values': [region] }},
+                    {'Dimensions': { 'Key': 'LINKED_ACCOUNT','Values': [account_id] }}
                 ]
-            },
+                },
             'Metrics': ['UnblendedCost'],
-            'GroupBy': [
-                {
-                    'Type': 'DIMENSION',
-                    'Key': 'SERVICE'
-                }
-            ]
+            'GroupBy': [{'Type': 'DIMENSION','Key': 'SERVICE'}]
         }
-
         # Retrieve the cost and usage data
         response = client.get_cost_and_usage(**query)
 

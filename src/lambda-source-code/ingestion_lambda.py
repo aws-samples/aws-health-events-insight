@@ -12,41 +12,23 @@ dynamodb = boto3.resource('dynamodb')
 @log_entry_exit
 def process_event_data(event, event_detail):
     """
-    Process the event data and structure it for saving to DynamoDB.
+    Process fields.
     """
-    
     event_data = {
-        'eventArn': event_detail.get('eventArn'),
-        'service': event_detail.get('service', ''),
-        'eventScopeCode': event_detail.get('eventScopeCode', ''),
-        'eventRegion': event_detail.get('eventRegion', ''),
-        'eventTypeCode': event_detail.get('eventTypeCode', ''),
-        'eventTypeCategory': event_detail.get('eventTypeCategory', ''),
+        'account': event_detail.get('account') or event.get('account'),
+        'eventSource': event.get('source'),
         'startTime': datetime.strptime(event_detail.get('startTime', ''), '%a, %d %b %Y %H:%M:%S %Z').strftime('%d/%m/%Y %H:%M:%S') if event_detail.get('startTime') else '',
+        'ingestionTime': datetime.strptime(event.get('time'), '%Y-%m-%dT%H:%M:%SZ').strftime('%d/%m/%Y %H:%M:%S'),
+        'lastUpdatedTime': datetime.strptime(event_detail.get('lastUpdatedTime', event_detail['startTime']), '%a, %d %b %Y %H:%M:%S %Z').strftime('%d/%m/%Y %H:%M:%S'),
         'eventDescription': event_detail.get('eventDescription', [{'latestDescription': None}])[0]['latestDescription'],
-        'affectedEntities': ', '.join([entity['entityValue'] for entity in event_detail.get('affectedEntities', [])])
+        'affectedEntities': ', '.join(entity['entityValue'] for entity in event_detail.get('affectedEntities', []))
     }
-
-    if event_detail.get('account'):
-        event_data['account'] = event_detail.get('account')
-    else:
-        event_data['account'] = event.get('account')
-
-    event_data['eventSource'] = event.get('source')
-    event_data['ingestionTime'] = datetime.strptime(
-        event.get('time'), '%Y-%m-%dT%H:%M:%SZ').strftime('%d/%m/%Y %H:%M:%S')
-
-    if event_detail.get('endTime'):
-        event_data['endTime'] = datetime.strptime(
-            event_detail['endTime'], '%a, %d %b %Y %H:%M:%S %Z').strftime('%d/%m/%Y %H:%M:%S')
-
-    if event_detail.get('lastUpdatedTime'):
-        event_data['lastUpdatedTime'] = datetime.strptime(
-            event_detail['lastUpdatedTime'], '%a, %d %b %Y %H:%M:%S %Z').strftime('%d/%m/%Y %H:%M:%S')
-    else:
-        event_data['lastUpdatedTime'] = datetime.strptime(
-            event_detail['startTime'], '%a, %d %b %Y %H:%M:%S %Z').strftime('%d/%m/%Y %H:%M:%S')
-
+    if 'endTime' in event_detail:
+        event_data['endTime'] = datetime.strptime(event_detail['endTime'], '%a, %d %b %Y %H:%M:%S %Z').strftime('%d/%m/%Y %H:%M:%S')
+    """
+    Get all other fields as is.
+    """
+    event_data.update((key, value) for key, value in event_detail.items() if key not in event_data)
     return event_data
 
 @log_entry_exit

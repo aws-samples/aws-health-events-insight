@@ -36,7 +36,7 @@ Parameters:
     Description: Optional S3 bucket for dataLake, leave empty for no datalake setup.
   costSelected:
     Type: String
-    Description: Include last month cost?, leave black if not required.
+    Description: Include last month cost(yes/no)?, leave black if not required.
 
 Resources:
   HealtheventStorageStack:
