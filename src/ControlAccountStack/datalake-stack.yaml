@@ -1,0 +1,104 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: (AWS Heidi) Cloudformation stack for sending events to S3
+Parameters:
+  datalakebucket:
+    Type: String
+    Description: S3 Bucket for ingestion lambda source code 
+
+Resources:
+  EventHealthKinesisFirehoseRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "EventHealthKinesisFirehoseRole-${AWS::AccountId}-${AWS::Region}"
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: firehose.amazonaws.com
+            Action: sts:AssumeRole 
+      Policies:
+        - PolicyName: cloudwatch-logs-access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "logs:CreateLogGroup"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                Resource: "*"
+        - PolicyName: AllowS3Access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: AllowS3Access
+                Effect: Allow
+                Action:
+                  - "s3:AbortMultipartUpload"
+                  - "s3:GetBucketLocation"
+                  - "s3:GetObject"
+                  - "s3:ListBucket"
+                  - "s3:ListBucketMultipartUploads"
+                  - "s3:PutObject"
+                Resource:
+                  - !Sub "arn:aws:s3:::${datalakebucket}"
+                  - !Sub "arn:aws:s3:::${datalakebucket}/*"
+  EventHealtKinesisFirehose:
+    Type: "AWS::KinesisFirehose::DeliveryStream"
+    Properties:
+      DeliveryStreamName: !Sub EventHealthDataLake-${AWS::AccountId}-${AWS::Region}
+      DeliveryStreamType: "DirectPut"
+      ExtendedS3DestinationConfiguration:
+        BucketARN: !Sub arn:aws:s3:::${datalakebucket}
+        RoleARN: !GetAtt EventHealthKinesisFirehoseRole.Arn
+        Prefix: "eventhealth-data/"
+        CompressionFormat: "UNCOMPRESSED"
+        BufferingHints:
+          IntervalInSeconds: 60
+          SizeInMBs: 5
+        ErrorOutputPrefix: "eventhealth-error-output/"
+        CloudWatchLoggingOptions:
+          Enabled: true
+          LogGroupName: "EventHealtKinesisFirehoseLogs"
+          LogStreamName: "EventHealtKinesisFirehoseStream"
+
+  EventHealtRuleforDataLakeRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "EventHealtRuleforDataLakeRole-${AWS::AccountId}-${AWS::Region}"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+            Action: sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: !Sub "EventHealtRuleforDataLakePolicy-${AWS::AccountId}-${AWS::Region}"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "firehose:PutRecord"
+                  - "firehose:PutRecordBatch"
+                Resource: 
+                  - !GetAtt EventHealtKinesisFirehose.Arn
+
+  EventHealtRuleforDataLake:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: EventHealtRuleforDataLake
+      EventBusName: default
+      EventPattern:
+        source:
+          - aws.health
+          - awshealthtest
+      Name: !Sub "EventHealtRuleforDataLake-${AWS::AccountId}-${AWS::Region}"
+      State: ENABLED
+      Targets:
+        - Id: EventHealtKinesisFirehose
+          Arn: !GetAtt  EventHealtKinesisFirehose.Arn
+          RoleArn: !GetAtt EventHealtRuleforDataLakeRole.Arn

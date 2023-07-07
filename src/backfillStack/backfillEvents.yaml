@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-
+Description: (AWS Heidi) Back fill stack to do one time backfill of events to dynamodb
 Resources:
   EventHealthLambdaForDDBInitialLoadRole:
     Type: AWS::IAM::Role

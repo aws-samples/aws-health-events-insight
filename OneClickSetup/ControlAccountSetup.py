@@ -2,6 +2,8 @@ import boto3
 import subprocess
 from botocore.exceptions import ClientError
 import re
+import zipfile
+import os
 
 
 def get_default_region():
@@ -23,13 +25,22 @@ def get_account_id():
     account_id = sts_client.get_caller_identity().get("Account")
     return account_id
 
+def zip_files(source_dir, output_zip):
+    with zipfile.ZipFile(output_zip, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        for root, _, files in os.walk(source_dir):
+            for file in files:
+                file_path = os.path.join(root, file)
+                relative_path = os.path.relpath(file_path, source_dir)
+                zipf.write(file_path, relative_path)
+
 
 def create_or_get_s3_bucket(bucket_name, region):
     #create bucket or upload file if bucket is supplied by user
     try:
         s3_client = boto3.client('s3', region_name=region)
         s3_client.head_bucket(Bucket=bucket_name)
-        print(f"S3 bucket {bucket_name} already exists")
+        print(f"Skip Creating: S3 bucket {bucket_name} already exists")
+        supplied_bucket = bucket_name
     except ClientError as e:
         if region == 'us-east-1':
             s3_client.create_bucket(Bucket=bucket_name)
@@ -37,10 +48,16 @@ def create_or_get_s3_bucket(bucket_name, region):
             location = {'LocationConstraint': region}
             s3_client.create_bucket(Bucket=bucket_name, CreateBucketConfiguration=location)
         s3_client.get_waiter("bucket_exists").wait(Bucket=bucket_name)
+        supplied_bucket = bucket_name
         print(f"S3 bucket {bucket_name} has been created")
+    return supplied_bucket
 
+def sync_cfnfiles(bucket_name,region):
+    create_or_get_s3_bucket(bucket_name, region)
     try:
-        aws_sync_command = f"aws s3 sync src s3://{bucket_name}/"
+        #Added Support for Lambda Build PreSync
+        zip_files('../src/lambda-source-code', '../src/lambda-source-code/lambda.zip')
+        aws_sync_command = f"aws s3 sync ../src s3://{bucket_name}/"
         subprocess.call(aws_sync_command.split())
     except ClientError as e:
         print("Error while syncing S3. Check if deployer role has required S3 and KMS permissions.")
@@ -103,7 +120,7 @@ def translate_text(Include_targetLang):
         targetLang = ""
     return targetLang
 
-def create_or_update_cloudformation_stack(region, stack_name, bucket_name, quicksight_user, SageMakerEndpoint, quicksight_service_role, isPrimaryRegion, secondaryRegion,webhookSelected):
+def create_or_update_cloudformation_stack(region, stack_name, bucket_name, quicksight_user, SageMakerEndpoint, quicksight_service_role, isPrimaryRegion, secondaryRegion,webhookSelected,datalakebucket,costSelected):
     """
     Create or update the CloudFormation stack based on its status.
     """
@@ -115,7 +132,7 @@ def create_or_update_cloudformation_stack(region, stack_name, bucket_name, quick
         if stack.get("StackName") == stack_name:
             response = cfn_client.update_stack(
                 StackName=stack_name,
-                TemplateURL=f"https://{bucket_name}.s3.amazonaws.com/ManagementAccountStack/managementaccount-stack.yaml",
+                TemplateURL=f"https://{bucket_name}.s3.amazonaws.com/ControlAccountStack/root-stack.yaml",
                 Parameters=[
                     {"ParameterKey": "EventHealthBucket", "ParameterValue": bucket_name},
                     {"ParameterKey": "PrincipalOrgID", "ParameterValue": get_organization_details()},
@@ -125,7 +142,9 @@ def create_or_update_cloudformation_stack(region, stack_name, bucket_name, quick
                     {"ParameterKey": "targetLang", "ParameterValue": targetLang},
                     {"ParameterKey": "isPrimaryRegion", "ParameterValue": isPrimaryRegion},
                     {"ParameterKey": "secondaryRegion", "ParameterValue": secondaryRegion},
-                    {"ParameterKey": "webhookSelected", "ParameterValue": webhookSelected}
+                    {"ParameterKey": "webhookSelected", "ParameterValue": webhookSelected},
+                    {"ParameterKey": "datalakebucket", "ParameterValue": datalakebucket},
+                    {"ParameterKey": "costSelected", "ParameterValue": costSelected}
                 ],
                 Capabilities=["CAPABILITY_NAMED_IAM", "CAPABILITY_AUTO_EXPAND"],
                 DisableRollback=True
@@ -136,7 +155,7 @@ def create_or_update_cloudformation_stack(region, stack_name, bucket_name, quick
     if response is None:
         response = cfn_client.create_stack(
             StackName=stack_name,
-            TemplateURL=f"https://{bucket_name}.s3.amazonaws.com/ManagementAccountStack/managementaccount-stack.yaml",
+            TemplateURL=f"https://{bucket_name}.s3.amazonaws.com/ControlAccountStack/root-stack.yaml",
             Parameters=[
                 {"ParameterKey": "EventHealthBucket", "ParameterValue": bucket_name},
                 {"ParameterKey": "PrincipalOrgID", "ParameterValue": get_organization_details()},
@@ -146,18 +165,21 @@ def create_or_update_cloudformation_stack(region, stack_name, bucket_name, quick
                 {"ParameterKey": "targetLang", "ParameterValue": targetLang},
                 {"ParameterKey": "isPrimaryRegion", "ParameterValue": isPrimaryRegion},
                 {"ParameterKey": "secondaryRegion", "ParameterValue": secondaryRegion},
-                {"ParameterKey": "webhookSelected", "ParameterValue": webhookSelected}
+                {"ParameterKey": "webhookSelected", "ParameterValue": webhookSelected},
+                {"ParameterKey": "datalakebucket", "ParameterValue": datalakebucket},
+                {"ParameterKey": "costSelected", "ParameterValue": costSelected}
             ],
             Capabilities=["CAPABILITY_NAMED_IAM", "CAPABILITY_AUTO_EXPAND"],
             DisableRollback=True
         )
         print(f"Stack creation initiated for {region}: {response.get('StackId')}")
+#Get account_id for resource names
+account_id = get_account_id()
+# Get the default region or prompt user for a region
+default_region = get_default_region()
 
 # Get input for multiRegion Deployment
 multiregion = input(f"Do you want to deploy central accout setup in multiregion (yes/no): ")
-
-# Get the default region or prompt user for a region
-default_region = get_default_region()
 region = input(f"Enter Primary region name (Hit enter to use default: {default_region}): ") or default_region
 
 if multiregion == "yes":
@@ -165,14 +187,22 @@ if multiregion == "yes":
 else:
     secondaryRegion= ""
 
-# Get the AWS account ID
-account_id = get_account_id()
-
 # Get the S3 bucket name or prompt user for a bucket name
 bucket_name = input(f"Enter S3 bucket name for Primary Region (Hit enter to use default: awseventhealth-{account_id}-{region}): ") or f"awseventhealth-{account_id}-{region}"
-
 if multiregion == "yes":
     Secondary_bucket_name = input(f"Enter S3 bucket name for Secondary Region (Hit enter to use default: awseventhealth-{account_id}-{secondaryRegion}): ") or f"awseventhealth-{account_id}-{secondaryRegion}"
+
+# Prompt user to include delivery events to S3 to create datalake
+s3selected = input("Do you want to send events to s3 for datalake/future reference? (yes/no): ")
+if s3selected == "yes":
+    datalakebucket = input(f"Enter S3 bucket name for Primary datalake(Hit enter to use default: awseventhealth-{account_id}-{region}): ") or f"awseventhealth-{account_id}-{region}"
+    create_or_get_s3_bucket(datalakebucket, region)
+    if multiregion == "yes":
+        Secondarydatalakebucket = input(f"Enter S3 bucket name for secondary datalake(Hit enter to use default: awseventhealth-{account_id}-{secondaryRegion}): ") or f"awseventhealth-{account_id}-{secondaryRegion}"
+        create_or_get_s3_bucket(Secondarydatalakebucket, region)
+else:  
+    datalakebucket = ""
+    Secondarydatalakebucket=""
 
 # Get the QuickSight service role or use a default value
 quicksight_service_role = input("Enter QuickSight Service Role (Hit enter to use default: aws-quicksight-service-role-v0): ") or "aws-quicksight-service-role-v0"
@@ -195,20 +225,23 @@ targetLang = translate_text(Include_targetLang)
 
 # Prompt user to include webhook for 3rd party event ingestion
 webhookSelected = input("Do you want setup webhook for 3rd party event ingestion? (yes/no): ")
-# Get response for translation
 if webhookSelected != "yes":
     webhookSelected = ""
 
+# Prompt user to include webhook for 3rd party event ingestion
+costSelected = input("Do you want include last month cost for reference(Note: Need access to billing data, may need cross account access if deployment is in link account (yes/no): ")
+if costSelected != "yes":
+    costSelected = ""
 
-# Create or get the S3 bucket
-create_or_get_s3_bucket(bucket_name, region)
+# Create or get the S3 bucket and s
+sync_cfnfiles(bucket_name, region)
 if multiregion == "yes":
-    create_or_get_s3_bucket(Secondary_bucket_name, secondaryRegion)
+    sync_cfnfiles(Secondary_bucket_name, secondaryRegion)
 
 # Create or update the CloudFormation stack
 stack_name = f"HealthEventDashboardStack{account_id}-{region}"
-create_or_update_cloudformation_stack(region, stack_name, bucket_name, quicksight_user, SageMakerEndpoint, quicksight_service_role,'Y',secondaryRegion,webhookSelected)
+create_or_update_cloudformation_stack(region, stack_name, bucket_name, quicksight_user, SageMakerEndpoint, quicksight_service_role,'Y',secondaryRegion,webhookSelected,datalakebucket,costSelected)
 
 if multiregion == "yes":
     stack_name = f"HealthEventDashboardStack{account_id}-{secondaryRegion}"
-    create_or_update_cloudformation_stack(secondaryRegion, stack_name, Secondary_bucket_name, quicksight_user, SageMakerEndpoint, quicksight_service_role,'N',secondaryRegion,webhookSelected)
+    create_or_update_cloudformation_stack(secondaryRegion, stack_name, Secondary_bucket_name, quicksight_user, SageMakerEndpoint, quicksight_service_role,'N',secondaryRegion,webhookSelected,Secondarydatalakebucket,costSelected)

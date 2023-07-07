@@ -1,3 +1,5 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: (AWS Heidi) Child stack for AWS Heidi
 Parameters:
   PrimaryEventHealthBus:
     Type: String
