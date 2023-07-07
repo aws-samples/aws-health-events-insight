@@ -70,13 +70,13 @@ In this section, we will go through the steps to set up permissions for StackSet
 
     `python3 link-Account-RegionSetup.py`
 
-    **Option 2 (Bulk deployment via stackset)**:
+    **Option 2 (Bulk deployment via StackSet)**:
 
     1. In CloudFormation Console create a stackset with new resources from the template file ![Childaccount-Stack.yaml](https://github.com/aws-samples/aws-health-events-insight/blob/main/src/ChildAccountStack/childaccount-stack.yaml) .
     2. Input the HealthBus ARN. Go to the AWS CloudFormation console and get this information from output of the stack (HealthEventDashboardStack).
     3. Select deployment targets (Deploy to OU or deploy to organization).
-    4. Select regions to deploy
-    5. Summit..
+    4. Select regions to deploy.
+    5. Submit.
 
 3. **Setup QuickSight data refresh interval** By default Amazon QuickSight dataset will refresh every hour. you can edit this schedule to meet your need.
 
