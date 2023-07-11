@@ -64,6 +64,8 @@ def aws_health(event, context):
     costSelected = os.environ.get('costSelected')
     if costSelected == "yes":
         get_cost_impact(event, event_data)
+    else:
+        event_data['monthlySpend'] = "costNotSelected"
 
     save_event_data(table, event_data)
 
