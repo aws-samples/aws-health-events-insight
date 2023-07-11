@@ -128,7 +128,7 @@ def get_cost_impact(event, event_data):
                     keys = group['Keys']
                     monthly_spend = group['Metrics']['UnblendedCost']['Amount']  # Add the spend to the existing value
             else:
-                monthly_spend = "0"
+                monthly_spend = ''
         event_data['monthlySpend'] = monthly_spend  # Assign the final value to event_data
 
     except Exception as e:

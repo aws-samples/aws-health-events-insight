@@ -8,7 +8,6 @@ import datetime
 
 
 
-sagemaker_runtime = boto3.client('sagemaker-runtime')
 translate = boto3.client('translate')
 org_client = boto3.client('organizations')
 log_level = logging.DEBUG
@@ -40,7 +39,8 @@ def summarize_event_description(event_data, sagemaker_endpoint):
     try:
         sagemaker_endpoint_name = sagemaker_endpoint.split('/')[-1]  # Extract the name from the ARN
         sagemaker_endpoint_region = sagemaker_endpoint.split(':')[3]
-        model_max_length = 1000  # Adjust the desired maximum length
+        model_max_length = 1000  # Adjust the desired maximum length]
+        sagemaker_runtime = boto3.client('sagemaker-runtime',sagemaker_endpoint_region)
         summary_text = sagemaker_runtime.invoke_endpoint(
             EndpointName=sagemaker_endpoint_name,
             Body=bytes(event_data['eventDescription'][:model_max_length], 'utf-8'),
