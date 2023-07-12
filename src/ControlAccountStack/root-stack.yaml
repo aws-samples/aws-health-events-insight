@@ -21,22 +21,25 @@ Parameters:
     Description: The Quicksight Service role attached to QS, Default is aws-quicksight-service-role-v0
   SageMakerEndpoint:
     Type: String
-    Description: Optional Sagemaker endpoint for summarization model, leave blank if no summarization required.
+    Description: (Optional) Sagemaker endpoint for summarization model, leave blank if no summarization required.
   targetLang:
     Type: String
-    Description: Optional Target language code(e.g. for English, en ), leave blank of no translation required.
+    Description: (Optional) Target language code(e.g. for English, en ), leave blank of no translation required.
   secondaryRegion:
     Type: String
-    Description: Optional Enter name of secondary region, leave black if its single region deployment
+    Description: (Optional) Enter name of secondary region, leave black if its single region deployment
   webhookSelected:
     Type: String
-    Description: Optional Webhook Required?, leave black if not required
+    Description: (Optional) Webhook Required?, leave black if not required
   datalakebucket:
     Type: String
-    Description: Optional S3 bucket for dataLake, leave empty for no datalake setup.
+    Description: (Optional) S3 bucket for dataLake, leave empty for no datalake setup.
   costSelected:
     Type: String
-    Description: Include last month cost(yes/no)?, leave black if not required.
+    Description: (Optional) Include last month cost(yes/no)?, leave black if not required.
+  AllowedIpRange:
+    Type: String
+    Description: (Optional) AllowedIpRange for eventDetails url access, leave black if not required.
 
 Resources:
   HealtheventStorageStack:
@@ -102,6 +105,7 @@ Resources:
       Parameters:
         QuickSightUser: !Ref QuickSightUser
         AWSHealthEventQSDataSetArn: !GetAtt  QuickSightStack.Outputs.AWSHealthEventQSDataSetArn
+        EventDetailUrl: !If [ AllowedIpRange, !GetAtt EventDetailUrls.Outputs.EventDetailApiEndpoint, "https://test" ]
   
   WebhookStack:
     Condition: webhookSelected
@@ -119,6 +123,15 @@ Resources:
       Parameters:
         datalakebucket: !Ref datalakebucket
 
+  EventDetailUrls:
+    Condition: AllowedIpRange
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://${EventHealthBucket}.s3.amazonaws.com/eventDetailsUrl/restApiEventDetails-stack.yaml
+      Parameters:
+        DynamoDBArn: !GetAtt  HealtheventStorageStack.Outputs.EventHealthDDBTableArn
+        AllowedIpRange: !Ref AllowedIpRange
+
 Outputs:
   CentralHealthBusArn:
     Value: !GetAtt HealtheventEventBusStack.Outputs.EventHealthBusArn
@@ -128,3 +141,4 @@ Outputs:
 Conditions:
   webhookSelected: !Equals [!Ref webhookSelected, "yes"]
   datalakebucket: !Not [!Equals [!Ref datalakebucket, ""]]
+  AllowedIpRange: !Not [!Equals [!Ref AllowedIpRange, ""]]

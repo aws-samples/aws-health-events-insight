@@ -120,7 +120,7 @@ def translate_text(Include_targetLang):
         targetLang = ""
     return targetLang
 
-def create_or_update_cloudformation_stack(region, stack_name, bucket_name, quicksight_user, SageMakerEndpoint, quicksight_service_role, isPrimaryRegion, secondaryRegion,webhookSelected,datalakebucket,costSelected):
+def create_or_update_cloudformation_stack(region, stack_name, bucket_name, quicksight_user, SageMakerEndpoint, quicksight_service_role, isPrimaryRegion, secondaryRegion,webhookSelected,datalakebucket,costSelected,AllowedIpRange):
     """
     Create or update the CloudFormation stack based on its status.
     """
@@ -144,7 +144,8 @@ def create_or_update_cloudformation_stack(region, stack_name, bucket_name, quick
                     {"ParameterKey": "secondaryRegion", "ParameterValue": secondaryRegion},
                     {"ParameterKey": "webhookSelected", "ParameterValue": webhookSelected},
                     {"ParameterKey": "datalakebucket", "ParameterValue": datalakebucket},
-                    {"ParameterKey": "costSelected", "ParameterValue": costSelected}
+                    {"ParameterKey": "costSelected", "ParameterValue": costSelected},
+                    {"ParameterKey": "AllowedIpRange", "ParameterValue": AllowedIpRange}
                 ],
                 Capabilities=["CAPABILITY_NAMED_IAM", "CAPABILITY_AUTO_EXPAND"],
                 DisableRollback=True
@@ -167,7 +168,8 @@ def create_or_update_cloudformation_stack(region, stack_name, bucket_name, quick
                 {"ParameterKey": "secondaryRegion", "ParameterValue": secondaryRegion},
                 {"ParameterKey": "webhookSelected", "ParameterValue": webhookSelected},
                 {"ParameterKey": "datalakebucket", "ParameterValue": datalakebucket},
-                {"ParameterKey": "costSelected", "ParameterValue": costSelected}
+                {"ParameterKey": "costSelected", "ParameterValue": costSelected},
+                {"ParameterKey": "AllowedIpRange", "ParameterValue": AllowedIpRange}
             ],
             Capabilities=["CAPABILITY_NAMED_IAM", "CAPABILITY_AUTO_EXPAND"],
             DisableRollback=True
@@ -228,10 +230,17 @@ webhookSelected = input("Do you want setup webhook for 3rd party event ingestion
 if webhookSelected != "yes":
     webhookSelected = ""
 
-# Prompt user to include webhook for 3rd party event ingestion
+# Prompt user to include Cost for last month
 costSelected = input("Do you want include last month cost for reference(Note: Need access to billing data, may need cross account access if deployment is in link account (yes/no): ")
 if costSelected != "yes":
     costSelected = ""
+
+# Prompt user to include eventDetail Url
+eventUrlSelected = input("Do you want setup eventUrl for easy access to event descriptions? (no/yes): ") or "yes"
+if eventUrlSelected != "yes":
+    AllowedIpRange = ""
+else:
+    AllowedIpRange = input("Provide IP Range which can access these eventUrls, this could be your VPN range (Default 0.0.0.0/0): ") or "0.0.0.0/0"
 
 # Create or get the S3 bucket and s
 sync_cfnfiles(bucket_name, region)
@@ -240,8 +249,8 @@ if multiregion == "yes":
 
 # Create or update the CloudFormation stack
 stack_name = f"HealthEventDashboardStack{account_id}-{region}"
-create_or_update_cloudformation_stack(region, stack_name, bucket_name, quicksight_user, SageMakerEndpoint, quicksight_service_role,'Y',secondaryRegion,webhookSelected,datalakebucket,costSelected)
+create_or_update_cloudformation_stack(region, stack_name, bucket_name, quicksight_user, SageMakerEndpoint, quicksight_service_role,'Y',secondaryRegion,webhookSelected,datalakebucket,costSelected,AllowedIpRange)
 
 if multiregion == "yes":
     stack_name = f"HealthEventDashboardStack{account_id}-{secondaryRegion}"
-    create_or_update_cloudformation_stack(secondaryRegion, stack_name, Secondary_bucket_name, quicksight_user, SageMakerEndpoint, quicksight_service_role,'N',secondaryRegion,webhookSelected,Secondarydatalakebucket,costSelected)
+    create_or_update_cloudformation_stack(secondaryRegion, stack_name, Secondary_bucket_name, quicksight_user, SageMakerEndpoint, quicksight_service_role,'N',secondaryRegion,webhookSelected,Secondarydatalakebucket,costSelected,AllowedIpRange)
