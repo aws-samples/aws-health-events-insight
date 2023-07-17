@@ -130,6 +130,7 @@ Resources:
       TemplateURL: !Sub https://${EventHealthBucket}.s3.amazonaws.com/eventDetailsUrl/restApiEventDetails-stack.yaml
       Parameters:
         DynamoDBArn: !GetAtt  HealtheventStorageStack.Outputs.EventHealthDDBTableArn
+        DynamoDBName: !GetAtt  HealtheventStorageStack.Outputs.EventHealthDDBTable
         AllowedIpRange: !Ref AllowedIpRange
 
 Outputs:

@@ -173,11 +173,6 @@ Resources:
                 Format: dd/MM/yyyy HH:mm:ss
             - CreateColumnsOperation:
                 Columns:
-                - ColumnName: location
-                  ColumnId: location
-                  Expression: ifelse({eventRegion}="us-east-1","N.Virginia",{eventRegion}="us-east-2","Ohio",{eventRegion}="us-west-1","California",{eventRegion}="us-west-2","Oregon","others")
-            - CreateColumnsOperation:
-                Columns:
                 - ColumnName: Status
                   ColumnId: Status
                   Expression: |
@@ -190,10 +185,6 @@ Resources:
                 - ColumnName: eventDuration
                   ColumnId: bcd2978c-5b1a-4eb4-829d-5ad5c66bf06e
                   Expression: dateDiff({startTime},{endTime},'HH')
-            - TagColumnOperation:
-                ColumnName: location
-                Tags:
-                - ColumnGeographicRole: STATE
             - ProjectOperation:
                 ProjectedColumns:
                 - eventTypeCode
@@ -212,7 +203,6 @@ Resources:
                 - eventRegion
                 - endTime
                 - account
-                - location
                 - Status
                 - eventDuration
                 - monthlySpend
