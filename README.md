@@ -63,7 +63,7 @@ In this section, we will go through the steps to set up permissions for StackSet
 
 2. **Child Account Setup:**
 
-**You must create an Child Account Setup for each Region for which you want to receive AWS Health events. If you don’t create this setup, you won’t receive events. For example, to receive events from the US West (Oregon) Region, you must create this setup in us-east-2. Some AWS Health events are not Region-specific. Events that aren't specific to a Region are called global events. These include events sent for AWS Identity and Access Management (IAM). To receive global events, you must create Child Account Setup for the US East (N. Virginia) Region and US West (Oregon) Region as backup Region if needed(see bulk deployment option for large deployments)**
+**Note:** You must create an Child Account Setup for each Region for which you want to receive AWS Health events. If you don’t create this setup, you won’t receive events. Events that aren't specific to a Region are called global events. To receive global events, you must create Child Account Setup for the US East (N. Virginia) Region and US West (Oregon) Region as backup Region if needed(see bulk deployment option for large deployments)
 
 CloudFormation template in ![src/ChildAccountStack](https://github.com/aws-samples/aws-health-events-insight/blob/main/src/ChildAccountStack) will set up all the necessary components required to send health events to control account. You can use stacksets to deploy to multiple accounts and regions.
 
