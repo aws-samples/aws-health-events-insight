@@ -61,11 +61,7 @@ In this section, we will go through the steps to set up permissions for StackSet
     **TIP**: If CloudFormation failed due to wrong parameters (such as wrong Amazon QuickSight principal entered, etc.), rerun step 2 with correct parameters. This would update the failed stack.
 
 
-2. **Child Account Setup:**
-
-**Note:** You must create an Child Account Setup for each Region for which you want to receive AWS Health events. If you don’t create this setup, you won’t receive events. Events that aren't specific to a Region are called global events. To receive global events, you must create Child Account Setup for the US East (N. Virginia) Region and US West (Oregon) Region as backup Region if needed(see bulk deployment option for large deployments)
-
-CloudFormation template in ![src/ChildAccountStack](https://github.com/aws-samples/aws-health-events-insight/blob/main/src/ChildAccountStack) will set up all the necessary components required to send health events to control account. You can use stacksets to deploy to multiple accounts and regions.
+2. **Child Account Setup:** CloudFormation template in ![src/ChildAccountStack](https://github.com/aws-samples/aws-health-events-insight/blob/main/src/ChildAccountStack) will set up all the necessary components required to send health events to control account. You can use stacksets to deploy to multiple accounts and regions. **Note:**You must create an Child Account Setup for each Region for which you want to receive AWS Health events. To receive global events, you must create Child Account Setup for the US East (N. Virginia) Region and US West (Oregon) Region as backup Region if needed.
 
     **Option 1**:
 
