@@ -42,7 +42,7 @@ def deploy_cloudformation_template(template_path, parameters):
         print("Failed to create CloudFormation stack:", str(e))
 
 # Specify the path to the CloudFormation YAML template
-template_path = 'src/ChildAccountStack/childaccount-stack.yaml'
+template_path = '../src/ChildAccountStack/childaccount-stack.yaml'
 
 # Input parameter values
 parameters = [
