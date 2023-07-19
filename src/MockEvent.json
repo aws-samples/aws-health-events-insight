@@ -8,6 +8,7 @@
       "eventTypeCode":"EC2",
       "eventTypeCategory":"issue",
       "startTime":"Wed, 3 May 2023 11:00:00 GMT",
+      "endTime": "Wed, 3 May 2023 11:10:00 GMT",
       "eventDescription":[
          {
             "language":"en_US",
@@ -20,3 +21,4 @@
          }
       ]
 }
+

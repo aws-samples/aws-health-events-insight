@@ -18,13 +18,12 @@ def process_event_data(event, event_detail):
         'account': event_detail.get('account') or event.get('account'),
         'eventSource': event.get('source'),
         'startTime': datetime.strptime(event_detail.get('startTime', ''), '%a, %d %b %Y %H:%M:%S %Z').strftime('%d/%m/%Y %H:%M:%S') if event_detail.get('startTime') else '',
+        'endTime': datetime.strptime(event_detail.get('endTime',''), '%a, %d %b %Y %H:%M:%S %Z').strftime('%d/%m/%Y %H:%M:%S') if event_detail.get('endTime') else '',
         'ingestionTime': datetime.strptime(event.get('time'), '%Y-%m-%dT%H:%M:%SZ').strftime('%d/%m/%Y %H:%M:%S'),
         'lastUpdatedTime': datetime.strptime(event_detail.get('lastUpdatedTime', event_detail['startTime']), '%a, %d %b %Y %H:%M:%S %Z').strftime('%d/%m/%Y %H:%M:%S'),
         'eventDescription': event_detail.get('eventDescription', [{'latestDescription': None}])[0]['latestDescription'],
         'affectedEntities': ', '.join(entity['entityValue'] for entity in event_detail.get('affectedEntities', []))
     }
-    if 'endTime' in event_detail:
-        event_data['endTime'] = datetime.strptime(event_detail['endTime'], '%a, %d %b %Y %H:%M:%S %Z').strftime('%d/%m/%Y %H:%M:%S')
     """
     Get all other fields as is.
     """

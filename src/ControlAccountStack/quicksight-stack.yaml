@@ -120,6 +120,8 @@ Resources:
               Type: STRING
             - Name: accountName
               Type: STRING
+            - Name: monthlySpend
+              Type: STRING
             - Name: eventSource
               Type: STRING
             - Name: eventScopeCode
@@ -144,68 +146,74 @@ Resources:
               Type: STRING
             - Name: endTime
               Type: STRING
+            - Name: region
+              Type: STRING
+            - Name: arn
+              Type: STRING
             - Name: account
               Type: STRING
-            - Name: monthlySpend
+            - Name: statusCode
               Type: STRING
-
       LogicalTableMap:
         "AWSHealthQSLT":
           Alias: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
-          Source:
-            PhysicalTableId: "AWSHealthQSPT"
           DataTransforms:
-            - CastColumnTypeOperation:
-                ColumnName: ingestionTime
-                NewColumnType: DATETIME
-                Format: dd/MM/yyyy HH:mm:ss
-            - CastColumnTypeOperation:
-                ColumnName: lastUpdatedTime
-                NewColumnType: DATETIME
-                Format: dd/MM/yyyy HH:mm:ss
-            - CastColumnTypeOperation:
-                ColumnName: startTime
-                NewColumnType: DATETIME
-                Format: dd/MM/yyyy HH:mm:ss
-            - CastColumnTypeOperation:
-                ColumnName: endTime
-                NewColumnType: DATETIME
-                Format: dd/MM/yyyy HH:mm:ss
-            - CreateColumnsOperation:
-                Columns:
-                - ColumnName: Status
-                  ColumnId: Status
-                  Expression: |
-                    ifelse({endTime}>now(), "Upcoming",
-                    isNull({endTime}) and {eventTypeCategory}="scheduledChange", "Upcoming",
-                    addDateTime(7, 'DD', {startTime})<now() and {eventTypeCategory}="accountNotification" and isNull({endTime}), "Archived",
-                    isNull({endTime}), "Active", "Archived")
-            - CreateColumnsOperation:
-                Columns:
-                - ColumnName: eventDuration
-                  ColumnId: bcd2978c-5b1a-4eb4-829d-5ad5c66bf06e
-                  Expression: dateDiff({startTime},{endTime},'HH')
-            - ProjectOperation:
-                ProjectedColumns:
-                - eventTypeCode
-                - eventSummary
-                - accountName
-                - eventSource
-                - eventScopeCode
-                - eventTypeCategory
-                - affectedEntities
-                - eventArn
-                - ingestionTime
-                - service
-                - eventDescription
-                - lastUpdatedTime
-                - startTime
-                - eventRegion
-                - endTime
-                - account
-                - Status
-                - eventDuration
-                - monthlySpend
+          - CastColumnTypeOperation:
+              ColumnName: ingestionTime
+              NewColumnType: DATETIME
+              Format: dd/MM/yyyy HH:mm:ss
+          - CastColumnTypeOperation:
+              ColumnName: lastUpdatedTime
+              NewColumnType: DATETIME
+              Format: dd/MM/yyyy HH:mm:ss
+          - CastColumnTypeOperation:
+              ColumnName: startTime
+              NewColumnType: DATETIME
+              Format: dd/MM/yyyy HH:mm:ss
+          - CreateColumnsOperation:
+              Columns:
+              - ColumnName: endTimeC
+                ColumnId: 933a5d30-3922-496d-bc77-171eba9f0710
+                Expression: ifelse( strlen({endTime})>0,parseDate(endTime,'dd/MM/yyyy HH:mm:ss'),NULL)
+          - CreateColumnsOperation:
+              Columns:
+              - ColumnName: Status
+                ColumnId: Status
+                Expression: |
+                  ifelse(endTimeC>now(), "Upcoming",
+                  isNull(endTimeC) and {eventTypeCategory}="scheduledChange", "Upcoming",
+                  addDateTime(7, 'DD', {startTime})<now() and {eventTypeCategory}="accountNotification" and isNull(endTimeC), "Archived",
+                  isNull(endTimeC), "Active", "Archived")
+          - CreateColumnsOperation:
+              Columns:
+              - ColumnName: eventDuration
+                ColumnId: bcd2978c-5b1a-4eb4-829d-5ad5c66bf06e
+                Expression: dateDiff({startTime},endTimeC,'HH')
+          - ProjectOperation:
+              ProjectedColumns:
+              - eventTypeCode
+              - eventSummary
+              - accountName
+              - monthlySpend
+              - eventSource
+              - eventScopeCode
+              - eventTypeCategory
+              - affectedEntities
+              - eventArn
+              - ingestionTime
+              - service
+              - eventDescription
+              - lastUpdatedTime
+              - startTime
+              - eventRegion
+              - account
+              - statusCode
+              - Status
+              - eventDuration
+              - endTime
+              - endTimeC
+          Source:
+            PhysicalTableId: AWSHealthQSPT
       Permissions:
       - Principal: !Sub "${QuickSightUser}"
         Actions:

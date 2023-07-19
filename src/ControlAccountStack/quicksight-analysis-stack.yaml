@@ -274,149 +274,6 @@ Resources:
                       SameSheetTargetVisualConfiguration:
                         TargetVisualOptions: ALL_VISUALS
               ColumnHierarchies: []
-          - TableVisual:
-              VisualId: 060046f2-4e40-4d4a-b4ac-7cf9d0960591
-              Title:
-                Visibility: VISIBLE
-                FormatText:
-                  RichText: "<visual-title>Events Details</visual-title>"
-              Subtitle:
-                Visibility: VISIBLE
-              ChartConfiguration:
-                FieldWells:
-                  TableAggregatedFieldWells:
-                    GroupBy:
-                    - CategoricalDimensionField:
-                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.service.0.1683501457253
-                        Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
-                          ColumnName: service
-                    - CategoricalDimensionField:
-                        FieldId: AWSHealthQSLT.accountName.12.1688097043849
-                        Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
-                          ColumnName: accountName
-                    - CategoricalDimensionField:
-                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventRegion.2.1683501482351
-                        Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
-                          ColumnName: eventRegion
-                    - CategoricalDimensionField:
-                        FieldId: 0b236e72-c6f6-43d7-809c-4572a2178870.7.1683501689380
-                        Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
-                          ColumnName: Status
-                    - CategoricalDimensionField:
-                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventTypeCategory.3.1683501517677
-                        Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
-                          ColumnName: eventTypeCategory
-                    - DateDimensionField:
-                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.startTime.4.1683501539232
-                        Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
-                          ColumnName: startTime
-                    - DateDimensionField:
-                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.endTime.5.1683501542503
-                        Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
-                          ColumnName: endTime
-                    - DateDimensionField:
-                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.lastUpdatedTime.6.1683501542503
-                        Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
-                          ColumnName: lastUpdatedTime
-                    - CategoricalDimensionField:
-                        FieldId: AWSHealthQSLT.monthlySpend.13.1688327602727
-                        Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
-                          ColumnName: monthlySpend
-                    - CategoricalDimensionField:
-                        FieldId: 57755e0a-445e-4a54-94fe-ea6395a8b869.14.1689108023569
-                        Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
-                          ColumnName: eventDetailUrl
-                    - CategoricalDimensionField:
-                        FieldId: AWSHealthQSLT.eventScopeCode.11.1688001965316
-                        Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
-                          ColumnName: eventScopeCode
-                    - CategoricalDimensionField:
-                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventDescription.8.1683501691236
-                        Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
-                          ColumnName: eventDescription
-                    - CategoricalDimensionField:
-                        FieldId: AWSHealthQSLT.eventSummary.12.1688004360280
-                        Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
-                          ColumnName: eventSummary
-                    - CategoricalDimensionField:
-                        FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventArn.9.1683563397883
-                        Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
-                          ColumnName: eventArn
-                    Values: []
-                SortConfiguration:
-                  RowSort:
-                  - FieldSort:
-                      FieldId: AWSHealthQSLT.accountName.12.1688097043849
-                      Direction: DESC
-                  PaginationConfiguration:
-                    PageSize: 10000
-                    PageNumber: 1
-                TableOptions:
-                  HeaderStyle:
-                    TextWrap: WRAP
-                    Height: 25
-                  CellStyle:
-                    Height: 51
-                TotalOptions:
-                  TotalsVisibility: VISIBLE
-                  Placement: END
-                  ScrollStatus: SCROLLED
-                FieldOptions:
-                  SelectedFieldOptions:
-                  - FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.service.0.1683501457253
-                    URLStyling:
-                      LinkConfiguration:
-                        Target: NEW_TAB
-                        Content:
-                          CustomTextContent:
-                            Value: test
-                            FontConfiguration:
-                              FontDecoration: UNDERLINE
-                  - FieldId: 57755e0a-445e-4a54-94fe-ea6395a8b869.14.1689108023569
-                    URLStyling:
-                      LinkConfiguration:
-                        Target: NEW_TAB
-                        Content:
-                          CustomTextContent:
-                            Value: EventDetailsUrl
-                            FontConfiguration:
-                              FontDecoration: UNDERLINE
-                  - FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventDescription.8.1683501691236
-                    Width: 697px
-                  - FieldId: AWSHealthQSLT.eventSummary.12.1688004360280
-                    Width: 288px
-                  - FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventArn.9.1683563397883
-                    Width: 538px
-                  Order:
-                  - b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.service.0.1683501457253
-                  - AWSHealthQSLT.accountName.12.1688097043849
-                  - b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventRegion.2.1683501482351
-                  - 0b236e72-c6f6-43d7-809c-4572a2178870.7.1683501689380
-                  - b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventTypeCategory.3.1683501517677
-                  - b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.startTime.4.1683501539232
-                  - b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.endTime.5.1683501542503
-                  - b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.lastUpdatedTime.6.1683501542503
-                  - AWSHealthQSLT.monthlySpend.13.1688327602727
-                  - 57755e0a-445e-4a54-94fe-ea6395a8b869.14.1689108023569
-                  - AWSHealthQSLT.eventScopeCode.11.1688001965316
-                  - b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventDescription.8.1683501691236
-                  - AWSHealthQSLT.eventSummary.12.1688004360280
-                  - b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventArn.9.1683563397883
-              Actions: []
           - PieChartVisual:
               VisualId: 732f058d-4bd2-473b-bdd8-8891b2783605
               Title:
@@ -666,6 +523,141 @@ Resources:
                       SameSheetTargetVisualConfiguration:
                         TargetVisualOptions: ALL_VISUALS
               ColumnHierarchies: []
+          - TableVisual:
+              VisualId: 27d57516-b701-4c25-b8ae-1a6a8691feaf
+              Title:
+                Visibility: VISIBLE
+                FormatText:
+                  RichText: "<visual-title>EventDetails</visual-title>"
+              Subtitle:
+                Visibility: VISIBLE
+              ChartConfiguration:
+                FieldWells:
+                  TableAggregatedFieldWells:
+                    GroupBy:
+                    - CategoricalDimensionField:
+                        FieldId: AWSHealthQSLT.service.0.1689722387264
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                          ColumnName: service
+                    - CategoricalDimensionField:
+                        FieldId: AWSHealthQSLT.eventRegion.8.1689722876524
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                          ColumnName: eventRegion
+                    - CategoricalDimensionField:
+                        FieldId: Status.12.1689723403075
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                          ColumnName: Status
+                    - CategoricalDimensionField:
+                        FieldId: AWSHealthQSLT.account.1.1689722392215
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                          ColumnName: account
+                    - CategoricalDimensionField:
+                        FieldId: AWSHealthQSLT.accountName.2.1689722393579
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                          ColumnName: accountName
+                    - DateDimensionField:
+                        FieldId: AWSHealthQSLT.startTime.3.1689722402483
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                          ColumnName: startTime
+                    - DateDimensionField:
+                        FieldId: 933a5d30-3922-496d-bc77-171eba9f0710.4.1689722405931
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                          ColumnName: endTimeC
+                    - NumericalDimensionField:
+                        FieldId: bcd2978c-5b1a-4eb4-829d-5ad5c66bf06e.7.1689722863698
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                          ColumnName: eventDuration
+                    - CategoricalDimensionField:
+                        FieldId: AWSHealthQSLT.monthlySpend.8.1689722786294
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                          ColumnName: monthlySpend
+                    - CategoricalDimensionField:
+                        FieldId: 51fc89f6-deb3-4761-a8ef-dd0876dccf99.9.1689722926318
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                          ColumnName: eventDetailUrl
+                    - CategoricalDimensionField:
+                        FieldId: AWSHealthQSLT.eventDescription.11.1689723413162
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                          ColumnName: eventDescription
+                    - CategoricalDimensionField:
+                        FieldId: AWSHealthQSLT.eventArn.12.1689723414373
+                        Column:
+                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                          ColumnName: eventArn
+                    Values: []
+                SortConfiguration: {}
+                TableOptions:
+                  HeaderStyle:
+                    TextWrap: WRAP
+                    Height: 25
+                  CellStyle:
+                    Height: 25
+                FieldOptions:
+                  SelectedFieldOptions:
+                  - FieldId: AWSHealthQSLT.service.0.1689722387264
+                    URLStyling:
+                      LinkConfiguration:
+                        Target: NEW_TAB
+                        Content:
+                          CustomIconContent:
+                            Icon: LINK
+                  - FieldId: 51fc89f6-deb3-4761-a8ef-dd0876dccf99.9.1689722926318
+                    URLStyling:
+                      LinkConfiguration:
+                        Target: NEW_WINDOW
+                        Content:
+                          CustomTextContent:
+                            Value: eventDetailUrl
+                            FontConfiguration:
+                              FontDecoration: UNDERLINE
+                  Order:
+                  - AWSHealthQSLT.service.0.1689722387264
+                  - AWSHealthQSLT.eventRegion.8.1689722876524
+                  - Status.12.1689723403075
+                  - AWSHealthQSLT.account.1.1689722392215
+                  - AWSHealthQSLT.accountName.2.1689722393579
+                  - AWSHealthQSLT.startTime.3.1689722402483
+                  - 933a5d30-3922-496d-bc77-171eba9f0710.4.1689722405931
+                  - bcd2978c-5b1a-4eb4-829d-5ad5c66bf06e.7.1689722863698
+                  - AWSHealthQSLT.monthlySpend.8.1689722786294
+                  - 51fc89f6-deb3-4761-a8ef-dd0876dccf99.9.1689722926318
+                  - AWSHealthQSLT.eventDescription.11.1689723413162
+                  - AWSHealthQSLT.eventArn.12.1689723414373
+              ConditionalFormatting:
+                ConditionalFormattingOptions:
+                - Cell:
+                    FieldId: Status.12.1689723403075
+                    TextFormat:
+                      BackgroundColor:
+                        Solid:
+                          Expression: '{Status} = "Active"'
+                          Color: "#DE3B00"
+                - Cell:
+                    FieldId: Status.12.1689723403075
+                    TextFormat:
+                      BackgroundColor:
+                        Solid:
+                          Expression: '{Status} = "Upcoming"'
+                          Color: "#FF8700"
+                - Cell:
+                    FieldId: Status.12.1689723403075
+                    TextFormat:
+                      BackgroundColor:
+                        Solid:
+                          Expression: '{Status} = "Archived"'
+                          Color: "#9FDEF1"
+              Actions: []
           Layouts:
           - Configuration:
               GridLayout:
@@ -712,12 +704,12 @@ Resources:
                   ColumnSpan: 22
                   RowIndex: 6
                   RowSpan: 11
-                - ElementId: 060046f2-4e40-4d4a-b4ac-7cf9d0960591
+                - ElementId: 27d57516-b701-4c25-b8ae-1a6a8691feaf
                   ElementType: VISUAL
                   ColumnIndex: 0
                   ColumnSpan: 36
                   RowIndex: 17
-                  RowSpan: 9
+                  RowSpan: 11
                 CanvasSizeOptions:
                   ScreenCanvasSizeOptions:
                     ResizeOption: RESPONSIVE
@@ -866,6 +858,14 @@ Resources:
                 Scope: ALL_VISUALS
           Status: ENABLED
           CrossDataset: SINGLE_DATASET
+        ColumnConfigurations:
+        - Column:
+            DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+            ColumnName: eventDetailUrl
+          FormatConfiguration:
+            StringFormatConfiguration:
+              NullValueFormatConfiguration:
+                NullString: eventDetails
         AnalysisDefaults:
           DefaultNewSheetConfiguration:
             InteractiveLayoutConfiguration:

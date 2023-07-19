@@ -74,20 +74,26 @@ Resources:
                     return []
 
             def get_event_data(event_details, event_description):
-                print(event_details)
                 event_data = {
                     'eventArn': event_details['arn'],
-                    'service': event_details.get('service', ''),
-                    'eventScopeCode': event_details.get('eventScopeCode', ''),
-                    'lastUpdatedTime': event_details.get('lastUpdatedTime', '').strftime('%a, %d %b %Y %H:%M:%S %Z'),
                     'eventRegion': event_details.get('region', ''),
                     'eventTypeCode': event_details.get('eventTypeCode', ''),
-                    'eventTypeCategory': event_details.get('eventTypeCategory', ''),
-                    'startTime': event_details.get('startTime', '').strftime('%a, %d %b %Y %H:%M:%S %Z'),
+                    'lastUpdatedTime': event_details.get('lastUpdatedTime', ''),
+                    'endTime': event_details.get('endTime', ''),
+                    'startTime': event_details.get('startTime', ''),
                     'eventDescription': [{'latestDescription': event_description['latestDescription']}]
                 }
-                if event_details.get('endTime'):
-                    event_data['endTime'] = event_details.get('endTime').strftime('%a, %d %b %Y %H:%M:%S %Z')
+
+                for key, value in event_data.items():
+                    if isinstance(value, datetime):
+                        event_data[key] = value.strftime('%a, %d %b %Y %H:%M:%S %Z')
+                
+                """
+                Get all other fields as is.
+                """
+                event_data.update((key, value) for key, value in event_details.items() if key not in event_data)
+                print(event_data)
+
                 return event_data
 
             def send_event_defaultBus(event_data):
