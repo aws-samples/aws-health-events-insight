@@ -24,6 +24,7 @@ def lambda_handler(event, context):
                         "eventSummary": "Test Event Summary",
                         "eventSource": "mocktest",
                         "monthlySpend": "0.0",
+                        "statusCode":"closed",
                         "eventDescription": [{
                             "language": "en_US",
                             "latestDescription": "This is a test AWS Health Event AWS_WORKSPACES_MAINTENANCE_SCHEDULED\n"
