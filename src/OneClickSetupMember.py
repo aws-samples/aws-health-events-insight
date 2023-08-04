@@ -8,19 +8,11 @@ default_region = session.region_name
 # Get the username details for the specified AWS account
 sts_client = boto3.client("sts")
 account_id = sts_client.get_caller_identity().get("Account")
+DataCollectionBusArn = input("Enter the value for Primary EventHealth Bus: ")
+BackfillEvents = input("Do you want to backfill healthevents. The data can only be retrieved for the last 90 days.(N/Y):") or "Y"
 
 # Get input parameters from user
 region = input("Enter region name: (Hit enter to use default: {}): ".format(default_region)) or default_region
-
-# Prompt the user to enter the value for the HealthEventBusArn parameter
-# Get input for multiRegion Deployment
-multiregion = input(f"Do you have multi region deployment for central account (yes/no): ")
-
-PrimaryEventHealthBus = input("Enter the value for Primary EventHealth Bus: ")
-if multiregion == "yes":
-    SecondaryEventHealthBus = input("Enter the value for Secondary EventHealth Bus: ")
-else:
-    SecondaryEventHealthBus = ""
 
 def deploy_cloudformation_template(template_path, parameters):
     cloudformation = boto3.client('cloudformation',region)
@@ -28,7 +20,7 @@ def deploy_cloudformation_template(template_path, parameters):
     with open(template_path, 'r') as file:
         template_body = file.read()
     
-    stack_name = "EventHealthLink{}-{}".format(account_id,region)
+    stack_name = "HeidiDataCollection-MemberAccount-{}-{}".format(account_id,region)
     
     try:
         response = cloudformation.create_stack(
@@ -42,12 +34,10 @@ def deploy_cloudformation_template(template_path, parameters):
         print("Failed to create CloudFormation stack:", str(e))
 
 # Specify the path to the CloudFormation YAML template
-template_path = '../src/ChildAccountStack/childaccount-stack.yaml'
+template_path = '../src/AWSHealthModule/cfnTemplates/AWSHealthEventMember.yaml'
 
 # Input parameter values
-parameters = [
-    {'ParameterKey': 'PrimaryEventHealthBus','ParameterValue': PrimaryEventHealthBus},
-    {'ParameterKey': 'SecondaryEventHealthBus','ParameterValue': SecondaryEventHealthBus}
-    ]
+parameters = [{'ParameterKey': 'DataCollectionBusArn','ParameterValue': DataCollectionBusArn},
+              {"ParameterKey": "BackfillEvents", "ParameterValue": BackfillEvents},]
 
 deploy_cloudformation_template(template_path, parameters)

@@ -1,0 +1,5 @@
+﻿Account ID,ARN,Email,Name,Status,Joined method,Joined timestamp,Tag
+"123456789012","arn:aws:organizations::123456789123:account/o-xxxxxxxxxx/123456789012","Production@example.com","ProductionAccount","ACTIVE","CREATED",Wed Jan 27 2021 10:36:17 GMT-0500 (Eastern Standard Time),"Production"
+"234567890123","arn:aws:organizations::123456789123:account/o-xxxxxxxxxx/234567890123","Operations@example.com","OperationsAccount","ACTIVE","CREATED",Wed Jan 27 2021 10:36:17 GMT-0500 (Eastern Standard Time),"Production"
+"345678901234","arn:aws:organizations::345678901234:account/o-xxxxxxxxxx/345678901234","Development@example.com","DevelopmentAccount","ACTIVE","CREATED",Wed Jan 27 2021 10:36:17 GMT-0500 (Eastern Standard Time),"Development"
+"456789012345","arn:aws:organizations::456789012345:account/o-xxxxxxxxxx/456789012345","Security@example.com","SecurityAccount","ACTIVE","CREATED",Wed Jan 27 2021 10:36:17 GMT-0500 (Eastern Standard Time),"Security"

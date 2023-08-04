@@ -1,0 +1,70 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description:  (AwsHealthEvents) Root stack for AwsHealthEvents module
+
+Parameters:
+  DataCollectionBucket:
+    Type: String
+  QuicksightServiceRole:
+    Type: String
+    Default: aws-quicksight-service-role-v0
+    Description: The Quicksight Service role attached to QS, Default is aws-quicksight-service-role-v0
+  QuickSightUser:
+    Type: String
+    Description: The QuickSight User that is allowed configure and manage the QS dashboard.
+  DataCollectionBusArn:
+    Type: String
+    Description: Primary Event Health Bus Arn(Get it from  DataCollectionRootStack)
+  BackfillEvents:
+    Default: "Y"
+    Type: String
+    Description: (Optional) Backfill health events Y/N, leave it blank for No.
+  AllowedIpRange:
+    Default: "0.0.0.0/0"
+    Type: String
+    Description: AllowedIpRange who can access EventDetailUrls, leave blank to disable stack creating DDB and APIGW for DetailUrl.
+  AuthorizationType:
+    Default: "NONE"
+    Type: String
+    Description: Specify a valid Default value for AuthorizationType. Valid values are ["NONE", "AWS_IAM", "CUSTOM", "COGNITO_USER_POOLS"]
+
+Resources:
+  AWSHealtheventQSDataSet:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://${DataCollectionBucket}.s3.amazonaws.com/DataCollection-metadata/AWSHealthModule/cfnTemplates/AWSHealthEventQSDataSet.yaml
+      Parameters:
+        DataCollectionBucket: !Ref DataCollectionBucket
+        QuicksightServiceRole: !Ref QuicksightServiceRole
+        QuickSightUser: !Ref QuickSightUser
+
+  AWSHealtheventQSAnalysis:
+    Type: AWS::CloudFormation::Stack
+    Properties: 
+      TemplateURL: !Sub https://${DataCollectionBucket}.s3.amazonaws.com/DataCollection-metadata/AWSHealthModule/cfnTemplates/AWSHealthEventQSAnalysis.yaml
+      Parameters:
+        AWSHealthEventQuickSightDataSetArn: !GetAtt  AWSHealtheventQSDataSet.Outputs.AWSHealthEventQuickSightDataSetArn
+        EventDetailUrl: !If [ AllowedIpRange, !GetAtt AWSHealthEventDetailsUrl.Outputs.EventDetailApiEndpoint, "https://test" ]
+        QuickSightUser: !Ref QuickSightUser
+
+  AWSHealthEventMemberAccountandRegion:
+    Type: AWS::CloudFormation::Stack
+    Properties: 
+      TemplateURL: !Sub https://${DataCollectionBucket}.s3.amazonaws.com/DataCollection-metadata/AWSHealthModule/cfnTemplates/AWSHealthEventMember.yaml
+      Parameters:
+        DataCollectionBusArn: !Ref DataCollectionBusArn
+        BackfillEvents: !Ref BackfillEvents
+        EventDetailUrl: !If [ AllowedIpRange, !GetAtt AWSHealthEventDetailsUrl.Outputs.EventDetailApiEndpoint, "https://test" ]
+
+  AWSHealthEventDetailsUrl:
+    Condition: AllowedIpRange
+    Type: AWS::CloudFormation::Stack
+    Properties: 
+      TemplateURL: !Sub https://${DataCollectionBucket}.s3.amazonaws.com/DataCollection-metadata/AWSHealthModule/cfnTemplates/AWSHealthEventDetailUrl.yaml
+      Parameters:
+        DataCollectionBusArn: !Ref DataCollectionBusArn
+        AllowedIpRange: !Ref AllowedIpRange
+        AuthorizationType: !Ref AuthorizationType
+
+Conditions:
+  AllowedIpRange: !Not [!Equals [!Ref AllowedIpRange, ""]]
+

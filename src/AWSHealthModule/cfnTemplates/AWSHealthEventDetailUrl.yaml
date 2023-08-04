@@ -1,0 +1,295 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: (AwsHealthEvents) Stack to create eventUrl via APIGW.
+
+Parameters:
+  DataCollectionBusArn:
+    Type: String
+    Description: Primary Event Health Bus Arn(Get it from  DataCollectionRootStack)
+  AllowedIpRange:
+    Default: "0.0.0.0/0"
+    Type: String
+    Description: AllowedIpRange who can access EventDetailUrls.
+  AuthorizationType:
+    Default: "NONE"
+    Type: String
+    Description: Specify a valid Default value for AuthorizationType. Valid values are ["NONE", "AWS_IAM", "CUSTOM", "COGNITO_USER_POOLS"]
+
+Resources:
+  AWSHealthEventDynamoDB:
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Retain
+    Type: AWS::DynamoDB::GlobalTable
+    Properties:
+      TableName: !Sub "AWSHealthEventDDBTable-${AWS::AccountId}"
+      AttributeDefinitions:
+        - AttributeName: eventArn
+          AttributeType: S
+      KeySchema:
+        - AttributeName: eventArn
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
+      Replicas: 
+        - Region: !Sub "${AWS::Region}"
+
+  AWSHealthEventLambadDdbRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole 
+      Policies:
+        - PolicyName: cloudwatch-logsAccess-Policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*"
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
+        - PolicyName: AwshealtheventDDBAccess-Policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:PutItem
+                Resource: !GetAtt AWSHealthEventDynamoDB.Arn
+        - PolicyName: AwshealtheventSendEventAccess-Policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "events:PutEvents"
+                Resource: !Ref DataCollectionBusArn
+
+  AWSHealthEventLambadDdb:
+    Type: AWS::Lambda::Function
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W58
+            reason: "Given AWSLambda ExecutionRole and allows Cloudwatch"
+    Properties: 
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import os
+          # Initialize the DynamoDB client
+          dynamodb = boto3.resource('dynamodb')
+          table = dynamodb.Table(os.environ['DynamoDBName'])
+
+          def lambda_handler(event, context):
+              try:
+                  # Extract the data from the event
+                  payload = event['detail']
+                  event_data = {
+                      'eventDescription': payload.get('eventDescription', [{'latestDescription': None}])[0]['latestDescription'],
+                      'affectedEntities': ', '.join(entity['entityValue'] for entity in payload.get('affectedEntities', [])),
+                      'account': event.get('account')
+                  }
+                  event_data.update((key, value) for key, value in payload.items() if key not in event_data)
+                  print(event_data)
+
+                  # Put the data into DynamoDB
+                  response = table.put_item(Item=event_data)
+
+                  # If successful, return the response
+                  return {
+                      'statusCode': 200,
+                      'body': json.dumps('Data inserted successfully.')
+                  }
+              except Exception as e:
+                  # If there's an error, return the error message
+                  return {
+                      'statusCode': 500,
+                      'body': json.dumps(str(e))
+                  }
+      Handler: index.lambda_handler
+      Runtime: python3.10
+      Timeout: 900
+      ReservedConcurrentExecutions: 5
+      Role: !GetAtt AWSHealthEventLambadDdbRole.Arn
+      Environment:
+        Variables:
+          DynamoDBName: !Ref AWSHealthEventDynamoDB
+  
+  AWSHealthtEventDataCollectionBusRule:
+    Type: "AWS::Events::Rule"
+    Properties:
+      Description: "Event Health bus rule for aws.health events"
+      EventBusName: !Select [1, !Split ["/", !Ref DataCollectionBusArn]]
+      EventPattern:
+        source:
+          - "aws.health"
+          - "awshealthtest"
+      Targets:
+        - Arn: !GetAtt AWSHealthEventLambadDdb.Arn
+          Id: "LambaasTarget"
+
+  EventHealthLambdaForDDBPermissions:
+    Type: "AWS::Lambda::Permission"
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt AWSHealthEventLambadDdb.Arn
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt AWSHealthtEventDataCollectionBusRule.Arn
+
+  apiGatewayRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: AllowApiGatewayServiceToAssumeRole
+            Effect: Allow
+            Action:
+              - 'sts:AssumeRole'
+            Principal:
+              Service:
+                - apigateway.amazonaws.com
+      Policies:
+        - PolicyName: dynamoDBAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                Resource: !GetAtt AWSHealthEventDynamoDB.Arn
+        - PolicyName: ApiGatewayLogsPolicy
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:DescribeLogGroups
+                  - logs:DescribeLogStreams
+                  - logs:PutLogEvents
+                  - logs:GetLogEvents
+                  - logs:FilterLogEvents
+                Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*"
+
+  ApiGatewayLogs:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      LogGroupName: !Sub /aws/api-gateway/${apiGateway}
+      RetentionInDays: 30
+
+
+  APIGatewayAccountSettings:
+    Type: AWS::ApiGateway::Account
+    Properties: 
+      CloudWatchRoleArn: !GetAtt apiGatewayRole.Arn
+  
+  apiGateway:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+      Name: !Sub AWSHealthEventDetailUrl-${AWS::AccountId}-${AWS::Region}-api
+      Description: (AWSHEIDI) for eventdetail Urls
+      Policy: {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Deny",
+                "Principal": "*",
+                "Action": "execute-api:Invoke",
+                "Resource": "execute-api:/*",
+                "Condition": {
+                    "NotIpAddress": {
+                        "aws:SourceIp": !Ref AllowedIpRange
+                    }
+                }
+            },
+            {
+                "Effect": "Allow",
+                "Principal": "*",
+                "Action": "execute-api:Invoke",
+                "Resource": "execute-api:/*"
+            }
+        ]
+       }
+
+  apiGatewayMethodResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref apiGateway
+      ParentId: !GetAtt apiGateway.RootResourceId
+      PathPart: healthevent
+
+  apiGatewayMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: !Ref AuthorizationType
+      HttpMethod: GET
+      MethodResponses:
+        - StatusCode: 200
+          ResponseModels:
+            text/html: Empty
+      RequestParameters: 
+        method.request.querystring.eventArn: False
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS
+        Credentials: !GetAtt apiGatewayRole.Arn 
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:dynamodb:action/GetItem
+        PassthroughBehavior: WHEN_NO_TEMPLATES
+        RequestTemplates: 
+          application/json: !Sub 
+              |- 
+              {
+                "TableName": "${AWSHealthEventDynamoDB}",
+                "Key":{
+                  "eventArn": {"S": "$util.escapeJavaScript($input.params().querystring.get("eventArn"))"}
+                }
+              }
+        IntegrationResponses:
+          - StatusCode: 200
+            ResponseTemplates:
+              application/json: !Sub 
+                  |- 
+                  <html>
+                  <h1>Event Detail</h1>
+                  <br><b>Service:</b> $input.path('$.Item.service.S')<br>
+                  <br><b>Account:</b> $input.path('$.Item.account.S')<br>
+                  <br><b>Region:</b> $input.path('$.Item.eventRegion.S')<br>
+                  <br><b>Affected Entities:</b> $input.path('$.Item.affectedEntities.S')<br>
+                  <br><b>Description:</b> $input.json('$.Item.eventDescription.S').replaceAll("\\n","<br>")
+                  </html>
+      ResourceId: !Ref apiGatewayMethodResource
+      RestApiId: !Ref apiGateway
+
+  apiGatewayDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - apiGatewayMethod
+    Properties:
+      RestApiId: !Ref apiGateway
+      StageName: 'v1'
+      StageDescription:     
+        AccessLogSetting:
+          DestinationArn: !GetAtt ApiGatewayLogs.Arn
+          Format: $context.requestId 
+
+Outputs:
+  EventDetailApiEndpoint: 
+    Description: "API Gateway endpoint URL for Prod stage for Product api"
+    Value: !Sub "https://${apiGateway}.execute-api.${AWS::Region}.amazonaws.com/v1/healthevent?eventArn="
