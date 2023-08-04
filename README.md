@@ -63,7 +63,7 @@ In this section, we will go through the steps to set up permissions for StackSet
     4. Select regions to deploy.
     5. Submit.
 
-**Note:** You MUST complete Child Account Setup for each Region for which you want to receive AWS Health events. To receive global events, you must create Child Account Setup for the US East (N. Virginia) Region and US West (Oregon) Region as backup Region if needed.
+**Note:** You MUST complete Member Account Setup for each Region for which you want to receive AWS Health events. To receive global events, you must create Member Account/Region Setup for the US East (N. Virginia) Region and US West (Oregon) Region as backup Region if needed.
 
 3. **Update Metadata (Optional):** Map AWS Accounts with Account Name and Account Tags (AppID, Env, etc.)
 

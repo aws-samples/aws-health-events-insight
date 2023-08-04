@@ -889,7 +889,7 @@ Resources:
         CalculatedFields:
         - DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
           Name: eventDetailUrl
-          Expression: concat("https://7dvwcaufrb.execute-api.us-east-1.amazonaws.com/v1/healthevent?eventArn=",eventArn)
+          Expression: !Sub concat("${EventDetailUrl}",eventArn)
         ParameterDeclarations:
         - StringParameterDeclaration:
             ParameterValueType: SINGLE_VALUED
