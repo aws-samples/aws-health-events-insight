@@ -51,9 +51,9 @@ In this section, we will go through the steps to set up permissions for StackSet
     1. Setup AWS credntials for desired Account and Regions.
     2. Go to aws-health-events-insight directory and run link-Account-RegionSetup.py and provide necessary inputs. 
 
-    `cd aws-health-events-insight`
+    `cd aws-health-events-insight/src`
 
-    `python3 src/OneClickSetupMember.py`
+    `python3 OneClickSetupMember.py`
 
     **Option 2 (Bulk deployment via StackSet)**:
 
@@ -83,7 +83,7 @@ In this section, we will go through the steps to set up permissions for StackSet
 
 # Troubleshooting Steps:
 
-If AWS Lakeformation is enabled and you encounter the error message "Resource handler returned message: Insufficient permissions to execute the query. Insufficient Lake Formation permission(s) on awshealthevent," follow these steps to resolve the issue:
+**If AWS Lakeformation is enabled and you encounter the error message "Resource handler returned message: Insufficient permissions to execute the query. Insufficient Lake Formation permission(s) on awshealthevent," follow these steps to resolve the issue:**
 
 1. Navigate to Lakeformation and go to the "Permissions" tab.
 2. Under "Data Lake Permissions," select "Grant."
@@ -94,4 +94,9 @@ If AWS Lakeformation is enabled and you encounter the error message "Resource ha
 
 By following these steps, you should be able to resolve the "Insufficient Lake Formation permission(s) on awshealthevent" issue. This will grant the necessary permissions to the specified Amazon QuickSight ARN and allow it to access the AWS Lake Formation resources correctly.
 
+**Possible Reasons for No Data in AWS QuickSight Analysis:**
 
+1. Your AWS environment is relatively new and does not currently have any AWS Health Events. To verify this, please check the AWS Health Dashboard on the AWS Console.
+2. The Amazon QuickSight DataSet was created before the event could be backfilled by Amazon Kinesis Firehose. To resolve this, manually refresh the Amazon QuickSight DataSet.
+
+[![GitHub Clones](https://img.shields.io/badge/dynamic/json?color=success&label=Clone&query=count&url=https://gist.githubusercontent.com/bajwkanw/24109c8c210fc89367f044d83d07c1bc/raw/clone.json&logo=github)](https://github.com/aws-samples/aws-health-events-insight)
