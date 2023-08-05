@@ -1,3 +1,4 @@
+---
 AWSTemplateFormatVersion: '2010-09-09'
 Description: (AwsHealthEvents) Stack to create eventUrl via APIGW.
 
@@ -51,12 +52,12 @@ Resources:
               - Effect: Allow
                 Action:
                   - logs:CreateLogGroup
-                Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*"
+                Resource: !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:*"
               - Effect: Allow
                 Action:
                   - logs:CreateLogStream
                   - logs:PutLogEvents
-                Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
+                Resource: !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
         - PolicyName: AwshealtheventDDBAccess-Policy
           PolicyDocument:
             Version: '2012-10-17'
@@ -181,7 +182,7 @@ Resources:
                   - logs:PutLogEvents
                   - logs:GetLogEvents
                   - logs:FilterLogEvents
-                Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*"
+                Resource: !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:*"
 
   ApiGatewayLogs:
     Type: AWS::Logs::LogGroup
@@ -250,7 +251,7 @@ Resources:
         IntegrationHttpMethod: POST
         Type: AWS
         Credentials: !GetAtt apiGatewayRole.Arn 
-        Uri: !Sub arn:aws:apigateway:${AWS::Region}:dynamodb:action/GetItem
+        Uri: !Sub arn:${AWS::Partition}:apigateway:${AWS::Region}:dynamodb:action/GetItem
         PassthroughBehavior: WHEN_NO_TEMPLATES
         RequestTemplates: 
           application/json: !Sub 

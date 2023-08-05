@@ -1,3 +1,4 @@
+---
 AWSTemplateFormatVersion: '2010-09-09'
 Description: (DataCollection) Stack to enable link account to send data to central DataCollectionBus
 
@@ -54,12 +55,12 @@ Resources:
               - Effect: Allow
                 Action:
                   - logs:CreateLogGroup
-                Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*"
+                Resource: !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:*"
               - Effect: Allow
                 Action:
                   - logs:CreateLogStream
                   - logs:PutLogEvents
-                Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/kinesisfirehose/*"
+                Resource: !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/kinesisfirehose/*"
         # Policy allowing S3 access
         - PolicyName: AllowS3Access
           PolicyDocument:
@@ -75,8 +76,8 @@ Resources:
                   - "s3:ListBucketMultipartUploads"
                   - "s3:PutObject"
                 Resource:
-                  - !Sub "arn:aws:s3:::${DataCollectionBucket}"
-                  - !Sub "arn:aws:s3:::${DataCollectionBucket}/*"
+                  - !Sub "arn:${AWS::Partition}:s3:::${DataCollectionBucket}"
+                  - !Sub "arn:${AWS::Partition}:s3:::${DataCollectionBucket}/*"
 
   # Define an AWS Kinesis Firehose Delivery Stream for data ingestion
   KinesisFirehose:
@@ -87,7 +88,7 @@ Resources:
       DeliveryStreamEncryptionConfigurationInput:
         KeyType: AWS_OWNED_CMK
       ExtendedS3DestinationConfiguration:
-        BucketARN: !Sub "arn:aws:s3:::${DataCollectionBucket}"
+        BucketARN: !Sub "arn:${AWS::Partition}:s3:::${DataCollectionBucket}"
         RoleARN: !GetAtt KinesisFirehoseRole.Arn
         Prefix: "DataCollection-data/!{partitionKeyFromQuery:source}/!{timestamp:yyyy}/!{timestamp:MM}/!{timestamp:dd}/"
         CompressionFormat: "UNCOMPRESSED"

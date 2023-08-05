@@ -1,3 +1,4 @@
+---
 AWSTemplateFormatVersion: '2010-09-09'
 Description: (AwsHealthEvents) Stack to create QuickSight Analysis for AwsHealthEvents
 Parameters:

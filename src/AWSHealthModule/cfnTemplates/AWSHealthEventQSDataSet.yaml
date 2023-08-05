@@ -1,3 +1,4 @@
+---
 AWSTemplateFormatVersion: '2010-09-09'
 Description: (AwsHealthEvents) Stack to create dataset and GlueTables for AwsHealthEvents
 
@@ -155,10 +156,10 @@ Resources:
               - "s3:ListMultipartUploadParts"
               - "s3:CreateBucket"
             Resource: 
-              - !Sub arn:aws:s3:::${DataCollectionBucket}
-              - !Sub arn:aws:s3:::${DataCollectionBucket}/*
-              - arn:aws:s3:::aws-athena-query-results-*
-              - arn:aws:s3:::aws-athena-query-results-*/*
+              - !Sub arn:${AWS::Partition}:s3:::${DataCollectionBucket}
+              - !Sub arn:${AWS::Partition}:s3:::${DataCollectionBucket}/*
+              - !Sub arn:${AWS::Partition}:s3:::aws-athena-query-results-*
+              - !Sub arn:${AWS::Partition}:s3:::aws-athena-query-results-*/*
           - Effect: "Allow"
             Action:
               - athena:BatchGetQueryExecution
