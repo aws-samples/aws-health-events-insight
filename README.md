@@ -72,12 +72,12 @@ In this section, we will go through the steps to set up permissions for StackSet
 
    ![S3 Location](img/s3Location.jpg)
 
-4. **Testing (Optional):** Send a mock event to test eventpipeline
+4. **Testing (Optional):** Send a mock event to test setup.
 
-    1. Go to Amazon EventBridge console and chose default event bus. (You can chose any account or region) and select send events.
+    1. Go to Amazon EventBridge console and chose default event bus. (You can chose any member account or region) and select send events.
     2. **Important** Put the `event source` and `Detail Type` as **"awshealthtest"** , otherwise the rule will discard mock event.
     3. Copy the json from ![MockEvent.json](https://github.com/aws-samples/aws-health-events-insight/blob/main/src/MockEvent.json) and paste it in the events field, hit send
-    4. You will see the event S3. For event to reflect in AWS QuickSight analysis, make sure you refresh the Amazon QuickSight dataset.
+    4. You will see the event in Amazon S3. For event to reflect in Amazon QuickSight analysis, make sure you refresh the Amazon QuickSight dataset.
 
 # Troubleshooting Steps:
 
