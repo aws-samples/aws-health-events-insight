@@ -35,7 +35,7 @@ In this section, we will go through the steps to set up permissions for StackSet
 
     `cd aws-health-events-insight/src`
 
-    `python3 OneClickSetupCentralAccount.py`
+    `python3 OneClickSetup.py`
 
     **Note:** if you're running this script from your local machine, ensure that you have set up AWS credentials properly and have `boto3` , `subprocess` and `botocore.exceptions`  modules. Alternatively, you can use AWS CloudShell, which automatically inherits the login role and have all the required modules with python3.
 
@@ -49,11 +49,11 @@ In this section, we will go through the steps to set up permissions for StackSet
     **Option 1 (Using One click Script):**
 
     1. Setup AWS credntials for desired Account and Regions.
-    2. Go to aws-health-events-insight directory and run link-Account-RegionSetup.py and provide necessary inputs. 
+    2. Go to aws-health-events-insight directory and run python3 OneClickSetup.py and provide necessary inputs. 
 
     `cd aws-health-events-insight/src`
 
-    `python3 OneClickSetupMember.py`
+    `python3 OneClickSetup.py`
 
     **Option 2 (Bulk deployment via StackSet)**:
 
