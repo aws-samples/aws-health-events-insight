@@ -159,7 +159,7 @@ if AWSHealtheventSelected == "Y":
 else:
     AWSHealtheventSelected = "N"
     BackfillEvents = "N"
-    AllowedIpRange = ""
+    AllowedIpRange = "N"
 
 
 

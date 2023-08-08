@@ -8,7 +8,7 @@ Parameters:
   BackfillEvents:
     Default: "Y"
     Type: String
-    Description: (Optional) Backfill health events Y/N, leave it blank for No.
+    Description: (Optional) Backfill health events Y/N.
   EventDetailUrl:
     Type: String
     Default: https://test

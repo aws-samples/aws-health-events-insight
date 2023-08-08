@@ -25,11 +25,9 @@ In this section, we will go through the steps to set up permissions for StackSet
 
 1. **Central Account Setup for AWS Health Events:** The setup script provided in this repo will set up all the necessary components required to receive AWS health events from other accounts. This can be payer or any other regular AWS account which would receive AWS Health data from all other accounts and regions. 
 
-    1. To start, clone aws-health-events-insight repo
+    1. To start, Login to your AWS account and launch `AWS CloudShell` and clone aws-health-events-insight repo.
 
     `git clone https://github.com/aws-samples/aws-health-events-insight.git`
-
-    **TIP**: If you are deploying setup in in ca-central-1 region,  `QuickSight-stack.yaml` would fail. This is due to that CFN property `AWS::QuickSight::RefreshSchedule` doesn't exist in this region yet. You can comment `AWSHealthEventQSDataSetRefresh` in ![AWSHealthEventQSDataSet.yaml](https://github.com/aws-samples/aws-health-events-insight/blob/main/src/AWSHealthModule/cfnTemplates/AWSHealthEventQSDataSet.yaml) and setup refresh schedule from QuickSight console.
 
     2. Go to aws-health-events-insight directory and run ControlAccountSetup.py and provide account specific inputs.
 
@@ -37,12 +35,7 @@ In this section, we will go through the steps to set up permissions for StackSet
 
     `python3 OneClickSetup.py`
 
-    **Note:** if you're running this script from your local machine, ensure that you have set up AWS credentials properly and have `boto3` , `subprocess` and `botocore.exceptions`  modules. Alternatively, you can use AWS CloudShell, which automatically inherits the login role and have all the required modules with python3.
-
-    3. Go to CloudFormation and wait until Status changes to **CREATE_COMPLETE** (about 10-15 minutes). Once status is CREATE_COMPLETE, go to Amazon QuickSight dashboard and verify the analysis deployed. At this point, you must have at least one event in the analysis under historical tab.
-
-**TIP**: If CloudFormation failed due to wrong parameters (such as wrong Amazon QuickSight principal entered, etc.), rerun step 2 with correct parameters. This would update the failed stack.
-
+    3. Once CloudFormation status changes to **CREATE_COMPLETE** (about 10-15 minutes), go to Amazon QuickSight dashboard and verify the analysis deployed. 
 
 2. **Member Account/Region Setup for AWS Health Events:** CloudFormation template in ![AWSHealthEventMember.yaml](https://github.com/aws-samples/aws-health-events-insight/blob/main/src/AWSHealthModule/cfnTemplates/AWSHealthEventMember.yaml) will set up all the necessary components required to send health events to control account. 
 
@@ -79,11 +72,20 @@ In this section, we will go through the steps to set up permissions for StackSet
 
    ![S3 Location](img/s3Location.jpg)
 
-**TIP**: If there are new accounts, you can simply upload a new file with a different name.
+4. **Testing (Optional):** Send a mock event to test eventpipeline
+
+    1. Go to Amazon EventBridge console and chose default event bus. (You can chose any account or region) and select send events.
+    2. **Important** Put the `event source` and `Detail Type` as **"awshealthtest"** , otherwise the rule will discard mock event.
+    3. Copy the json from ![MockEvent.json](https://github.com/aws-samples/aws-health-events-insight/blob/main/src/MockEvent.json) and paste it in the events field, hit send
+    4. You will see the event S3. For event to reflect in AWS QuickSight analysis, make sure you refresh the Amazon QuickSight dataset.
 
 # Troubleshooting Steps:
 
-**If AWS Lakeformation is enabled and you encounter the error message "Resource handler returned message: Insufficient permissions to execute the query. Insufficient Lake Formation permission(s) on awshealthevent," follow these steps to resolve the issue:**
+**Template format error: Unrecognized resource types: [AWS::QuickSight::RefreshSchedule]**
+
+`AWS::QuickSight::RefreshSchedule` doesn't exist in certain regions such as us-west-1, ca-central-1 etc. You can comment out `AWSHealthEventQSDataSetRefresh` section in ![AWSHealthEventQSDataSet.yaml](https://github.com/aws-samples/aws-health-events-insight/blob/main/src/AWSHealthModule/cfnTemplates/AWSHealthEventQSDataSet.yaml) and setup refresh schedule from QuickSight console. 
+
+**"Resource handler returned message: Insufficient permissions to execute the query. Insufficient Lake Formation permission(s) on awshealthevent," follow these steps to resolve the issue:**
 
 1. Navigate to Lakeformation and go to the "Permissions" tab.
 2. Under "Data Lake Permissions," select "Grant."
@@ -92,7 +94,7 @@ In this section, we will go through the steps to set up permissions for StackSet
 5. From the dropdown menu, select the "awshealthdb" database and grant the necessary permission.
 6. Repeat the previous step (Step 5), but this time, select all tables and grant the required permission.
 
-By following these steps, you should be able to resolve the "Insufficient Lake Formation permission(s) on awshealthevent" issue. This will grant the necessary permissions to the specified Amazon QuickSight ARN and allow it to access the AWS Lake Formation resources correctly.
+By following these steps, you should be able to resolve the "Insufficient Lake Formation permission(s) on awshealthevent" issue. This will grant the necessary permissions to the specified Amazon QuickSight ARN and allow it to access the AWS Lake Formation resources correctly. You must repeate same process for Amazon QuickSight service role if thats also lacking these permissions.
 
 **Possible Reasons for No Data in AWS QuickSight Analysis:**
 

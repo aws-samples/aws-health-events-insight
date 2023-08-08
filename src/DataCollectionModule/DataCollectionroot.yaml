@@ -17,13 +17,13 @@ Parameters:
     Description: The AWS Organizations ID for the organization that should be allowed to put events on the event bus.
   AWSHealtheventSelected:
     Type: String
-    Description: (Optional) Deploy AWS Health Events Stack Y/N, leave it blank for No.
+    Description: (Optional) Deploy AWS Health Events Stack Y/N.
   BackfillEvents:
     Type: String
-    Description: (Optional) Backfill health events Y/N, leave it blank for No.
+    Description: (Optional) Backfill health events Y/N.
   AllowedIpRange:
     Type: String
-    Description: (Optional) AllowedIpRange who can access EventDetailUrls, leave blank to disable stack creating DDB and APIGW for DetailUrl.
+    Description: (Optional) AllowedIpRange who can access EventDetailUrls, Type "N" to disable this.
   AuthorizationType:
     Default: "NONE"
     Type: String
@@ -80,5 +80,5 @@ Resources:
         QuickSightUser: !Ref QuickSightUser
 
 Conditions:
-  AllowedIpRange: !Not [!Equals [!Ref AllowedIpRange, ""]]
+  AllowedIpRange: !Not [!Equals [!Ref AllowedIpRange, "N"]]
   AWSHealtheventSelected: !Equals [!Ref AWSHealtheventSelected, "Y"]

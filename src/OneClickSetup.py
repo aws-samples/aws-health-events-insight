@@ -118,7 +118,7 @@ if selected_option == 'CentralAccount':
     else:
         AWSHealtheventSelected = "N"
         BackfillEvents = "N"
-        AllowedIpRange = ""
+        AllowedIpRange = "N"
 
     # Create or get the S3 bucket and s
     sync_cfnfiles(bucket_name, region)
