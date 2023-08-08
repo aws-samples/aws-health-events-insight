@@ -85,7 +85,7 @@ In this section, we will go through the steps to set up permissions for StackSet
 
 `AWS::QuickSight::RefreshSchedule` doesn't exist in certain regions such as us-west-1, ca-central-1 etc. You can comment out `AWSHealthEventQSDataSetRefresh` section in ![AWSHealthEventQSDataSet.yaml](https://github.com/aws-samples/aws-health-events-insight/blob/main/src/AWSHealthModule/cfnTemplates/AWSHealthEventQSDataSet.yaml) and setup refresh schedule from QuickSight console. 
 
-**"Resource handler returned message: Insufficient permissions to execute the query. Insufficient Lake Formation permission(s) on awshealthevent," follow these steps to resolve the issue:**
+**Resource handler returned message: Insufficient permissions to execute the query. Insufficient Lake Formation permission(s) on awshealthevent**
 
 1. Navigate to Lakeformation and go to the "Permissions" tab.
 2. Under "Data Lake Permissions," select "Grant."
@@ -98,7 +98,7 @@ By following these steps, you should be able to resolve the "Insufficient Lake F
 
 **Possible Reasons for No Data in AWS QuickSight Analysis:**
 
-1. Your AWS environment is relatively new and does not currently have any AWS Health Events. To verify this, please check the AWS Health Dashboard on the AWS Console.
+1. Your AWS environment is relatively new and does not currently have any AWS Health Events. To verify this, please check the AWS Health Dashboard on the AWS Console and send mock event.
 2. The Amazon QuickSight DataSet was created before the event could be backfilled by Amazon Kinesis Firehose. To resolve this, manually refresh the Amazon QuickSight DataSet.
 
 [![GitHub Clones](https://img.shields.io/badge/dynamic/json?color=success&label=Clone&query=count&url=https://gist.githubusercontent.com/bajwkanw/24109c8c210fc89367f044d83d07c1bc/raw/clone.json&logo=github)](https://github.com/aws-samples/aws-health-events-insight)
