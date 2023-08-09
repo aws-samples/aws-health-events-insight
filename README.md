@@ -29,7 +29,7 @@ In this section, we will go through the steps to set up permissions for StackSet
 
     `git clone https://github.com/aws-samples/aws-health-events-insight.git`
 
-    2. Go to aws-health-events-insight directory and run ControlAccountSetup.py and provide account specific inputs.
+    2. Go to aws-health-events-insight directory and run OneClickSetup.py and provide account specific inputs.
 
     `cd aws-health-events-insight/src`
 
