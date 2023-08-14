@@ -20,6 +20,7 @@ In this section, we will go through the steps to set up permissions for StackSet
 2. Sign up for Amazon QuickSight if you have never used it in this account. To use the forecast capability in QuickSight, sign up for the Enterprise Edition.
 3. Verify Amazon QuickSight service has access to Amazon Athena. To enable, go to security and permissions under *manage QuickSight*.
 4. AWS Health Event Dashboard will use ![SPICE](https://docs.aws.amazon.com/quicksight/latest/user/spice.html) to hold data. Go to SPICE capacity under manage QuickSight and verify you have required space.
+5. (Optional) You can enrich incoming AWS Health Events with data such as Resource Tags, Availability Zone, Resource ARN etc. via AWS Config Aggregator. See ![enrichEvent.md](https://github.com/aws-samples/aws-health-events-insight/blob/main/src/enrichEvent.md) for more details. 
 
 # Deployment
 
@@ -102,3 +103,14 @@ By following these steps, you should be able to resolve the "Insufficient Lake F
 2. The Amazon QuickSight DataSet was created before the event could be backfilled by Amazon Kinesis Firehose. To resolve this, manually refresh the Amazon QuickSight DataSet.
 
 [![GitHub Clones](https://img.shields.io/badge/dynamic/json?color=success&label=Clone&query=count&url=https://gist.githubusercontent.com/bajwkanw/24109c8c210fc89367f044d83d07c1bc/raw/clone.json&logo=github)](https://github.com/aws-samples/aws-health-events-insight)
+
+**Possible Reasons for un-enriched data(No Tags etc):** 
+Remember that events will undergo enhancement if the resource/affected entities are detected within AWS Health Events and recorded in AWS Config Aggregator.
+
+1. Review the logs of the Enrich Lambda function to ensure that Lambda can assume the across account role in account where AWS Config is collating the information.
+2. Validate AWS Config aggregator setting to confirm that it's effectively collecting data from all necessary accounts and regions.
+
+**Note:** The data obtained from AWS Health events occasionally arrives in a non-ARN format. AWS Heidi conducts a comparison of the Affected Entity with the resourceName, ResourceID, and ResourceArn. This could return multiple rows. To suppress misleading data, enrich data will not be enriched for those resource which has duplicate names. Cross check AWS Config aggregator with following query. Go to aggregator account, nevigate to  AWS Config Console run following in query editor. 
+
+`SELECT * WHERE resourceId = '<affectedEntity>' or resourceName = '<affectedEntity>' or arn = '<affectedEntity>'`
+

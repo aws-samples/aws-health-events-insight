@@ -114,7 +114,7 @@ Resources:
               Type: array<string>
               Comment: 'from deserializer'
             - Name: detail
-              Type: struct<eventarn:string,service:string,eventscopecode:string,communicationid:string,lastupdatedtime:string,eventregion:string,eventtypecode:string,eventtypecategory:string,starttime:string,endtime:string,eventdescription:array<struct<language:string,latestdescription:string>>,affectedentities:array<struct<entityvalue:string>>>
+              Type: struct<eventarn:string,service:string,eventscopecode:string,communicationid:string,lastupdatedtime:string,eventregion:string,eventtypecode:string,eventtypecategory:string,starttime:string,endtime:string,eventdescription:array<struct<language:string,latestdescription:string>>,affectedentities:array<struct<entityvalue:string,entityarn:string,entityaz:string,entitytags:array<struct<value:string,key:string>>>>>
               Comment: 'from deserializer'
           # S3 location of the data for the Athena External Table
           Location: !Sub 's3://${DataCollectionBucket}/DataCollection-data'
@@ -249,33 +249,47 @@ Resources:
               DataSourceArn: !GetAtt AWSHealthEventQSDataSource.Arn
               Name: !Sub "awshealthevents-${AWS::AccountId}-${AWS::Region}"
               SqlQuery: |-
-                SELECT
-                  detail.eventTypeCode
-                , ROW_NUMBER() OVER(PARTITION BY detail.eventarn ORDER BY "time" DESC) rowrank
-                , source eventSource
-                , account
-                , CASE WHEN "name" IS NULL THEN "account" ELSE "name" END AS accountName
-                , Tag as accountTag
-                , detail.service
-                , detail.eventScopeCode
-                , detail.eventTypeCategory
-                , detail.eventArn
-                , detail.communicationid
-                , detail.eventRegion
-                , detail.eventdescription[1].latestdescription eventDescription
-                , array_join(transform(detail.affectedEntities, (x) -> x.entityValue), ', ') affectedEntities
-                , array_join(resources, ', ') resources
-                , CAST(from_iso8601_timestamp("time") AS timestamp) ingestionTime
-                , CAST(date_parse(detail.endTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) endTime
-                , CAST(date_parse(detail.startTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) startTime
-                , CAST(date_parse(detail.lastUpdatedTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) lastUpdatedTime
-                , CAST(DATE_DIFF('HOUR', CAST(date_parse(detail.startTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp), CAST(date_parse(detail.endTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp)) AS BIGINT) "eventDuration"
-                , (CASE WHEN (CAST(date_parse(detail.endTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) > current_timestamp) THEN 'Upcoming' WHEN ((CAST(date_parse(detail.endTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) IS NULL) AND (detail.eventTypeCategory = 'scheduledChange')) THEN 'Upcoming' WHEN (((CAST(date_parse(detail.startTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) + (7 * INTERVAL  '1' DAY)) < current_timestamp) AND (detail.eventTypeCategory = 'accountNotification') AND (CAST(date_parse(detail.endTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) IS NULL)) THEN 'Archived' WHEN (CAST(date_parse(detail.endTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) IS NULL) THEN 'Active' ELSE 'Archived' END) "Status"
-                FROM
-                  "AwsDataCatalog"."awshealtheventdb"."awshealthevent" detail  left outer JOIN
-                  "AwsDataCatalog"."awshealtheventdb"."awshealtheventaccinfo" accountinfo
-                ON
-                  detail.account = accountinfo."accountid"
+                  with latestRow as (select * from (SELECT *, ROW_NUMBER() OVER(PARTITION BY detail.eventarn ORDER BY "time" DESC) rowrank FROM "AwsDataCatalog"."awshealtheventdb"."awshealthevent") where rowrank = 1)
+                  SELECT
+                    rowrank,
+                    detail.eventTypeCode,
+                    source AS eventSource,
+                    account,
+                    CASE WHEN "name" IS NULL THEN "account" ELSE "name" END AS accountName,
+                    Tag AS accountTag,
+                    detail.service,
+                    detail.eventScopeCode,
+                    detail.eventTypeCategory,
+                    detail.eventArn,
+                    detail.communicationid,
+                    detail.eventRegion,
+                    detail.eventdescription[1].latestdescription AS eventDescription,
+                    array_join(resources, ', ') AS resources,
+                    CAST(from_iso8601_timestamp("time") AS timestamp) AS ingestionTime,
+                    CAST(date_parse(detail.endTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) AS endTime,
+                    CAST(date_parse(detail.startTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) AS startTime,
+                    CAST(date_parse(detail.lastUpdatedTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) AS lastUpdatedTime,
+                    CAST(DATE_DIFF('HOUR', CAST(date_parse(detail.startTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp), CAST(date_parse(detail.endTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp)) AS BIGINT) AS "eventDuration",
+                    (CASE
+                      WHEN (CAST(date_parse(detail.endTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) > current_timestamp) THEN 'Upcoming'
+                      WHEN ((CAST(date_parse(detail.endTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) IS NULL) AND (detail.eventTypeCategory = 'scheduledChange')) THEN 'Upcoming'
+                      WHEN (((CAST(date_parse(detail.startTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) + (7 * INTERVAL '1' DAY)) < current_timestamp) AND (detail.eventTypeCategory = 'accountNotification') AND (CAST(date_parse(detail.endTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) IS NULL)) THEN 'Archived'
+                      WHEN (CAST(date_parse(detail.endTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) IS NULL) THEN 'Active'
+                      ELSE 'Archived'
+                    END) AS "Status",
+                    entities.entityValue AS affectedEntities,
+                    entities.entityArn AS entityArn,
+                    entities.entityAZ AS entityAZ,
+                    tags.key AS entityTagKey,
+                    tags.value AS entityTagValue
+                  FROM
+                    latestRow detail
+                  LEFT OUTER JOIN
+                    "AwsDataCatalog"."awshealtheventdb"."awshealtheventaccinfo" accountinfo
+                  ON
+                    detail.account = accountinfo."accountid"
+                  CROSS JOIN UNNEST(detail.affectedEntities) AS t(entities)
+                  LEFT JOIN UNNEST(entities.entityTags) AS s(tags) ON TRUE
               Columns:
               - Name: eventTypeCode
                 Type: STRING
@@ -294,8 +308,6 @@ Resources:
               - Name: communicationid
                 Type: STRING
               - Name: eventDescription
-                Type: STRING
-              - Name: affectedEntities
                 Type: STRING
               - Name: resources
                 Type: STRING
@@ -319,12 +331,20 @@ Resources:
                 Type: STRING
               - Name: accountTag
                 Type: STRING
+              - Name: affectedEntities
+                Type: STRING
+              - Name: entityArn
+                Type: STRING
+              - Name: entityAZ
+                Type: STRING
+              - Name: entityTagKey
+                Type: STRING
+              - Name: entityTagValue
+                Type: STRING
         LogicalTableMap:
           AWSHealthQSLT:
             Alias: !Sub "awshealthevents-${AWS::AccountId}-${AWS::Region}"
             DataTransforms:
-            - FilterOperation:
-                ConditionExpression: "{rowrank}=1.0"
             - ProjectOperation:
                 ProjectedColumns:
                 - eventTypeCode
@@ -336,7 +356,6 @@ Resources:
                 - eventArn
                 - communicationid
                 - eventDescription
-                - affectedEntities
                 - resources
                 - ingestionTime
                 - endTime
@@ -348,6 +367,11 @@ Resources:
                 - service
                 - accountName
                 - accountTag
+                - affectedEntities
+                - entityArn
+                - entityAZ
+                - entityTagKey
+                - entityTagValue
             Source:
               PhysicalTableId: AWSHealthQSPT
         Permissions:

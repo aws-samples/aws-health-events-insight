@@ -80,13 +80,13 @@ def get_quicksight_user(account_id, qsidregion):
 
 #Get user choice to get deployment type
 def get_user_choice():
-    options = {'1': 'CentralAccount', '2': 'MemberAccount'}
+    options = {'1': 'CentralAccount', '2': 'MemberAccount', '3': 'ConfigRole'}
     
     while True:
-        print("Select Deployment option:\n1. CentralAccount\n2. MemberAccount")
+        print("\nSelect Deployment option:\n1. Central Account Setup \n2. Member Account Setup\n3. Config Role Setup (Must deploy in AWS Config Aggregator account)\n")
         choice = input("Enter the number of your choice: ")
         if choice in options: return options[choice]
-        else: print("Invalid option. Please choose 1 or 2.")
+        else: print("Invalid option. Please choose 1, 2 or 3.")
 
 selected_option = get_user_choice()
 print("You selected:", selected_option)
@@ -100,25 +100,45 @@ account_id = get_account_id()
 if selected_option == 'CentralAccount':
     POrgID=get_organization_details()
     bucket_name = input(f"Enter S3 bucket name for Primary Region (Hit enter to use default: awseventhealth-{account_id}-{region}): ") or f"awseventhealth-{account_id}-{region}"
-    quicksight_service_role = input("Enter QuickSight Service Role (Hit enter to use default: aws-quicksight-service-role-v0): ") or "aws-quicksight-service-role-v0"
-    qsidregion = input("Enter your QuickSight Identity region (Hit enter to use default: us-east-1): ") or "us-east-1"
-    quicksight_user = get_quicksight_user(account_id, qsidregion)
 
     # Get the response if backfill is required.
-    AWSHealtheventSelected = input("Do you want to deploy AWS Health Events Dashboard (N/Y):") or "Y"
+    AWSHealtheventSelected = input("Do you want to deploy AWS Health Events Dashboard (N/Y): ") or "Y"
     if AWSHealtheventSelected == "Y":
+        quicksight_service_role = input("Enter QuickSight Service Role (Hit enter to use default: aws-quicksight-service-role-v0): ") or "aws-quicksight-service-role-v0"
+        qsidregion = input("Enter your QuickSight Identity region (Hit enter to use default: us-east-1): ") or "us-east-1"
+        quicksight_user = get_quicksight_user(account_id, qsidregion)
+        EnrichEventSelected = input("Do you want to enrich events with Tags, It requires access to AWS Config Aggregator (N/Y): ") or "Y"
+        if EnrichEventSelected == 'Y':
+            ConfigurationAggregatorAccount = input(f"  Enter AWS Config Aggregator AccountID(Account that aggregate data from other Accounts) (Default {account_id}): ") or account_id
+            if ConfigurationAggregatorAccount == account_id:
+                ConfigurationAggregatorAccount = "N"
+            else:
+                print("  (**NOTE:** Since AWS Config Aggregator is in different account, You must complete Config Role Setup in that account after this)")
+            ConfigurationAggregatorName = input(f"  Enter AWS Config Aggregator Name : ") or "PlaceHolder"
+            ConfigurationAggregatorRegion = input(f"  Enter AWS Config Aggregator Region : ") or region
+        else:
+            ConfigurationAggregatorAccount = "N"
+            ConfigurationAggregatorName = "N"
+            ConfigurationAggregatorRegion = "N"
         # Get the response if backfill is required.
         BackfillEvents = input("Do you want to backfill healthevents. The data can only be retrieved for the last 90 days.(N/Y):") or "Y"
         # Prompt user to include eventDetail Url
-        eventUrlSelected = input("Do you want setup eventUrl for easy access to event descriptions? (N/Y): ") or "Y"
-        if eventUrlSelected != "Y":
-            AllowedIpRange = ""
+        eventUrlSelected = input("Do you want to setup eventUrl for easy access to event descriptions? (N/Y):") or "Y"
+        if eventUrlSelected == "Y":
+            AllowedIpRange = input("  Provide IP Range which can access these eventUrls, this could be your VPN range (Default 0.0.0.0/0): ") or "0.0.0.0/0"
         else:
-            AllowedIpRange = input("Provide IP Range which can access these eventUrls, this could be your VPN range (Default 0.0.0.0/0): ") or "0.0.0.0/0"
+            AllowedIpRange = "N"
     else:
         AWSHealtheventSelected = "N"
         BackfillEvents = "N"
         AllowedIpRange = "N"
+        EnrichEventSelected = "N"
+        quicksight_service_role = "N"
+        qsidregion = "N"
+        quicksight_user = "N"
+        ConfigurationAggregatorAccount = "N"
+        ConfigurationAggregatorName = "N"
+        ConfigurationAggregatorRegion = "N"
 
     # Create or get the S3 bucket and s
     sync_cfnfiles(bucket_name, region)
@@ -132,7 +152,12 @@ if selected_option == 'CentralAccount':
                 POrgID={POrgID} \
                 AWSHealtheventSelected={AWSHealtheventSelected} \
                 BackfillEvents={BackfillEvents} \
-                AllowedIpRange={AllowedIpRange}"
+                AllowedIpRange={AllowedIpRange}\
+                EnrichEventSelected={EnrichEventSelected}\
+                ConfigurationAggregatorAccount={ConfigurationAggregatorAccount}\
+                ConfigurationAggregatorName={ConfigurationAggregatorName}\
+                ConfigurationAggregatorRegion={ConfigurationAggregatorRegion}"
+
 
     command= f"sam deploy --stack-name {stack_name} --region {region} --parameter-overrides {parameters}\
         --template-file DataCollectionModule/DataCollectionroot.yaml --capabilities CAPABILITY_IAM --disable-rollback"
@@ -142,6 +167,7 @@ if selected_option == 'CentralAccount':
     except Exception as e:
         # Handle the exception here
         print("An error occurred:", e)
+
 elif selected_option == 'MemberAccount':
     DataCollectionBusArn = input("Enter the value for Primary EventHealth Bus: ")
     BackfillEvents = input("Do you want to backfill healthevents. The data can only be retrieved for the last 90 days.(N/Y):") or "Y"
@@ -160,4 +186,17 @@ elif selected_option == 'MemberAccount':
         # Handle the exception here
         print("An error occurred:", e)
 
+elif selected_option == 'ConfigRole':
+    AWSHealthEventEnrichLambdaRoleArn = input("Enter AWSHealthEventEnrichLambdaRole Arn(Output of Stack HeidiDataCollection-<AccountID>-<region>-AWSHealthEventEnrich-<hash>): ")
+    # Create or update the CloudFormation stack
+    stack_name = f"HeidiDataCollection-ConfigCrossAccount-{account_id}-{region}"
+    parameters = f"AWSHealthEventEnrichLambdaRoleArn={AWSHealthEventEnrichLambdaRoleArn}"
 
+    command= f"sam deploy --stack-name {stack_name} --region {region} --parameter-overrides {parameters}\
+        --template-file AWSHealthModule/cfnTemplates/AWSHealthEventConfigAccountRole.yaml --capabilities CAPABILITY_NAMED_IAM --disable-rollback"
+    
+    try:
+        subprocess.call(command, shell=True)
+    except Exception as e:
+        # Handle the exception here
+        print("An error occurred:", e)

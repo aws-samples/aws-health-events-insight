@@ -28,6 +28,18 @@ Parameters:
     Default: "NONE"
     Type: String
     Description: (Optional) Specify a valid Default value for AuthorizationType. Valid values are ["NONE", "AWS_IAM", "CUSTOM", "COGNITO_USER_POOLS"]
+  EnrichEventSelected:
+    Type: String
+    Description: (Optional) EnrichEvents with Tags/ARN and AZ Y/N, Type "N" to disable this.
+  ConfigurationAggregatorName:
+    Type: String
+    Description: (Optional) Configuration Aggregator Name, This is required if EnrichEventSelected is selected.
+  ConfigurationAggregatorRegion:
+    Type: String
+    Description: (Optional) Configuration Aggregator Region, This is required if EnrichEventSelected is selected.
+  ConfigurationAggregatorAccount:
+    Type: String
+    Description: (Optional) Cross Account for Lambda to call Configuration Aggregator, This is required if AWS Config Aggregator is in different account.
 
 Resources:
   DataCollection:
@@ -37,6 +49,8 @@ Resources:
       Parameters:
         DataCollectionBucket: !Ref DataCollectionBucket
         POrgID: !Ref POrgID
+        AWSHealthEventEnrichLambdaArn: !If [ EnrichEventSelected, !GetAtt AWSHealthEventEnrich.Outputs.AWSHealthEventEnrichLambdaArn, "N" ]
+
 
   AWSHealthEventDetailsUrl:
     Condition: AllowedIpRange
@@ -79,6 +93,17 @@ Resources:
         EventDetailUrl: !If [ AllowedIpRange, !GetAtt AWSHealthEventDetailsUrl.Outputs.EventDetailApiEndpoint, "https://test" ]
         QuickSightUser: !Ref QuickSightUser
 
+  AWSHealthEventEnrich:
+    Condition: EnrichEventSelected
+    Type: AWS::CloudFormation::Stack
+    Properties: 
+      TemplateURL: !Sub https://${DataCollectionBucket}.s3.amazonaws.com/DataCollection-metadata/AWSHealthModule/cfnTemplates/AWSHealthEventEnrich.yaml
+      Parameters:
+        ConfigurationAggregatorName: !Ref  ConfigurationAggregatorName
+        ConfigurationAggregatorRegion: !Ref ConfigurationAggregatorRegion
+        ConfigurationAggregatorAccount:  !Ref ConfigurationAggregatorAccount
+
 Conditions:
   AllowedIpRange: !Not [!Equals [!Ref AllowedIpRange, "N"]]
   AWSHealtheventSelected: !Equals [!Ref AWSHealtheventSelected, "Y"]
+  EnrichEventSelected: !Equals [!Ref EnrichEventSelected, "Y"]
