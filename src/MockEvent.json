@@ -17,31 +17,7 @@
     ],
     "affectedEntities":[
       {
-          "entityValue":"i-00f3c104deb664486"
+          "entityValue":"i-MockEvent"
        }
     ]
- } 
-
- {
-   "eventArn":"MockwithTagLambda",
-   "service":"Lambda",
-   "eventScopeCode":"ACCOUNT_SPECIFIC",
-   "communicationId":"8f7ef91f0c9f2f3e3f68dffd0fa34fe299e56f323f06154df1de185d0e3f49bf",
-   "lastUpdatedTime":"Wed, 3 May 2023 13:30:55 GMT",
-   "eventRegion":"us-east-1",
-   "eventTypeCode":"Lambda",
-   "eventTypeCategory":"issue",
-   "startTime":"Wed, 3 May 2023 11:00:00 GMT",
-   "endTime": "Wed, 3 May 2023 11:10:00 GMT",
-   "eventDescription":[
-      {
-         "language":"en_US",
-         "latestDescription":"MockEvent\n"
-      }
-   ],
-   "affectedEntities":[
-     {
-         "entityValue":"CimaEnrichFunctionBackfill-274696341801"
-      }
-   ]
-} 
+ }

@@ -27,7 +27,7 @@ Parameters:
   AuthorizationType:
     Default: "NONE"
     Type: String
-    Description: (Optional) Specify a valid Default value for AuthorizationType. Valid values are ["NONE", "AWS_IAM", "CUSTOM", "COGNITO_USER_POOLS"]
+    Description: (Optional) Specify a valid Default value for AuthorizationType. Valid values are ["NONE", "AWS_IAM", "CUSTOM", "COGNITO_USER_POOLS"], This is required if AllowedIpRange is supplied.
   EnrichEventSelected:
     Type: String
     Description: (Optional) EnrichEvents with Tags/ARN and AZ Y/N, Type "N" to disable this.
