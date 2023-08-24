@@ -28,7 +28,7 @@ Resources:
             Action: sts:AssumeRole
       Path: "/"
       Policies:
-        - PolicyName: !Sub "AWSHealthEventPutEvent-${AWS::AccountId}-${AWS::Region}-Policy"
+        - PolicyName: !Sub "HealthEventPutEvent-${AWS::AccountId}-${AWS::Region}-Policy"
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -37,7 +37,7 @@ Resources:
                 Resource: 
                   - !Ref DataCollectionBusArn
 
-  AWSHealthEventDefaultBusRule:
+  DefaultBusRule:
     Type: "AWS::Events::Rule"
     Properties:
       Description: "EventBridge default rule for aws.health events"
@@ -46,6 +46,7 @@ Resources:
         source:
           - "aws.health"
           - "awshealthtest"
+          - "aws.config"
       Targets:
         - Arn: !Ref DataCollectionBusArn
           Id: "EventHealthBusTarget"
@@ -54,7 +55,7 @@ Resources:
   #This is one time execution of lamnda to backfill the events
   LambdaBackfillEventsRole:
     Condition: BackfillEvents
-    DependsOn: AWSHealthEventDefaultBusRule
+    DependsOn: DefaultBusRule
     Type: AWS::IAM::Role
     Metadata:
       cfn_nag:

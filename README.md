@@ -20,7 +20,7 @@ In this section, we will go through the steps to set up permissions for StackSet
 2. Sign up for Amazon QuickSight if you have never used it in this account. To use the forecast capability in QuickSight, sign up for the Enterprise Edition.
 3. Verify Amazon QuickSight service has access to Amazon Athena. To enable, go to security and permissions under *manage QuickSight*.
 4. AWS Health Event Dashboard will use ![SPICE](https://docs.aws.amazon.com/quicksight/latest/user/spice.html) to hold data. Go to SPICE capacity under manage QuickSight and verify you have required space.
-5. (Optional) You can enrich incoming AWS Health Events with data such as Resource Tags, Availability Zone, Resource ARN etc. via AWS Config Aggregator. See ![enrichEvent.md](https://github.com/aws-samples/aws-health-events-insight/blob/main/enrichEvent.md) for more details. 
+5. (Optional) You can enrich incoming AWS Health Events with data such as Resource Tags, Availability Zone, Resource ARN etc. via AWS Config. See ![enrichEvent.md](https://github.com/aws-samples/aws-health-events-insight/blob/main/enrichEvent.md) for more details. 
 
 # Deployment
 

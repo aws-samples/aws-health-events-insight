@@ -16,30 +16,25 @@ Parameters:
     Type: String
     Description: The AWS Organizations ID for the organization that should be allowed to put events on the event bus.
   AWSHealtheventSelected:
+    Default: "Y"
     Type: String
     Description: (Optional) Deploy AWS Health Events Stack Y/N.
   BackfillEvents:
+    Default: "N"
     Type: String
     Description: (Optional) Backfill health events Y/N.
   AllowedIpRange:
+    Default: "N"
     Type: String
     Description: (Optional) AllowedIpRange who can access EventDetailUrls, Type "N" to disable this.
   AuthorizationType:
     Default: "NONE"
     Type: String
     Description: (Optional) Specify a valid Default value for AuthorizationType. Valid values are ["NONE", "AWS_IAM", "CUSTOM", "COGNITO_USER_POOLS"], This is required if AllowedIpRange is supplied.
-  EnrichEventSelected:
+  ConfigAggregatorBucket:
+    Default: "N"
     Type: String
-    Description: (Optional) EnrichEvents with Tags/ARN and AZ Y/N, Type "N" to disable this.
-  ConfigurationAggregatorName:
-    Type: String
-    Description: (Optional) Configuration Aggregator Name, This is required if EnrichEventSelected is selected.
-  ConfigurationAggregatorRegion:
-    Type: String
-    Description: (Optional) Configuration Aggregator Region, This is required if EnrichEventSelected is selected.
-  ConfigurationAggregatorAccount:
-    Type: String
-    Description: (Optional) Cross Account for Lambda to call Configuration Aggregator, This is required if AWS Config Aggregator is in different account.
+    Description: S3 Bucket where Config data is aggregated, Type "N" to disable this.
 
 Resources:
   DataCollection:
@@ -49,61 +44,94 @@ Resources:
       Parameters:
         DataCollectionBucket: !Ref DataCollectionBucket
         POrgID: !Ref POrgID
-        AWSHealthEventEnrichLambdaArn: !If [ EnrichEventSelected, !GetAtt AWSHealthEventEnrich.Outputs.AWSHealthEventEnrichLambdaArn, "N" ]
 
+  DataSource:
+    Condition: AWSHealtheventSelected
+    DependsOn: HealthEventMember
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://${DataCollectionBucket}.s3.amazonaws.com/DataCollection-metadata/AWSHealthModule/cfnTemplates/QSDataSource.yaml
+      Parameters:
+        DataCollectionBucket: !Ref DataCollectionBucket
+        QuicksightServiceRole: !Ref QuicksightServiceRole
+        ConfigAggregatorBucket: !Ref ConfigAggregatorBucket
 
-  AWSHealthEventDetailsUrl:
+  HealthEventDetailsUrl:
     Condition: AllowedIpRange
     Type: AWS::CloudFormation::Stack
     Properties: 
-      TemplateURL: !Sub https://${DataCollectionBucket}.s3.amazonaws.com/DataCollection-metadata/AWSHealthModule/cfnTemplates/AWSHealthEventDetailUrl.yaml
+      TemplateURL: !Sub https://${DataCollectionBucket}.s3.amazonaws.com/DataCollection-metadata/AWSHealthModule/cfnTemplates/HealthEventDetailUrl.yaml
       Parameters:
         DataCollectionBusArn: !GetAtt  DataCollection.Outputs.DataCollectionBusArn
         AllowedIpRange: !Ref AllowedIpRange
         AuthorizationType: !Ref AuthorizationType
 
-  AWSHealthEventMemberAccountandRegion:
+  HealthEventMember:
     Condition: AWSHealtheventSelected
     Type: AWS::CloudFormation::Stack
     Properties: 
-      TemplateURL: !Sub https://${DataCollectionBucket}.s3.amazonaws.com/DataCollection-metadata/AWSHealthModule/cfnTemplates/AWSHealthEventMember.yaml
+      TemplateURL: !Sub https://${DataCollectionBucket}.s3.amazonaws.com/DataCollection-metadata/AWSHealthModule/cfnTemplates/HealthEventMember.yaml
       Parameters:
         DataCollectionBusArn: !GetAtt  DataCollection.Outputs.DataCollectionBusArn
         BackfillEvents: !Ref BackfillEvents
-        EventDetailUrl: !If [ AllowedIpRange, !GetAtt AWSHealthEventDetailsUrl.Outputs.EventDetailApiEndpoint, "https://test" ]
+        EventDetailUrl: !If [ AllowedIpRange, !GetAtt HealthEventDetailsUrl.Outputs.EventDetailApiEndpoint, "https://test" ]
 
-  AWSHealtheventQSDataSet:
+  QSDataSetHealthEvent:
     Condition: AWSHealtheventSelected
-    DependsOn: AWSHealthEventMemberAccountandRegion
+    DependsOn: HealthEventMember
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Sub https://${DataCollectionBucket}.s3.amazonaws.com/DataCollection-metadata/AWSHealthModule/cfnTemplates/AWSHealthEventQSDataSet.yaml
+      TemplateURL: !Sub https://${DataCollectionBucket}.s3.amazonaws.com/DataCollection-metadata/AWSHealthModule/cfnTemplates/QSDataSetHealthEvent.yaml
       Parameters:
-        DataCollectionBucket: !Ref DataCollectionBucket
-        QuicksightServiceRole: !Ref QuicksightServiceRole
         QuickSightUser: !Ref QuickSightUser
+        DataSourceArn: !GetAtt DataSource.Outputs.DataSourceArn
 
-  AWSHealtheventQSAnalysis:
+  QSDataSourcePartition:
+    Condition: AWSHealtheventSelectedandConfigAggregatorBucket
+    DependsOn: HealthEventMember
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://${DataCollectionBucket}.s3.amazonaws.com/DataCollection-metadata/AWSHealthModule/cfnTemplates/QSDataSourcePartition.yaml
+      Parameters:
+        GlueConfigTable: !GetAtt DataSource.Outputs.GlueConfigTable
+        GlueDatabaseDataCollection: !GetAtt DataSource.Outputs.GlueDatabaseDataCollection
+        ConfigAggregatorBucket: !Ref ConfigAggregatorBucket
+        DataCollectionBusArn: !GetAtt  DataCollection.Outputs.DataCollectionBusArn
+
+  QSDataSetConfigLambdaView:
     Condition: AWSHealtheventSelected
     Type: AWS::CloudFormation::Stack
     Properties: 
-      TemplateURL: !Sub https://${DataCollectionBucket}.s3.amazonaws.com/DataCollection-metadata/AWSHealthModule/cfnTemplates/AWSHealthEventQSAnalysis.yaml
+      TemplateURL: !Sub https://${DataCollectionBucket}.s3.amazonaws.com/DataCollection-metadata/AWSHealthModule/cfnTemplates/QSDataSetConfigLambdaView.yaml
       Parameters:
-        AWSHealthEventQuickSightDataSetArn: !GetAtt  AWSHealtheventQSDataSet.Outputs.AWSHealthEventQuickSightDataSetArn
-        EventDetailUrl: !If [ AllowedIpRange, !GetAtt AWSHealthEventDetailsUrl.Outputs.EventDetailApiEndpoint, "https://test" ]
+        DataSourceArn: !GetAtt DataSource.Outputs.DataSourceArn
         QuickSightUser: !Ref QuickSightUser
 
-  AWSHealthEventEnrich:
-    Condition: EnrichEventSelected
+  QSDataSetConfigRDSView:
+    Condition: AWSHealtheventSelected
     Type: AWS::CloudFormation::Stack
     Properties: 
-      TemplateURL: !Sub https://${DataCollectionBucket}.s3.amazonaws.com/DataCollection-metadata/AWSHealthModule/cfnTemplates/AWSHealthEventEnrich.yaml
+      TemplateURL: !Sub https://${DataCollectionBucket}.s3.amazonaws.com/DataCollection-metadata/AWSHealthModule/cfnTemplates/QSDataSetConfigRDSView.yaml
       Parameters:
-        ConfigurationAggregatorName: !Ref  ConfigurationAggregatorName
-        ConfigurationAggregatorRegion: !Ref ConfigurationAggregatorRegion
-        ConfigurationAggregatorAccount:  !Ref ConfigurationAggregatorAccount
+        DataSourceArn: !GetAtt DataSource.Outputs.DataSourceArn
+        QuickSightUser: !Ref QuickSightUser
+
+  QSAnalysisHealthEvent:
+    Condition: AWSHealtheventSelected
+    Type: AWS::CloudFormation::Stack
+    Properties: 
+      TemplateURL: !Sub https://${DataCollectionBucket}.s3.amazonaws.com/DataCollection-metadata/AWSHealthModule/cfnTemplates/QSAnalysisHealthEvent.yaml
+      Parameters:
+        QSDataSetHealthEventArn: !GetAtt  QSDataSetHealthEvent.Outputs.QSDataSetHealthEventArn
+        QSDataSetConfigLambdaViewArn: !GetAtt  QSDataSetConfigLambdaView.Outputs.QSDataSetConfigLambdaViewArn
+        QSDataSetConfigRDSViewArn: !GetAtt  QSDataSetConfigRDSView.Outputs.QSDataSetConfigRDSViewArn
+        EventDetailUrl: !If [ AllowedIpRange, !GetAtt HealthEventDetailsUrl.Outputs.EventDetailApiEndpoint, "https://test" ]
+        QuickSightUser: !Ref QuickSightUser
 
 Conditions:
   AllowedIpRange: !Not [!Equals [!Ref AllowedIpRange, "N"]]
   AWSHealtheventSelected: !Equals [!Ref AWSHealtheventSelected, "Y"]
-  EnrichEventSelected: !Equals [!Ref EnrichEventSelected, "Y"]
+  ConfigAggregatorBucket: !Not [!Equals [!Ref ConfigAggregatorBucket, "N"]]
+  AWSHealtheventSelectedandConfigAggregatorBucket: !And [!Equals [!Ref AWSHealtheventSelected, "Y"], !Not [!Equals [!Ref ConfigAggregatorBucket, "N"]]]
+
+  

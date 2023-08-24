@@ -1,0 +1,140 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: (awsconfig) Stack to create dataset for awsconfig
+
+Parameters:
+  DataSourceArn:
+    Type: String
+    Description: The AWS Health Event QSDataSetArn for Analysis.
+  QuickSightUser:
+    Type: String
+    Description: The QuickSight User that is allowed configure and manage the QS dashboard.
+
+Resources:
+  QSDataSetConfigLambdaView:
+  # Create an AWS QuickSight DataSet for Lambda view
+      Type: AWS::QuickSight::DataSet
+      Properties:
+        AwsAccountId: !Sub ${AWS::AccountId}
+        ImportMode: SPICE
+        DataSetId: !Sub "awsconfiglambda-${AWS::AccountId}-${AWS::Region}"
+        Name: !Sub "awsconfiglambda-${AWS::AccountId}-${AWS::Region}"
+        PhysicalTableMap:
+          "AWSconfigLambdaQSPT":
+            CustomSql:
+              DataSourceArn: !Ref DataSourceArn
+              Name: !Sub "awsconfiglambda-${AWS::AccountId}-${AWS::Region}"
+              SqlQuery: |-
+                SELECT
+                    Distinct awsAccountId as account
+                    ,COALESCE(accountinfo."name", LambdaView."awsAccountId") AS accountName
+                    ,accountinfo.Tag as accountTag
+                    ,awsregion as region
+                    ,configurationitem.resourceid AS resourceId
+                    ,configurationitem.resourcename AS resourceName
+                    ,configurationitem.arn AS entityArn
+                    ,configurationitem.availabilityzone AS entityAZ
+                    ,tag_key AS entityTagKey
+                    ,configurationitem.tags[tag_key] AS entityTagValue
+                  , "json_extract_scalar"("configurationItem"."configuration", '$.tracingConfig.mode') "tracingConfig"
+                  , "json_extract_scalar"("configurationItem"."configuration", '$.runtime') "runtime"
+                  , "json_extract_scalar"("configurationItem"."configuration", '$.description') "description"
+                  , "json_extract_scalar"("configurationItem"."configuration", '$.version') "version"
+                  , "json_extract_scalar"("configurationItem"."configuration", '$.timeout') "timeout"
+                  , "json_extract_scalar"("configurationItem"."configuration", '$.layers') "layers"
+                  , "json_extract_scalar"("configurationItem"."configuration", '$.state') "state"
+                FROM "AwsDataCatalog"."awshealtheventdb"."awsconfigdata" LambdaView
+                LEFT JOIN "AwsDataCatalog"."awshealtheventdb"."awshealtheventaccinfo" accountinfo ON LambdaView.awsAccountId = accountinfo."accountid"
+                    CROSS JOIN UNNEST(configurationitems) AS t(configurationitem)
+                    LEFT JOIN UNNEST(map_keys(configurationitem.tags)) AS t(tag_key) ON TRUE
+                    WHERE date_created = 'latest' AND "configurationItem"."resourcetype" IN ('AWS::Lambda::Function')
+              Columns:
+              - Name: account
+                Type: STRING
+              - Name: accountName
+                Type: STRING
+              - Name: accountTag
+                Type: STRING
+              - Name: region
+                Type: STRING
+              - Name: resourceId
+                Type: STRING
+              - Name: resourceName
+                Type: STRING
+              - Name: entityArn
+                Type: STRING
+              - Name: entityAZ
+                Type: STRING
+              - Name: entityTagKey
+                Type: STRING
+              - Name: entityTagValue
+                Type: STRING
+              - Name: tracingConfig
+                Type: STRING
+              - Name: runtime
+                Type: STRING
+              - Name: description
+                Type: STRING
+              - Name: version
+                Type: STRING
+              - Name: timeout
+                Type: STRING
+              - Name: layers
+                Type: STRING
+              - Name: state
+                Type: STRING
+        LogicalTableMap:
+          AWSconfigLambdaQSLT:
+            Alias: !Sub "awshealthevents-${AWS::AccountId}-${AWS::Region}"
+            DataTransforms:
+            - ProjectOperation:
+                ProjectedColumns:
+                - account
+                - accountName
+                - region
+                - resourceId
+                - resourceName
+                - entityArn
+                - entityAZ
+                - entityTagKey
+                - entityTagValue
+                - tracingConfig
+                - runtime
+                - description
+                - version
+                - timeout
+                - layers
+                - state
+            Source:
+              PhysicalTableId: AWSconfigLambdaQSPT
+        Permissions:
+        - Principal: !Sub "${QuickSightUser}"
+          Actions:
+            - quicksight:DescribeDataSet
+            - quicksight:DescribeDataSetPermissions
+            - quicksight:PassDataSet
+            - quicksight:DescribeIngestion
+            - quicksight:ListIngestions
+            - quicksight:UpdateDataSet
+            - quicksight:DeleteDataSet
+            - quicksight:CreateIngestion
+            - quicksight:CancelIngestion
+            - quicksight:UpdateDataSetPermissions
+
+  QSDataSetConfigLambdaViewRefresh:
+  # Create an AWS QuickSight Refresh Schedule for Lambda view
+    DependsOn: QSDataSetConfigLambdaView
+    Type: AWS::QuickSight::RefreshSchedule
+    Properties: 
+      AwsAccountId: !Sub ${AWS::AccountId}
+      DataSetId: !Sub "awsconfiglambda-${AWS::AccountId}-${AWS::Region}"
+      Schedule:
+        RefreshType: FULL_REFRESH
+        ScheduleFrequency:
+          Interval: HOURLY
+        ScheduleId: QSDataSetConfigLambdaViewRefresh
+Outputs:
+  QSDataSetConfigLambdaViewArn:
+    Value: !GetAtt QSDataSetConfigLambdaView.Arn
+    Export:
+      Name: QSDataSetConfigLambdaViewArn

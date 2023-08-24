@@ -16,12 +16,12 @@ Parameters:
     Description: Specify a valid Default value for AuthorizationType. Valid values are ["NONE", "AWS_IAM", "CUSTOM", "COGNITO_USER_POOLS"]
 
 Resources:
-  AWSHealthEventDynamoDB:
+  HealthEventDynamoDB:
     DeletionPolicy: Delete
     UpdateReplacePolicy: Retain
     Type: AWS::DynamoDB::GlobalTable
     Properties:
-      TableName: !Sub "AWSHealthEventDDBTable-${AWS::AccountId}"
+      TableName: !Sub "HealthEventDDBTable-${AWS::AccountId}"
       AttributeDefinitions:
         - AttributeName: eventArn
           AttributeType: S
@@ -34,7 +34,7 @@ Resources:
       Replicas: 
         - Region: !Sub "${AWS::Region}"
 
-  AWSHealthEventLambadDdbRole:
+  HealthEventLambadDdbRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -65,7 +65,7 @@ Resources:
               - Effect: Allow
                 Action:
                   - dynamodb:PutItem
-                Resource: !GetAtt AWSHealthEventDynamoDB.Arn
+                Resource: !GetAtt HealthEventDynamoDB.Arn
         - PolicyName: AwshealtheventSendEventAccess-Policy
           PolicyDocument:
             Version: '2012-10-17'
@@ -75,7 +75,7 @@ Resources:
                   - "events:PutEvents"
                 Resource: !Ref DataCollectionBusArn
 
-  AWSHealthEventLambadDdb:
+  HealthEventLambadDdb:
     Type: AWS::Lambda::Function
     Metadata:
       cfn_nag:
@@ -122,12 +122,12 @@ Resources:
       Runtime: python3.10
       Timeout: 900
       ReservedConcurrentExecutions: 5
-      Role: !GetAtt AWSHealthEventLambadDdbRole.Arn
+      Role: !GetAtt HealthEventLambadDdbRole.Arn
       Environment:
         Variables:
-          DynamoDBName: !Ref AWSHealthEventDynamoDB
+          DynamoDBName: !Ref HealthEventDynamoDB
   
-  AWSHealthtEventDataCollectionBusRule:
+  HealthtEventDataCollectionBusRule:
     Type: "AWS::Events::Rule"
     Properties:
       Description: "Event Health bus rule for aws.health events"
@@ -137,16 +137,16 @@ Resources:
           - "aws.health"
           - "awshealthtest"
       Targets:
-        - Arn: !GetAtt AWSHealthEventLambadDdb.Arn
+        - Arn: !GetAtt HealthEventLambadDdb.Arn
           Id: "LambaasTarget"
 
   EventHealthLambdaForDDBPermissions:
     Type: "AWS::Lambda::Permission"
     Properties:
       Action: lambda:InvokeFunction
-      FunctionName: !GetAtt AWSHealthEventLambadDdb.Arn
+      FunctionName: !GetAtt HealthEventLambadDdb.Arn
       Principal: events.amazonaws.com
-      SourceArn: !GetAtt AWSHealthtEventDataCollectionBusRule.Arn
+      SourceArn: !GetAtt HealthtEventDataCollectionBusRule.Arn
 
   apiGatewayRole:
     Type: AWS::IAM::Role
@@ -169,7 +169,7 @@ Resources:
               - Effect: Allow
                 Action:
                   - dynamodb:GetItem
-                Resource: !GetAtt AWSHealthEventDynamoDB.Arn
+                Resource: !GetAtt HealthEventDynamoDB.Arn
         - PolicyName: ApiGatewayLogsPolicy
           PolicyDocument:
             Statement:
@@ -204,7 +204,7 @@ Resources:
       EndpointConfiguration:
         Types:
           - REGIONAL
-      Name: !Sub AWSHealthEventDetailUrl-${AWS::AccountId}-${AWS::Region}-api
+      Name: !Sub HealthEventDetailUrl-${AWS::AccountId}-${AWS::Region}-api
       Description: (AWSHEIDI) for eventdetail Urls
       Policy: {
         "Version": "2012-10-17",

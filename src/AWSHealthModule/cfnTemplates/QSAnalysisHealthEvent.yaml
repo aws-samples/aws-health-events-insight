@@ -2,9 +2,15 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: (AwsHealthEvents) Stack to create QuickSight Analysis for AwsHealthEvents
 Parameters:
-  AWSHealthEventQuickSightDataSetArn:
+  QSDataSetHealthEventArn:
     Type: String
     Description: The AWS Health Event QSDataSetArn for Analysis.
+  QSDataSetConfigLambdaViewArn:
+    Type: String
+    Description: The AWS Config QSDataSetArn for Analysis.
+  QSDataSetConfigRDSViewArn:
+    Type: String
+    Description: The AWS Config QSDataSetArn for Analysis.
   QuickSightUser:
     Type: String
     Description: The QuickSight User that is allowed configure and manage the QS dashboard.
@@ -23,7 +29,11 @@ Resources:
       Definition: 
         DataSetIdentifierDeclarations:
         - Identifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
-          DataSetArn: !Ref AWSHealthEventQuickSightDataSetArn
+          DataSetArn: !Ref QSDataSetHealthEventArn
+        - Identifier: !Sub "AWSConfigLambda-${AWS::AccountId}-${AWS::Region}"
+          DataSetArn: !Ref QSDataSetConfigLambdaViewArn
+        - Identifier: !Sub "AWSConfigRDS-${AWS::AccountId}-${AWS::Region}"
+          DataSetArn: !Ref QSDataSetConfigRDSViewArn
         Sheets:
         - SheetId: fb07dc95-b53c-4830-95b0-ab8441a3c3fd
           Title: 'AWS Health Events Intelligence Dashboards & Insights (AWS HEIDI) '
@@ -155,10 +165,10 @@ Resources:
                   PieChartAggregatedFieldWells:
                     Category:
                     - CategoricalDimensionField:
-                        FieldId: AWSHealthQSLT.accountName.0.1691088926172
+                        FieldId: AWSHealthQSLT.account.1.1692807851511
                         Column:
                           DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
-                          ColumnName: accountName
+                          ColumnName: account
                     Values:
                     - CategoricalMeasureField:
                         FieldId: AWSHealthQSLT.eventArn.1.1691962810745
@@ -202,10 +212,10 @@ Resources:
                     TooltipTitleType: PRIMARY_VALUE
                     TooltipFields:
                     - FieldTooltipItem:
-                        FieldId: AWSHealthQSLT.accountName.0.1691088926172
+                        FieldId: AWSHealthQSLT.eventArn.1.1691962810745
                         Visibility: VISIBLE
                     - FieldTooltipItem:
-                        FieldId: AWSHealthQSLT.eventArn.1.1691962810745
+                        FieldId: AWSHealthQSLT.account.1.1692807851511
                         Visibility: VISIBLE
               Actions:
               - CustomActionId: eef911c2-800f-41a1-aaf8-13643a4b5ab5
@@ -1058,6 +1068,478 @@ Resources:
                   RowIndex: 1
                   RowSpan: 1
           ContentType: INTERACTIVE
+        - SheetId: be631db2-9c8f-436a-8e3a-484bf743529b
+          Name: Runtime(Beta)
+          FilterControls:
+          - Dropdown:
+              FilterControlId: 586d155f-ead1-4f70-96ae-10ddc24ee358
+              Title: TagKey
+              SourceFilterId: a331ad47-a405-49f7-8391-caea3f0d4d2c
+              DisplayOptions:
+                SelectAllOptions:
+                  Visibility: VISIBLE
+                TitleOptions:
+                  Visibility: VISIBLE
+                  FontConfiguration:
+                    FontSize:
+                      Relative: MEDIUM
+              Type: MULTI_SELECT
+          - Dropdown:
+              FilterControlId: 709d7b65-f3af-4032-80d7-ee8d25fa8888
+              Title: TagValue
+              SourceFilterId: 21094b7b-e25a-4eec-8db7-524baf30b50e
+              DisplayOptions:
+                SelectAllOptions:
+                  Visibility: HIDDEN
+                TitleOptions:
+                  Visibility: VISIBLE
+                  FontConfiguration:
+                    FontSize:
+                      Relative: MEDIUM
+              Type: MULTI_SELECT
+              CascadingControlConfiguration:
+                SourceControls:
+                - SourceSheetControlId: 586d155f-ead1-4f70-96ae-10ddc24ee358
+                  ColumnToMatch:
+                    DataSetIdentifier: !Sub "AWSConfigLambda-${AWS::AccountId}-${AWS::Region}"
+                    ColumnName: entityTagKey
+          Visuals:
+          - SankeyDiagramVisual:
+              VisualId: 0ab5cab0-0dba-46bb-82d7-a667d4abae1f
+              Title:
+                Visibility: VISIBLE
+                FormatText:
+                  RichText: "<visual-title>Lambda Function Runtime by Account</visual-title>"
+              Subtitle:
+                Visibility: VISIBLE
+              ChartConfiguration:
+                FieldWells:
+                  SankeyDiagramAggregatedFieldWells:
+                    Source:
+                    - CategoricalDimensionField:
+                        FieldId: AWSconfigLambdaQSLT.runtime.0.1692831380011
+                        Column:
+                          DataSetIdentifier: !Sub "AWSConfigLambda-${AWS::AccountId}-${AWS::Region}"
+                          ColumnName: runtime
+                    Destination:
+                    - CategoricalDimensionField:
+                        FieldId: AWSconfigLambdaQSLT.accountName.2.1692831527260
+                        Column:
+                          DataSetIdentifier: !Sub "AWSConfigLambda-${AWS::AccountId}-${AWS::Region}"
+                          ColumnName: accountName
+                    Weight:
+                    - CategoricalMeasureField:
+                        FieldId: AWSconfigLambdaQSLT.entityArn.2.1692831589432
+                        Column:
+                          DataSetIdentifier: !Sub "AWSConfigLambda-${AWS::AccountId}-${AWS::Region}"
+                          ColumnName: entityArn
+                        AggregationFunction: DISTINCT_COUNT
+                SortConfiguration:
+                  WeightSort:
+                  - FieldSort:
+                      FieldId: AWSconfigLambdaQSLT.entityArn.2.1692831589432
+                      Direction: DESC
+                DataLabels:
+                  Visibility: VISIBLE
+                  Overlap: DISABLE_OVERLAP
+              Actions:
+              - CustomActionId: 9b23d179-4ba7-4f77-bb3a-a699d5c44e8a
+                Name: Action 1
+                Status: ENABLED
+                Trigger: DATA_POINT_CLICK
+                ActionOperations:
+                - FilterOperation:
+                    SelectedFieldsConfiguration:
+                      SelectedFieldOptions: ALL_FIELDS
+                    TargetVisualsConfiguration:
+                      SameSheetTargetVisualConfiguration:
+                        TargetVisualOptions: ALL_VISUALS
+          - BarChartVisual:
+              VisualId: 143ec30e-7234-4850-98b1-fa568737ad15
+              Title:
+                Visibility: VISIBLE
+                FormatText:
+                  RichText: "<visual-title>Lambda Function Runtime by region</visual-title>"
+              Subtitle:
+                Visibility: VISIBLE
+              ChartConfiguration:
+                FieldWells:
+                  BarChartAggregatedFieldWells:
+                    Category:
+                    - CategoricalDimensionField:
+                        FieldId: AWSconfigLambdaQSLT.runtime.1.1692831836510
+                        Column:
+                          DataSetIdentifier: !Sub "AWSConfigLambda-${AWS::AccountId}-${AWS::Region}"
+                          ColumnName: runtime
+                    Values:
+                    - CategoricalMeasureField:
+                        FieldId: AWSconfigLambdaQSLT.entityArn.2.1692831849204
+                        Column:
+                          DataSetIdentifier: !Sub "AWSConfigLambda-${AWS::AccountId}-${AWS::Region}"
+                          ColumnName: entityArn
+                        AggregationFunction: DISTINCT_COUNT
+                    Colors:
+                    - CategoricalDimensionField:
+                        FieldId: AWSconfigLambdaQSLT.region.1.1692831831077
+                        Column:
+                          DataSetIdentifier: !Sub "AWSConfigLambda-${AWS::AccountId}-${AWS::Region}"
+                          ColumnName: region
+                SortConfiguration:
+                  CategorySort:
+                  - FieldSort:
+                      FieldId: AWSconfigLambdaQSLT.runtime.1.1692831836510
+                      Direction: DESC
+                  CategoryItemsLimit:
+                    OtherCategories: INCLUDE
+                  ColorItemsLimit:
+                    OtherCategories: INCLUDE
+                  SmallMultiplesLimitConfiguration:
+                    OtherCategories: INCLUDE
+                Orientation: HORIZONTAL
+                BarsArrangement: STACKED
+                CategoryAxis:
+                  ScrollbarOptions:
+                    VisibleRange:
+                      PercentRange:
+                        From: 0
+                        To: 100
+                DataLabels:
+                  Visibility: HIDDEN
+                  Overlap: DISABLE_OVERLAP
+                Tooltip:
+                  TooltipVisibility: VISIBLE
+                  SelectedTooltipType: BASIC
+                  FieldBasedTooltip:
+                    AggregationVisibility: HIDDEN
+                    TooltipTitleType: PRIMARY_VALUE
+                    TooltipFields:
+                    - FieldTooltipItem:
+                        FieldId: AWSconfigLambdaQSLT.region.1.1692831831077
+                        Visibility: VISIBLE
+                    - FieldTooltipItem:
+                        FieldId: AWSconfigLambdaQSLT.runtime.1.1692831836510
+                        Visibility: VISIBLE
+                    - FieldTooltipItem:
+                        FieldId: AWSconfigLambdaQSLT.entityArn.2.1692831849204
+                        Visibility: VISIBLE
+              Actions:
+              - CustomActionId: b6a9ddd9-231f-4c53-a7c7-ebc8b0339d66
+                Name: Action 1
+                Status: ENABLED
+                Trigger: DATA_POINT_CLICK
+                ActionOperations:
+                - FilterOperation:
+                    SelectedFieldsConfiguration:
+                      SelectedFieldOptions: ALL_FIELDS
+                    TargetVisualsConfiguration:
+                      SameSheetTargetVisualConfiguration:
+                        TargetVisualOptions: ALL_VISUALS
+              ColumnHierarchies: []
+          - TableVisual:
+              VisualId: d4081726-98e3-4bc7-8838-42e007ac2890
+              Title:
+                Visibility: VISIBLE
+                FormatText:
+                  RichText: "<visual-title>Lambda Function Details</visual-title>"
+              Subtitle:
+                Visibility: VISIBLE
+              ChartConfiguration:
+                FieldWells:
+                  TableAggregatedFieldWells:
+                    GroupBy:
+                    - CategoricalDimensionField:
+                        FieldId: AWSconfigLambdaQSLT.accountName.1.1692831934047
+                        Column:
+                          DataSetIdentifier: !Sub "AWSConfigLambda-${AWS::AccountId}-${AWS::Region}"
+                          ColumnName: accountName
+                    - CategoricalDimensionField:
+                        FieldId: AWSconfigLambdaQSLT.runtime.1.1692831955315
+                        Column:
+                          DataSetIdentifier: !Sub "AWSConfigLambda-${AWS::AccountId}-${AWS::Region}"
+                          ColumnName: runtime
+                    - CategoricalDimensionField:
+                        FieldId: AWSconfigLambdaQSLT.state.2.1692831958621
+                        Column:
+                          DataSetIdentifier: !Sub "AWSConfigLambda-${AWS::AccountId}-${AWS::Region}"
+                          ColumnName: state
+                    - CategoricalDimensionField:
+                        FieldId: AWSconfigLambdaQSLT.resourceName.3.1692831966867
+                        Column:
+                          DataSetIdentifier: !Sub "AWSConfigLambda-${AWS::AccountId}-${AWS::Region}"
+                          ColumnName: resourceName
+                    - CategoricalDimensionField:
+                        FieldId: AWSconfigLambdaQSLT.region.4.1692831979016
+                        Column:
+                          DataSetIdentifier: !Sub "AWSConfigLambda-${AWS::AccountId}-${AWS::Region}"
+                          ColumnName: region
+                    - CategoricalDimensionField:
+                        FieldId: AWSconfigLambdaQSLT.entityAZ.5.1692831980089
+                        Column:
+                          DataSetIdentifier: !Sub "AWSConfigLambda-${AWS::AccountId}-${AWS::Region}"
+                          ColumnName: entityAZ
+                    Values: []
+                SortConfiguration: {}
+                TableOptions:
+                  HeaderStyle:
+                    VerticalTextAlignment: MIDDLE
+                    BackgroundColor: "#FF8700"
+                  RowAlternateColorOptions:
+                    Status: DISABLED
+              Actions:
+              - CustomActionId: af18605e-6f58-43c7-a542-f06f7cc6011f
+                Name: Action 1
+                Status: ENABLED
+                Trigger: DATA_POINT_CLICK
+                ActionOperations:
+                - FilterOperation:
+                    SelectedFieldsConfiguration:
+                      SelectedFieldOptions: ALL_FIELDS
+                    TargetVisualsConfiguration:
+                      SameSheetTargetVisualConfiguration:
+                        TargetVisualOptions: ALL_VISUALS
+          - SankeyDiagramVisual:
+              VisualId: 32a55eb3-9fb3-46ea-b173-9136808a4837
+              Title:
+                Visibility: VISIBLE
+                FormatText:
+                  RichText: "<visual-title>RDS Version by Account</visual-title>"
+              Subtitle:
+                Visibility: VISIBLE
+              ChartConfiguration:
+                FieldWells:
+                  SankeyDiagramAggregatedFieldWells:
+                    Source:
+                    - CategoricalDimensionField:
+                        FieldId: AWSconfigRDSQSLT.engineversion.0.1692832175915
+                        Column:
+                          DataSetIdentifier: !Sub "AWSConfigRDS-${AWS::AccountId}-${AWS::Region}"
+                          ColumnName: engineversion
+                    Destination:
+                    - CategoricalDimensionField:
+                        FieldId: AWSconfigRDSQSLT.accountName.1.1692832177692
+                        Column:
+                          DataSetIdentifier: !Sub "AWSConfigRDS-${AWS::AccountId}-${AWS::Region}"
+                          ColumnName: accountName
+                    Weight:
+                    - CategoricalMeasureField:
+                        FieldId: AWSconfigRDSQSLT.entityArn.2.1692832457077
+                        Column:
+                          DataSetIdentifier: !Sub "AWSConfigRDS-${AWS::AccountId}-${AWS::Region}"
+                          ColumnName: entityArn
+                        AggregationFunction: DISTINCT_COUNT
+                SortConfiguration:
+                  WeightSort:
+                  - FieldSort:
+                      FieldId: AWSconfigRDSQSLT.entityArn.2.1692832457077
+                      Direction: DESC
+                DataLabels:
+                  Visibility: VISIBLE
+                  Overlap: DISABLE_OVERLAP
+              Actions:
+              - CustomActionId: 7e2b91b2-9c2d-4a68-9e29-fc79f2a7b315
+                Name: Action 1
+                Status: ENABLED
+                Trigger: DATA_POINT_CLICK
+                ActionOperations:
+                - FilterOperation:
+                    SelectedFieldsConfiguration:
+                      SelectedFieldOptions: ALL_FIELDS
+                    TargetVisualsConfiguration:
+                      SameSheetTargetVisualConfiguration:
+                        TargetVisualOptions: ALL_VISUALS
+          - BarChartVisual:
+              VisualId: c76845d4-8f01-44bb-8fd7-f072a2d66e6f
+              Title:
+                Visibility: VISIBLE
+                FormatText:
+                  RichText: "<visual-title>Engine Version by Region</visual-title>"
+              Subtitle:
+                Visibility: VISIBLE
+              ChartConfiguration:
+                FieldWells:
+                  BarChartAggregatedFieldWells:
+                    Category:
+                    - CategoricalDimensionField:
+                        FieldId: AWSconfigRDSQSLT.engineversion.1.1692832234464
+                        Column:
+                          DataSetIdentifier: !Sub "AWSConfigRDS-${AWS::AccountId}-${AWS::Region}"
+                          ColumnName: engineversion
+                    Values:
+                    - CategoricalMeasureField:
+                        FieldId: AWSconfigRDSQSLT.entityArn.2.1692832467666
+                        Column:
+                          DataSetIdentifier: !Sub "AWSConfigRDS-${AWS::AccountId}-${AWS::Region}"
+                          ColumnName: entityArn
+                        AggregationFunction: DISTINCT_COUNT
+                    Colors:
+                    - CategoricalDimensionField:
+                        FieldId: AWSconfigRDSQSLT.region.0.1692832234464
+                        Column:
+                          DataSetIdentifier: !Sub "AWSConfigRDS-${AWS::AccountId}-${AWS::Region}"
+                          ColumnName: region
+                SortConfiguration:
+                  CategorySort:
+                  - FieldSort:
+                      FieldId: AWSconfigRDSQSLT.engineversion.1.1692832234464
+                      Direction: DESC
+                  CategoryItemsLimit:
+                    OtherCategories: INCLUDE
+                  ColorItemsLimit:
+                    OtherCategories: INCLUDE
+                  SmallMultiplesLimitConfiguration:
+                    OtherCategories: INCLUDE
+                Orientation: HORIZONTAL
+                BarsArrangement: STACKED
+                DataLabels:
+                  Visibility: HIDDEN
+                  Overlap: DISABLE_OVERLAP
+                Tooltip:
+                  TooltipVisibility: VISIBLE
+                  SelectedTooltipType: BASIC
+                  FieldBasedTooltip:
+                    AggregationVisibility: HIDDEN
+                    TooltipTitleType: PRIMARY_VALUE
+                    TooltipFields:
+                    - FieldTooltipItem:
+                        FieldId: AWSconfigRDSQSLT.engineversion.1.1692832234464
+                        Visibility: VISIBLE
+                    - FieldTooltipItem:
+                        FieldId: AWSconfigRDSQSLT.region.0.1692832234464
+                        Visibility: VISIBLE
+                    - FieldTooltipItem:
+                        FieldId: AWSconfigRDSQSLT.entityArn.2.1692832467666
+                        Visibility: VISIBLE
+              Actions:
+              - CustomActionId: e2c3679b-6cc9-4cca-b674-06f3ca09bf64
+                Name: Action 1
+                Status: ENABLED
+                Trigger: DATA_POINT_CLICK
+                ActionOperations:
+                - FilterOperation:
+                    SelectedFieldsConfiguration:
+                      SelectedFieldOptions: ALL_FIELDS
+                    TargetVisualsConfiguration:
+                      SameSheetTargetVisualConfiguration:
+                        TargetVisualOptions: ALL_VISUALS
+              ColumnHierarchies: []
+          - TableVisual:
+              VisualId: 5f33d552-8a97-426d-b627-54d008d3cf67
+              Title:
+                Visibility: VISIBLE
+                FormatText:
+                  RichText: "<visual-title>RDS Details</visual-title>"
+              Subtitle:
+                Visibility: VISIBLE
+              ChartConfiguration:
+                FieldWells:
+                  TableAggregatedFieldWells:
+                    GroupBy:
+                    - CategoricalDimensionField:
+                        FieldId: AWSconfigRDSQSLT.accountName.1.1692832310036
+                        Column:
+                          DataSetIdentifier: !Sub "AWSConfigRDS-${AWS::AccountId}-${AWS::Region}"
+                          ColumnName: accountName
+                    - CategoricalDimensionField:
+                        FieldId: AWSconfigRDSQSLT.DBInstanceClass.1.1692832313649
+                        Column:
+                          DataSetIdentifier: !Sub "AWSConfigRDS-${AWS::AccountId}-${AWS::Region}"
+                          ColumnName: DBInstanceClass
+                    - CategoricalDimensionField:
+                        FieldId: AWSconfigRDSQSLT.engineversion.2.1692832316882
+                        Column:
+                          DataSetIdentifier: !Sub "AWSConfigRDS-${AWS::AccountId}-${AWS::Region}"
+                          ColumnName: engineversion
+                    - CategoricalDimensionField:
+                        FieldId: AWSconfigRDSQSLT.resourceName.3.1692832326082
+                        Column:
+                          DataSetIdentifier: !Sub "AWSConfigRDS-${AWS::AccountId}-${AWS::Region}"
+                          ColumnName: resourceName
+                    - CategoricalDimensionField:
+                        FieldId: AWSconfigRDSQSLT.resourceType.4.1692832326642
+                        Column:
+                          DataSetIdentifier: !Sub "AWSConfigRDS-${AWS::AccountId}-${AWS::Region}"
+                          ColumnName: resourceType
+                    - CategoricalDimensionField:
+                        FieldId: AWSconfigRDSQSLT.region.5.1692832330064
+                        Column:
+                          DataSetIdentifier: !Sub "AWSConfigRDS-${AWS::AccountId}-${AWS::Region}"
+                          ColumnName: region
+                    Values: []
+                SortConfiguration: {}
+                TableOptions:
+                  HeaderStyle:
+                    VerticalTextAlignment: MIDDLE
+                    BackgroundColor: "#FF8700"
+                  RowAlternateColorOptions:
+                    Status: DISABLED
+              Actions:
+              - CustomActionId: d8384fb4-7063-4cf7-9beb-afa13de7dc92
+                Name: Action 1
+                Status: ENABLED
+                Trigger: DATA_POINT_CLICK
+                ActionOperations:
+                - FilterOperation:
+                    SelectedFieldsConfiguration:
+                      SelectedFieldOptions: ALL_FIELDS
+                    TargetVisualsConfiguration:
+                      SameSheetTargetVisualConfiguration:
+                        TargetVisualOptions: ALL_VISUALS
+          Layouts:
+          - Configuration:
+              GridLayout:
+                Elements:
+                - ElementId: 143ec30e-7234-4850-98b1-fa568737ad15
+                  ElementType: VISUAL
+                  ColumnIndex: 0
+                  ColumnSpan: 19
+                  RowIndex: 0
+                  RowSpan: 8
+                - ElementId: 0ab5cab0-0dba-46bb-82d7-a667d4abae1f
+                  ElementType: VISUAL
+                  ColumnIndex: 19
+                  ColumnSpan: 17
+                  RowIndex: 0
+                  RowSpan: 16
+                - ElementId: d4081726-98e3-4bc7-8838-42e007ac2890
+                  ElementType: VISUAL
+                  ColumnIndex: 0
+                  ColumnSpan: 19
+                  RowIndex: 8
+                  RowSpan: 8
+                - ElementId: 32a55eb3-9fb3-46ea-b173-9136808a4837
+                  ElementType: VISUAL
+                  ColumnIndex: 0
+                  ColumnSpan: 17
+                  RowIndex: 16
+                  RowSpan: 17
+                - ElementId: c76845d4-8f01-44bb-8fd7-f072a2d66e6f
+                  ElementType: VISUAL
+                  ColumnIndex: 17
+                  ColumnSpan: 19
+                  RowIndex: 16
+                  RowSpan: 9
+                - ElementId: 5f33d552-8a97-426d-b627-54d008d3cf67
+                  ElementType: VISUAL
+                  ColumnIndex: 17
+                  ColumnSpan: 19
+                  RowIndex: 25
+                  RowSpan: 8
+                CanvasSizeOptions:
+                  ScreenCanvasSizeOptions:
+                    ResizeOption: RESPONSIVE
+          SheetControlLayouts:
+          - Configuration:
+              GridLayout:
+                Elements:
+                - ElementId: 586d155f-ead1-4f70-96ae-10ddc24ee358
+                  ElementType: FILTER_CONTROL
+                  ColumnSpan: 2
+                  RowSpan: 1
+                - ElementId: 709d7b65-f3af-4032-80d7-ee8d25fa8888
+                  ElementType: FILTER_CONTROL
+                  ColumnSpan: 2
+                  RowSpan: 1
+          ContentType: INTERACTIVE
         - SheetId: 76ebf245-e26d-4b41-91dd-bdf96155e80a
           Name: DeploymentUrl
           Visuals: []
@@ -1085,7 +1567,7 @@ Resources:
         CalculatedFields:
         - DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
           Name: eventDetailUrl
-          Expression: !Sub concat("${EventDetailUrl}",eventArn)
+          Expression: concat("https://test",eventArn)
         ParameterDeclarations:
         - StringParameterDeclaration:
             ParameterValueType: SINGLE_VALUED
@@ -1254,6 +1736,76 @@ Resources:
                 Scope: ALL_VISUALS
           Status: ENABLED
           CrossDataset: SINGLE_DATASET
+        - FilterGroupId: 2cbefed2-c2e0-4569-b049-f228ca67b44e
+          Filters:
+          - CategoryFilter:
+              FilterId: e2b3cd15-d89d-48ff-9af9-b36be57f121f
+              Column:
+                DataSetIdentifier: !Sub "AWSConfigRDS-${AWS::AccountId}-${AWS::Region}"
+                ColumnName: entityTagValue
+              Configuration:
+                FilterListConfiguration:
+                  MatchOperator: CONTAINS
+                  SelectAllOptions: FILTER_ALL_VALUES
+          ScopeConfiguration:
+            SelectedSheets:
+              SheetVisualScopingConfigurations:
+              - SheetId: be631db2-9c8f-436a-8e3a-484bf743529b
+                Scope: SELECTED_VISUALS
+                VisualIds:
+                - 32a55eb3-9fb3-46ea-b173-9136808a4837
+          Status: ENABLED
+          CrossDataset: SINGLE_DATASET
+        - FilterGroupId: ca0f0291-db2b-44cf-bf33-0c20ead6e889
+          Filters:
+          - CategoryFilter:
+              FilterId: a331ad47-a405-49f7-8391-caea3f0d4d2c
+              Column:
+                DataSetIdentifier: !Sub "AWSConfigLambda-${AWS::AccountId}-${AWS::Region}"
+                ColumnName: entityTagKey
+              Configuration:
+                FilterListConfiguration:
+                  MatchOperator: CONTAINS
+                  SelectAllOptions: FILTER_ALL_VALUES
+          ScopeConfiguration:
+            SelectedSheets:
+              SheetVisualScopingConfigurations:
+              - SheetId: be631db2-9c8f-436a-8e3a-484bf743529b
+                Scope: SELECTED_VISUALS
+                VisualIds:
+                - 0ab5cab0-0dba-46bb-82d7-a667d4abae1f
+                - 143ec30e-7234-4850-98b1-fa568737ad15
+                - d4081726-98e3-4bc7-8838-42e007ac2890
+                - 32a55eb3-9fb3-46ea-b173-9136808a4837
+                - c76845d4-8f01-44bb-8fd7-f072a2d66e6f
+                - 5f33d552-8a97-426d-b627-54d008d3cf67
+          Status: ENABLED
+          CrossDataset: ALL_DATASETS
+        - FilterGroupId: 9ba38d09-f22f-464e-a875-38c271c2bf23
+          Filters:
+          - CategoryFilter:
+              FilterId: 21094b7b-e25a-4eec-8db7-524baf30b50e
+              Column:
+                DataSetIdentifier: !Sub "AWSConfigLambda-${AWS::AccountId}-${AWS::Region}"
+                ColumnName: entityTagValue
+              Configuration:
+                FilterListConfiguration:
+                  MatchOperator: CONTAINS
+                  SelectAllOptions: FILTER_ALL_VALUES
+          ScopeConfiguration:
+            SelectedSheets:
+              SheetVisualScopingConfigurations:
+              - SheetId: be631db2-9c8f-436a-8e3a-484bf743529b
+                Scope: SELECTED_VISUALS
+                VisualIds:
+                - 0ab5cab0-0dba-46bb-82d7-a667d4abae1f
+                - 143ec30e-7234-4850-98b1-fa568737ad15
+                - d4081726-98e3-4bc7-8838-42e007ac2890
+                - 32a55eb3-9fb3-46ea-b173-9136808a4837
+                - c76845d4-8f01-44bb-8fd7-f072a2d66e6f
+                - 5f33d552-8a97-426d-b627-54d008d3cf67
+          Status: ENABLED
+          CrossDataset: ALL_DATASETS
         ColumnConfigurations:
         - Column:
             DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
@@ -1270,6 +1822,9 @@ Resources:
                   ScreenCanvasSizeOptions:
                     ResizeOption: FIXED
                     OptimizedViewPortWidth: 1600px
+            SheetContentType: INTERACTIVE
+
+
             SheetContentType: INTERACTIVE
       Permissions:
       - Principal: !Sub "${QuickSightUser}"

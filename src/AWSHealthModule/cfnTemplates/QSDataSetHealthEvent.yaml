@@ -1,0 +1,188 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: (AwsHealthEvents) Stack to create dataset and GlueTables for AwsHealthEvents
+
+Parameters:
+  # S3 Bucket for ingestion
+  QuickSightUser:
+    Type: String
+    Description: The QuickSight User that is allowed configure and manage the QS dashboard.
+  DataSourceArn:
+    Type: String
+    Description: The AWS Health Event QSDataSetArn for Analysis.
+
+Resources:
+  QSDataSetHealthEvent:
+  # Create an AWS QuickSight DataSet for AWS Health events
+      Type: AWS::QuickSight::DataSet
+      Properties:
+        AwsAccountId: !Sub ${AWS::AccountId}
+        ImportMode: SPICE
+        DataSetId: !Sub "awshealthevents-${AWS::AccountId}-${AWS::Region}"
+        Name: !Sub "awshealthevents-${AWS::AccountId}-${AWS::Region}"
+        PhysicalTableMap:
+          "AWSHealthQSPT":
+            CustomSql:
+              DataSourceArn: !Ref DataSourceArn
+              Name: !Sub "awshealthevents-${AWS::AccountId}-${AWS::Region}"
+              SqlQuery: |-
+                  WITH latestRow AS (select * from (SELECT
+                          detail.eventTypeCode,
+                          source AS eventSource,
+                          account,
+                          detail.service,
+                          detail.eventScopeCode,
+                          detail.eventTypeCategory,
+                          detail.eventArn,
+                          detail.communicationid,
+                          detail.eventRegion,
+                          entities.entityValue AS affectedEntities,
+                          detail.eventdescription[1].latestdescription AS eventDescription,
+                          ROW_NUMBER() OVER (PARTITION BY detail.eventarn ORDER BY "time" DESC) AS rowrank,
+                          array_join(resources, ', ') AS resources,
+                          CAST(from_iso8601_timestamp("time") AS timestamp) AS ingestionTime,
+                          CAST(date_parse(detail.endTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) AS endTime,
+                          CAST(date_parse(detail.startTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) AS startTime,
+                          CAST(date_parse(detail.lastUpdatedTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) AS lastUpdatedTime,
+                          CAST(DATE_DIFF('HOUR', CAST(date_parse(detail.startTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp), CAST(date_parse(detail.endTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp)) AS BIGINT) AS eventDuration,
+                          CASE
+                              WHEN (CAST(date_parse(detail.endTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) > current_timestamp) THEN 'Upcoming'
+                              WHEN ((CAST(date_parse(detail.endTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) IS NULL) AND (detail.eventTypeCategory = 'scheduledChange')) THEN 'Upcoming'
+                              WHEN (((CAST(date_parse(detail.startTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) + (7 * INTERVAL '1' DAY)) < current_timestamp) AND (detail.eventTypeCategory = 'accountNotification') AND (CAST(date_parse(detail.endTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) IS NULL)) THEN 'Archived'
+                              WHEN (CAST(date_parse(detail.endTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) IS NULL) THEN 'Active'
+                              ELSE 'Archived'
+                          END AS "Status"
+                      FROM "AwsDataCatalog"."awshealtheventdb"."awshealthevent"
+                      CROSS JOIN UNNEST(detail.affectedEntities) AS t(entities))
+                      WHERE rowrank = 1),
+                  tagInfo AS (SELECT
+                          Distinct configurationitem.resourceid AS resourceId,
+                          configurationitem.resourcename AS resourceName,
+                          configurationitem.arn AS entityArn,
+                          configurationitem.availabilityzone AS entityAZ,
+                          tag_key AS entityTagKey,
+                          configurationitem.tags[tag_key] AS entityTagValue
+                      FROM "AwsDataCatalog"."awshealtheventdb"."awsconfigdata"
+                      CROSS JOIN UNNEST(configurationitems) AS t(configurationitem)
+                      LEFT JOIN UNNEST(map_keys(configurationitem.tags)) AS t(tag_key) ON TRUE
+                      WHERE date_created = 'latest')
+                  SELECT detail.*, tagInfo.*, COALESCE(accountinfo."name", detail."account") AS accountName, accountinfo.Tag as accountTag
+                  FROM latestRow detail
+                  LEFT JOIN "AwsDataCatalog"."awshealtheventdb"."awshealtheventaccinfo" accountinfo ON detail.account = accountinfo."accountid"
+                  LEFT JOIN tagInfo ON detail.affectedEntities in (tagInfo.resourceId,tagInfo.resourceName,tagInfo.entityArn)
+              Columns:
+              - Name: eventTypeCode
+                Type: STRING
+              - Name: rowrank
+                Type: INTEGER
+              - Name: eventSource
+                Type: STRING
+              - Name: account
+                Type: STRING
+              - Name: eventScopeCode
+                Type: STRING
+              - Name: eventTypeCategory
+                Type: STRING
+              - Name: eventArn
+                Type: STRING
+              - Name: communicationid
+                Type: STRING
+              - Name: eventDescription
+                Type: STRING
+              - Name: resources
+                Type: STRING
+              - Name: ingestionTime
+                Type: DATETIME
+              - Name: endTime
+                Type: DATETIME
+              - Name: startTime
+                Type: DATETIME
+              - Name: lastUpdatedTime
+                Type: DATETIME
+              - Name: eventDuration
+                Type: INTEGER
+              - Name: Status
+                Type: STRING
+              - Name: eventRegion
+                Type: STRING
+              - Name: service
+                Type: STRING
+              - Name: accountName
+                Type: STRING
+              - Name: accountTag
+                Type: STRING
+              - Name: affectedEntities
+                Type: STRING
+              - Name: entityArn
+                Type: STRING
+              - Name: entityAZ
+                Type: STRING
+              - Name: entityTagKey
+                Type: STRING
+              - Name: entityTagValue
+                Type: STRING
+        LogicalTableMap:
+          AWSHealthQSLT:
+            Alias: !Sub "awshealthevents-${AWS::AccountId}-${AWS::Region}"
+            DataTransforms:
+            - ProjectOperation:
+                ProjectedColumns:
+                - eventTypeCode
+                - rowrank
+                - eventSource
+                - account
+                - eventScopeCode
+                - eventTypeCategory
+                - eventArn
+                - communicationid
+                - eventDescription
+                - resources
+                - ingestionTime
+                - endTime
+                - startTime
+                - lastUpdatedTime
+                - eventDuration
+                - Status
+                - eventRegion
+                - service
+                - accountName
+                - accountTag
+                - affectedEntities
+                - entityArn
+                - entityAZ
+                - entityTagKey
+                - entityTagValue
+            Source:
+              PhysicalTableId: AWSHealthQSPT
+        Permissions:
+        - Principal: !Sub "${QuickSightUser}"
+          Actions:
+            - quicksight:DescribeDataSet
+            - quicksight:DescribeDataSetPermissions
+            - quicksight:PassDataSet
+            - quicksight:DescribeIngestion
+            - quicksight:ListIngestions
+            - quicksight:UpdateDataSet
+            - quicksight:DeleteDataSet
+            - quicksight:CreateIngestion
+            - quicksight:CancelIngestion
+            - quicksight:UpdateDataSetPermissions
+
+  QSDataSetHealthEventRefresh:
+    # Create an AWS QuickSight Refresh Schedule for AWS Health events
+    DependsOn: QSDataSetHealthEvent
+    Type: AWS::QuickSight::RefreshSchedule
+    Properties: 
+      AwsAccountId: !Sub ${AWS::AccountId}
+      DataSetId: !Sub "awshealthevents-${AWS::AccountId}-${AWS::Region}"
+      Schedule:
+        RefreshType: FULL_REFRESH
+        ScheduleFrequency:
+          Interval: HOURLY
+        ScheduleId: QSDataSetHealthEventRefresh
+
+Outputs:
+  QSDataSetHealthEventArn:
+    Value: !GetAtt QSDataSetHealthEvent.Arn
+    Export:
+      Name: QSDataSetHealthEventArn

@@ -17,7 +17,7 @@
     ],
     "affectedEntities":[
       {
-          "entityValue":"i-MockEvent"
+          "entityValue":"addpartition"
        }
     ]
  }

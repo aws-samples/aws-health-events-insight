@@ -12,10 +12,6 @@ Parameters:
   DataCollectionBucket:
     Type: String
     Description: S3 Bucket for ingestion
-  
-  AWSHealthEventEnrichLambdaArn:
-    Type: String
-    Description: Lambda for transformation, leave empty to disable transformation.
 
 Resources:
   # Define an AWS Events Event Bus for DataCollection
@@ -82,18 +78,6 @@ Resources:
                 Resource:
                   - !Sub "arn:${AWS::Partition}:s3:::${DataCollectionBucket}"
                   - !Sub "arn:${AWS::Partition}:s3:::${DataCollectionBucket}/*"
-        - !If
-          - AWSHealthEventEnrichLambdaArn
-          - PolicyName: InvokeTransformationLambda-Policy
-            PolicyDocument:
-              Version: '2012-10-17'
-              Statement:
-                - Effect: Allow
-                  Action:
-                    - "lambda:InvokeFunction"
-                  Resource: 
-                    - !Ref AWSHealthEventEnrichLambdaArn
-          - !Ref "AWS::NoValue"
 
   # Define an AWS Kinesis Firehose Delivery Stream for data ingestion
   KinesisFirehose:
@@ -130,14 +114,6 @@ Resources:
                   ParameterValue: "{source:.source}"
                 - ParameterName: JsonParsingEngine
                   ParameterValue: JQ-1.6
-            # Add transfor if Lambda Arn is Supplied.
-            - !If
-              - AWSHealthEventEnrichLambdaArn
-              - Type: Lambda
-                Parameters:
-                  - ParameterName: LambdaArn
-                    ParameterValue: !Ref AWSHealthEventEnrichLambdaArn
-              - !Ref "AWS::NoValue"
 
   # Define an IAM Role for the AWS Events Rule
   DataCollectionRuleRole:
@@ -187,6 +163,3 @@ Outputs:
     Value: !GetAtt DataCollectionBus.Arn
     Export:
       Name: DataCollectionBusArn
-
-Conditions:
-  AWSHealthEventEnrichLambdaArn: !Not [!Equals [!Ref AWSHealthEventEnrichLambdaArn, "N"]]

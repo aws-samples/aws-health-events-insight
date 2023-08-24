@@ -38,8 +38,48 @@ def create_or_get_s3_bucket(account_id, region):
         print(f"S3 bucket {bucket_name} has been created")
     return bucket_name
 
-#Sync cloudformation and metadata files
+def print_boxed_text(text):
+    lines = text.strip().split('\n')
+    max_length = max(len(line) for line in lines)
+    
+    print('═' * (max_length + 2))
+    for line in lines:
+        print(f' {line.ljust(max_length)} ')
+    print('═' * (max_length + 2))
+
+def check_config_bucket(bucket_name,account_id,region):
+    #check if config bucket is reachable
+    print_boxed_text("Note: To use this feature, you need a centralized S3 bucket receiving AWS Config snapshots from all accounts. See enrichEvent.md for more details")
+    ConfigAggregatorBucket = input("   Enter AWS Config centralized BucketName: ") or bucket_name
+    policy_template = f"""
+    {{
+        "Sid": "S3 Access policy to read Config snapshots",
+        "Effect": "Allow",
+        "Principal": {{
+           "AWS": ["<Important::: Replace this with QS serviceRole ARN>",
+                   "arn:aws:iam::{account_id}:role/GluePartitionUpdateLambda-{account_id}-{region}-Role"]
+        }},
+        "Action": [
+            "s3:GetBucketLocation",
+            "s3:GetObject",
+            "s3:ListBucket",
+            "s3:ListBucketMultipartUploads",
+            "s3:ListMultipartUploadParts",
+            "s3:AbortMultipartUpload"
+        ],
+        "Resource": [
+            "arn:aws:s3:::{ConfigAggregatorBucket}",
+            "arn:aws:s3:::{ConfigAggregatorBucket}/*"
+        ]
+    }}
+        """
+    print(f"\nINFO: You must add following policy to {ConfigAggregatorBucket} bucket for QuickSight and Lambda Function(To create Glue partitions) to include Tagging info after this setup")
+    print_boxed_text(policy_template)
+    print(f"continuing with Setup....\n")
+    return ConfigAggregatorBucket
+
 def sync_cfnfiles(bucket_name):
+    #Sync cloudformation and metadata files
     try:
         aws_sync_command = f"aws s3 sync ../src/ s3://{bucket_name}/DataCollection-metadata"
         subprocess.call(aws_sync_command.split())
@@ -47,8 +87,8 @@ def sync_cfnfiles(bucket_name):
         print("Error while syncing S3. Check if deployer role has required S3 and KMS permissions.")
         exit()
 
-#get quicksight user. ES user can have multiplenamespaces
 def get_quicksight_user(account_id, qsidregion):
+    #get quicksight user. ES user can have multiplenamespaces
     try:
         quicksight_client = boto3.client('quicksight', qsidregion)
         response = quicksight_client.list_namespaces(AwsAccountId=account_id)
@@ -67,19 +107,24 @@ def get_quicksight_user(account_id, qsidregion):
         exit()
 
     print("\nAvailable QuickSight Users")
-    for i, qsusername in enumerate(qsusernames, 1):
-        print("{}. {}".format(i, qsusername))
-    print()
-    quicksight_number = input("Enter the number corresponding to the QuickSight username from the list: ")
-    quicksight_user = qsusernames[int(quicksight_number) - 1] if quicksight_number.isdigit() and 1 <= int(quicksight_number) <= len(qsusernames) else None
-    if not quicksight_user:
-        print("Invalid input. Exiting script.")
-        exit()
-    return quicksight_user
+    try:
 
-#Get user choice to get deployment type
+        for i, qsusername in enumerate(qsusernames, 1):
+            print("{}. {}".format(i, qsusername))
+        print()
+        while True:
+            quicksight_number = input("Enter the number corresponding to the QuickSight username from the list: ")
+            quicksight_user = qsusernames[int(quicksight_number) - 1] if quicksight_number.isdigit() and 1 <= int(quicksight_number) <= len(qsusernames) else None
+            if quicksight_user:
+                return quicksight_user
+            else: 
+                print("Invalid Option") 
+    except ClientError as q:
+        print("Something went wrong, Check Quicksight settings")
+
 def get_user_choice():
-    options = {'1': 'CentralAccount', '2': 'MemberAccount', '3': 'ConfigRole'}
+    #Get user choice to get deployment type
+    options = {'1': 'CentralAccount', '2': 'MemberAccount'}
     while True:
         print("Select Deployment option:")
         for key, value in options.items():
@@ -88,9 +133,10 @@ def get_user_choice():
         if choice in options:
             return options[choice]
         else:
-            print("Invalid option. Please choose 1, 2, or 3.")
+            print("Invalid option. Please choose 1, 2")
 
 def deploy_stack(command):
+    #deploy stack
     try:
         subprocess.call(command, shell=True)
     except Exception as e:
@@ -111,42 +157,33 @@ def central_account_setup(region, account_id):
         qsidregion = input("Enter your QuickSight Identity region (Hit enter to use default: us-east-1): ") or "us-east-1"
         quicksight_user = get_quicksight_user(account_id, qsidregion)
 
-        # Check if event enrichment with Tags is required
-        EnrichEventSelected = input("(Optional)Do you want to enrich events with Tags? It requires access to AWS Config Aggregator (Y/N): ") or "N"
-        if EnrichEventSelected == 'Y':
-            # Configure AWS Config Aggregator settings
-            ConfigurationAggregatorAccount = input(f"   Enter AWS Config Aggregator AccountID (Account that aggregates data from other Accounts, Default {account_id}): ") or account_id
-            ConfigurationAggregatorName = input("   Enter AWS Config Aggregator Name: ") or "PlaceHolder"
-            ConfigurationAggregatorRegion = input("   Enter AWS Config Aggregator Region: ") or region
-            if ConfigurationAggregatorAccount != account_id:
-                ConfigurationAggregatorAccount = "N"
-                print("(**NOTE:** Since AWS Config Aggregator is in a different account, You must complete Config Role Setup in that account after this)")
-        else:
-            ConfigurationAggregatorAccount = "N"
-            ConfigurationAggregatorName = "N"
-            ConfigurationAggregatorRegion = "N"
-
         # Check if backfill of healthevents is required
-        BackfillEvents = input("(Optional)Do you want to backfill healthevents? The data can only be retrieved for the last 90 days. (Y/N): ") or "N"
+        BackfillEvents = input("(Optional)Do you want to backfill healthevents? limited to the past 90 days (Y/N): ") or "N"
 
         # Check if eventUrl setup is required
         eventUrlSelected = input("(Optional)Do you want to set up eventUrl for easy access to event descriptions? (Y/N): ") or "N"
         if eventUrlSelected == "Y":
+            print_boxed_text("Note: EventUrl will be accessible via APIGW with a resource policy resticting with IP range. Add additional authentication to APIGW post-setup as needed.")
             AllowedIpRange = input("   Provide IP Range which can access these eventUrls, this could be your VPN range (Default 0.0.0.0/0): ") or "0.0.0.0/0"
         else:
             AllowedIpRange = "N"
+
+        # Check if event enrichment with Tags is required
+        EnrichEventSelected = input("(Optional)Do you want to enrich events with Tags? It requires access to centralized AWS Config S3 Bucket(Y/N): ") or "N"
+        if EnrichEventSelected == 'Y':
+        # Configure AWS Config Aggregator settings
+            ConfigAggregatorBucket = check_config_bucket(bucket_name,account_id,region)
+        else:
+            ConfigAggregatorBucket = "N"
     else:
         # AWS Health Events Dashboard is not selected
         AWSHealtheventSelected = "N"
         BackfillEvents = "N"
         AllowedIpRange = "N"
-        EnrichEventSelected = "N"
         quicksight_service_role = "N"
         qsidregion = "N"
         quicksight_user = "N"
-        ConfigurationAggregatorAccount = "N"
-        ConfigurationAggregatorName = "N"
-        ConfigurationAggregatorRegion = "N"
+        ConfigAggregatorBucket = "N"
 
     #sync cfn template files
     sync_cfnfiles(bucket_name)
@@ -161,19 +198,17 @@ def central_account_setup(region, account_id):
                 AWSHealtheventSelected={AWSHealtheventSelected} \
                 BackfillEvents={BackfillEvents} \
                 AllowedIpRange={AllowedIpRange}\
-                EnrichEventSelected={EnrichEventSelected}\
-                ConfigurationAggregatorAccount={ConfigurationAggregatorAccount}\
-                ConfigurationAggregatorName={ConfigurationAggregatorName}\
-                ConfigurationAggregatorRegion={ConfigurationAggregatorRegion}"
+                ConfigAggregatorBucket={ConfigAggregatorBucket}"
 
     command= f"sam deploy --stack-name {stack_name} --region {region} --parameter-overrides {parameters}\
-        --template-file DataCollectionModule/DataCollectionroot.yaml --capabilities CAPABILITY_IAM --disable-rollback"
+        --template-file DataCollectionModule/DataCollectionroot.yaml --capabilities CAPABILITY_NAMED_IAM --disable-rollback"
     
     #Deploy Stack
     deploy_stack(command)
 
 def member_account_setup(region, account_id):
-    DataCollectionBusArn = input("Enter the value for Primary EventHealth Bus: ")
+    #Member Account Setup
+    DataCollectionBusArn = input("Enter the value for DataCollection Bus Arn: ")
     BackfillEvents = input("Do you want to backfill healthevents. The data can only be retrieved for the last 90 days.(Y/N):") or "N"
 
     # Create or update the CloudFormation stack
@@ -183,19 +218,7 @@ def member_account_setup(region, account_id):
                 BackfillEvents={BackfillEvents}"
     
     command= f"sam deploy --stack-name {stack_name} --region {region} --parameter-overrides {parameters}\
-        --template-file AWSHealthModule/cfnTemplates/AWSHealthEventMember.yaml --capabilities CAPABILITY_IAM --disable-rollback"
-    
-    #Deploy Stack
-    deploy_stack(command)
-
-def config_role_setup(region, account_id):
-    AWSHealthEventEnrichLambdaRoleArn = input("Enter AWSHealthEventEnrichLambdaRole Arn(Output of Stack HeidiDataCollection-<AccountID>-<region>-AWSHealthEventEnrich-<hash>): ")
-    # Create or update the CloudFormation stack
-    stack_name = f"HeidiDataCollection-ConfigCrossAccount-{account_id}-{region}"
-    parameters = f"AWSHealthEventEnrichLambdaRoleArn={AWSHealthEventEnrichLambdaRoleArn}"
-
-    command= f"sam deploy --stack-name {stack_name} --region {region} --parameter-overrides {parameters}\
-        --template-file AWSHealthModule/cfnTemplates/AWSHealthEventConfigAccountRole.yaml --capabilities CAPABILITY_NAMED_IAM --disable-rollback"
+        --template-file AWSHealthModule/cfnTemplates/HealthEventMember.yaml --capabilities CAPABILITY_NAMED_IAM --disable-rollback"
     
     #Deploy Stack
     deploy_stack(command)
@@ -212,9 +235,6 @@ def main():
 
     elif selected_option == 'MemberAccount':
         member_account_setup(region, account_id)
-
-    elif selected_option == 'ConfigRole':
-        config_role_setup(region, account_id)
 
 if __name__ == "__main__":
     main()
