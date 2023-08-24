@@ -12,7 +12,7 @@ AWS HEIDI Data Collection Framework enables you to collect data from different d
 
 # Deploying the solution
 
-In this section, we will go through the steps to set up permissions for StackSets in both the central and member accounts for AWS Health Events..
+In this section, We are going to walk through the procedures for configuring AWS Heidi within both the central and member accounts for AWS Health Events.
 
 # Prerequisites
 
@@ -82,6 +82,10 @@ In this section, we will go through the steps to set up permissions for StackSet
 
 # Troubleshooting Steps:
 
+***SYNTAX_ERROR: line 41:15: UNNEST on other than the right side of CROSS JOIN is not supported***
+
+This implies that you are using Amazon Athena V2. Please upgrade worker to Amazon Athena V3. Amazon Athena V2 is on deprecated path.
+
 ***Template format error: Unrecognized resource types: [AWS::QuickSight::RefreshSchedule]***
 
 `AWS::QuickSight::RefreshSchedule` doesn't exist in certain regions such as us-west-1, ca-central-1 etc. You can comment out `AWSHealthEventQSDataSetRefresh` section in ![AWSHealthEventQSDataSet.yaml](https://github.com/aws-samples/aws-health-events-insight/blob/main/src/AWSHealthModule/cfnTemplates/QSDataSetHealthEvent.yaml) and setup refresh schedule from QuickSight console. 
@@ -95,7 +99,7 @@ In this section, we will go through the steps to set up permissions for StackSet
 5. From the dropdown menu, select the "awshealthdb" database and grant the necessary permission.
 6. Repeat the previous step (Step 5), but this time, select all tables and grant the required permission.
 
-By following these steps, you should be able to resolve the "Insufficient Lake Formation permission(s) on awshealthevent" issue. This will grant the necessary permissions to the specified Amazon QuickSight ARN and allow it to access the AWS Lake Formation resources correctly. You must repeate same process for Amazon QuickSight service role if thats also lacking these permissions.
+ This will grant the necessary permissions to the specified Amazon QuickSight ARN and allow it to access the AWS Lake Formation resources correctly. You must repeate same process for Amazon QuickSight service role if thats also lacking these permissions.
 
 ***Possible Reasons for No Data in AWS QuickSight Analysis:***
 
