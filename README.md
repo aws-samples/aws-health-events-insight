@@ -38,7 +38,7 @@ In this section, we will go through the steps to set up permissions for StackSet
 
     3. Once CloudFormation status changes to **CREATE_COMPLETE** (about 10-15 minutes), go to Amazon QuickSight dashboard and verify the analysis deployed. 
 
-2. **Member Account/Region Setup for AWS Health Events:** CloudFormation template in ![AWSHealthEventMember.yaml](https://github.com/aws-samples/aws-health-events-insight/blob/main/src/AWSHealthModule/cfnTemplates/AWSHealthEventMember.yaml) will set up all the necessary components required to send health events to control account. 
+2. **Member Account/Region Setup for AWS Health Events:** You MUST complete Member Account Setup for each Region for which you want to receive AWS Health events.
 
     **Option 1 (Using One click Script):**
 
@@ -51,13 +51,13 @@ In this section, we will go through the steps to set up permissions for StackSet
 
     **Option 2 (Bulk deployment via StackSet)**:
 
-    1. In CloudFormation Console create a stackset with new resources from the template file ![AWSHealthEventMember.yaml](https://github.com/aws-samples/aws-health-events-insight/blob/main/src/AWSHealthModule/cfnTemplates/AWSHealthEventMember.yaml).
+    1. In CloudFormation Console create a stackset with new resources from the template file ![HealthEventMember.yaml](https://github.com/aws-samples/aws-health-events-insight/blob/main/src/AWSHealthModule/cfnTemplates/HealthEventMember.yaml).
     2. Input the DataCollectionBusArn. Go to the AWS CloudFormation console of central account and get this information from output of DataCollectionStack.
     3. Select deployment targets (Deploy to OU or deploy to organization).
     4. Select regions to deploy.
     5. Submit.
 
-**Note:** You MUST complete Member Account Setup for each Region for which you want to receive AWS Health events. To receive global events, you must create Member Account/Region Setup for the US East (N. Virginia) Region and US West (Oregon) Region as backup Region if needed.
+**Note:** To receive global events, you must create Member Account/Region Setup for the US East (N. Virginia) Region and US West (Oregon) Region as backup Region if needed.
 
 3. **Update Metadata (Optional):** Map AWS Accounts with Account Name and Account Tags (AppID, Env, etc.)
 
@@ -84,7 +84,7 @@ In this section, we will go through the steps to set up permissions for StackSet
 
 **Template format error: Unrecognized resource types: [AWS::QuickSight::RefreshSchedule]**
 
-`AWS::QuickSight::RefreshSchedule` doesn't exist in certain regions such as us-west-1, ca-central-1 etc. You can comment out `AWSHealthEventQSDataSetRefresh` section in ![AWSHealthEventQSDataSet.yaml](https://github.com/aws-samples/aws-health-events-insight/blob/main/src/AWSHealthModule/cfnTemplates/AWSHealthEventQSDataSet.yaml) and setup refresh schedule from QuickSight console. 
+`AWS::QuickSight::RefreshSchedule` doesn't exist in certain regions such as us-west-1, ca-central-1 etc. You can comment out `AWSHealthEventQSDataSetRefresh` section in ![AWSHealthEventQSDataSet.yaml](https://github.com/aws-samples/aws-health-events-insight/blob/main/src/AWSHealthModule/cfnTemplates/QSDataSetHealthEvent.yaml) and setup refresh schedule from QuickSight console. 
 
 **Resource handler returned message: Insufficient permissions to execute the query. Insufficient Lake Formation permission(s) on awshealthevent**
 

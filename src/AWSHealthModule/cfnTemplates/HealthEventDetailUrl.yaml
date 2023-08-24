@@ -257,7 +257,7 @@ Resources:
           application/json: !Sub 
               |- 
               {
-                "TableName": "${AWSHealthEventDynamoDB}",
+                "TableName": "${HealthEventDynamoDB}",
                 "Key":{
                   "eventArn": {"S": "$util.escapeJavaScript($input.params().querystring.get("eventArn"))"}
                 }

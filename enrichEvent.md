@@ -10,8 +10,11 @@ AWS Config delivers configuration snapshots of the AWS resources that AWS Config
 # Reading
 
 ![Granting AWS Config access to the Amazon S3 Bucket](https://docs.aws.amazon.com/config/latest/developerguide/s3-bucket-policy.html#granting-access-in-another-account)
+
 ![configuration history and configuration snapshot files](https://aws.amazon.com/blogs/mt/configuration-history-configuration-snapshot-files-aws-config/)
+
 ![recreate AWS Config delivery channel](https://repost.aws/knowledge-center/recreate-config-delivery-channel)
+
 ![Enable frequency of config snapshot](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-config-deliverychannel.html)
 
 # Limitation
