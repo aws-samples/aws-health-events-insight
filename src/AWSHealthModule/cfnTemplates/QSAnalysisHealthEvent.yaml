@@ -1069,7 +1069,7 @@ Resources:
                   RowSpan: 1
           ContentType: INTERACTIVE
         - SheetId: be631db2-9c8f-436a-8e3a-484bf743529b
-          Name: Runtime(Beta)
+          Name: ResourceExplorer 
           FilterControls:
           - Dropdown:
               FilterControlId: 586d155f-ead1-4f70-96ae-10ddc24ee358
