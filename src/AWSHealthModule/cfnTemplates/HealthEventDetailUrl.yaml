@@ -17,17 +17,20 @@ Parameters:
 
 Resources:
   HealthEventDynamoDB:
-    DeletionPolicy: Delete
+    DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
     Type: AWS::DynamoDB::GlobalTable
     Properties:
-      TableName: !Sub "HealthEventDDBTable-${AWS::AccountId}"
       AttributeDefinitions:
         - AttributeName: eventArn
+          AttributeType: S
+        - AttributeName: account
           AttributeType: S
       KeySchema:
         - AttributeName: eventArn
           KeyType: HASH
+        - AttributeName: account
+          KeyType: RANGE
       BillingMode: PAY_PER_REQUEST
       StreamSpecification:
         StreamViewType: NEW_IMAGE
@@ -247,6 +250,7 @@ Resources:
             text/html: Empty
       RequestParameters: 
         method.request.querystring.eventArn: False
+        method.request.querystring.account: False
       Integration:
         IntegrationHttpMethod: POST
         Type: AWS
@@ -259,7 +263,8 @@ Resources:
               {
                 "TableName": "${HealthEventDynamoDB}",
                 "Key":{
-                  "eventArn": {"S": "$util.escapeJavaScript($input.params().querystring.get("eventArn"))"}
+                  "eventArn": {"S": "$util.escapeJavaScript($input.params().querystring.get("eventArn"))"},
+                   "account": {"S": "$util.escapeJavaScript($input.params().querystring.get("account"))"}
                 }
               }
         IntegrationResponses:
@@ -293,4 +298,4 @@ Resources:
 Outputs:
   EventDetailApiEndpoint: 
     Description: "API Gateway endpoint URL for Prod stage for Product api"
-    Value: !Sub "https://${apiGateway}.execute-api.${AWS::Region}.amazonaws.com/v1/healthevent?eventArn="
+    Value: !Sub "https://${apiGateway}.execute-api.${AWS::Region}.amazonaws.com/v1/healthevent?"

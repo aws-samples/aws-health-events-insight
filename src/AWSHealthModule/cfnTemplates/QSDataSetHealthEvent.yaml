@@ -38,7 +38,7 @@ Resources:
                           detail.eventRegion,
                           entities.entityValue AS affectedEntities,
                           detail.eventdescription[1].latestdescription AS eventDescription,
-                          ROW_NUMBER() OVER (PARTITION BY detail.eventarn ORDER BY "time" DESC) AS rowrank,
+                          rank() OVER (PARTITION BY detail.eventarn,account ORDER BY detail.lastUpdatedTime DESC) AS rowrank,
                           array_join(resources, ', ') AS resources,
                           CAST(from_iso8601_timestamp("time") AS timestamp) AS ingestionTime,
                           CAST(date_parse(detail.endTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) AS endTime,

@@ -98,24 +98,6 @@ Resources:
         ConfigAggregatorBucket: !Ref ConfigAggregatorBucket
         DataCollectionBusArn: !GetAtt  DataCollection.Outputs.DataCollectionBusArn
 
-  QSDataSetConfigLambdaView:
-    Condition: AWSHealtheventSelected
-    Type: AWS::CloudFormation::Stack
-    Properties: 
-      TemplateURL: !Sub https://${DataCollectionBucket}.s3.amazonaws.com/DataCollection-metadata/AWSHealthModule/cfnTemplates/QSDataSetConfigLambdaView.yaml
-      Parameters:
-        DataSourceArn: !GetAtt DataSource.Outputs.DataSourceArn
-        QuickSightUser: !Ref QuickSightUser
-
-  QSDataSetConfigRDSView:
-    Condition: AWSHealtheventSelected
-    Type: AWS::CloudFormation::Stack
-    Properties: 
-      TemplateURL: !Sub https://${DataCollectionBucket}.s3.amazonaws.com/DataCollection-metadata/AWSHealthModule/cfnTemplates/QSDataSetConfigRDSView.yaml
-      Parameters:
-        DataSourceArn: !GetAtt DataSource.Outputs.DataSourceArn
-        QuickSightUser: !Ref QuickSightUser
-
   QSAnalysisHealthEvent:
     Condition: AWSHealtheventSelected
     Type: AWS::CloudFormation::Stack
@@ -123,15 +105,12 @@ Resources:
       TemplateURL: !Sub https://${DataCollectionBucket}.s3.amazonaws.com/DataCollection-metadata/AWSHealthModule/cfnTemplates/QSAnalysisHealthEvent.yaml
       Parameters:
         QSDataSetHealthEventArn: !GetAtt  QSDataSetHealthEvent.Outputs.QSDataSetHealthEventArn
-        QSDataSetConfigLambdaViewArn: !GetAtt  QSDataSetConfigLambdaView.Outputs.QSDataSetConfigLambdaViewArn
-        QSDataSetConfigRDSViewArn: !GetAtt  QSDataSetConfigRDSView.Outputs.QSDataSetConfigRDSViewArn
         EventDetailUrl: !If [ AllowedIpRange, !GetAtt HealthEventDetailsUrl.Outputs.EventDetailApiEndpoint, "https://test" ]
         QuickSightUser: !Ref QuickSightUser
 
 Conditions:
   AllowedIpRange: !Not [!Equals [!Ref AllowedIpRange, "N"]]
   AWSHealtheventSelected: !Equals [!Ref AWSHealtheventSelected, "Y"]
-  ConfigAggregatorBucket: !Not [!Equals [!Ref ConfigAggregatorBucket, "N"]]
   AWSHealtheventSelectedandConfigAggregatorBucket: !And [!Equals [!Ref AWSHealtheventSelected, "Y"], !Not [!Equals [!Ref ConfigAggregatorBucket, "N"]]]
 
   
