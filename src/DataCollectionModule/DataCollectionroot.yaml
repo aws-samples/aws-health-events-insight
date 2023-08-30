@@ -15,10 +15,6 @@ Parameters:
   POrgID:
     Type: String
     Description: The AWS Organizations ID for the organization that should be allowed to put events on the event bus.
-  AWSHealtheventSelected:
-    Default: "Y"
-    Type: String
-    Description: (Optional) Deploy AWS Health Events Stack Y/N.
   BackfillEvents:
     Default: "N"
     Type: String
@@ -35,6 +31,30 @@ Parameters:
     Default: "N"
     Type: String
     Description: S3 Bucket where Config data is aggregated, Type "N" to disable this.
+  Notification:
+    Type: String
+    Default: "N"
+    Description: Notificaiton Required? Type "N" to disable this.
+  SlackChannelId:
+    Type: String
+    Default: "N"
+    Description: SlackChannelId. Type "N" to disable this.
+  SlackWorkspaceId:
+    Type: String
+    Default: "N"
+    Description: SlackWorkspaceId. Type "N" to disable this.
+  TeamId:
+    Type: String
+    Description: The ID of the Microsoft Teams team to configure. Type "N" to disable this.
+    Default: "N"
+  TeamsTenantId:
+    Type: String
+    Description: The ID of the Microsoft Teams tenant. Type "N" to disable this.
+    Default: "N"
+  TeamsChannelId:
+    Type: String
+    Description: The ID of the Microsoft Teams channel to configure. Type "N" to disable this.
+    Default: "N"
 
 Resources:
   DataCollection:
@@ -46,7 +66,6 @@ Resources:
         POrgID: !Ref POrgID
 
   DataSource:
-    Condition: AWSHealtheventSelected
     DependsOn: HealthEventMember
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -66,8 +85,20 @@ Resources:
         AllowedIpRange: !Ref AllowedIpRange
         AuthorizationType: !Ref AuthorizationType
 
+  HealthEventNotification:
+    Condition: Notification
+    Type: AWS::CloudFormation::Stack
+    Properties: 
+      TemplateURL: !Sub https://${DataCollectionBucket}.s3.amazonaws.com/DataCollection-metadata/AWSHealthModule/cfnTemplates/HealthEventNotification.yaml
+      Parameters:
+        DataCollectionBusArn: !GetAtt  DataCollection.Outputs.DataCollectionBusArn
+        SlackChannelId: !Ref SlackChannelId
+        SlackWorkspaceId: !Ref SlackWorkspaceId
+        TeamId: !Ref TeamId
+        TeamsTenantId: !Ref TeamsTenantId
+        TeamsChannelId: !Ref TeamsChannelId
+
   HealthEventMember:
-    Condition: AWSHealtheventSelected
     Type: AWS::CloudFormation::Stack
     Properties: 
       TemplateURL: !Sub https://${DataCollectionBucket}.s3.amazonaws.com/DataCollection-metadata/AWSHealthModule/cfnTemplates/HealthEventMember.yaml
@@ -77,7 +108,6 @@ Resources:
         EventDetailUrl: !If [ AllowedIpRange, !GetAtt HealthEventDetailsUrl.Outputs.EventDetailApiEndpoint, "https://test" ]
 
   QSDataSetHealthEvent:
-    Condition: AWSHealtheventSelected
     DependsOn: HealthEventMember
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -87,7 +117,7 @@ Resources:
         DataSourceArn: !GetAtt DataSource.Outputs.DataSourceArn
 
   QSDataSourcePartition:
-    Condition: AWSHealtheventSelectedandConfigAggregatorBucket
+    Condition: ConfigAggregatorBucket
     DependsOn: HealthEventMember
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -99,7 +129,6 @@ Resources:
         DataCollectionBusArn: !GetAtt  DataCollection.Outputs.DataCollectionBusArn
 
   QSAnalysisHealthEvent:
-    Condition: AWSHealtheventSelected
     Type: AWS::CloudFormation::Stack
     Properties: 
       TemplateURL: !Sub https://${DataCollectionBucket}.s3.amazonaws.com/DataCollection-metadata/AWSHealthModule/cfnTemplates/QSAnalysisHealthEvent.yaml
@@ -109,8 +138,8 @@ Resources:
         QuickSightUser: !Ref QuickSightUser
 
 Conditions:
+  Notification: !Equals [!Ref Notification, "Y"]
   AllowedIpRange: !Not [!Equals [!Ref AllowedIpRange, "N"]]
-  AWSHealtheventSelected: !Equals [!Ref AWSHealtheventSelected, "Y"]
-  AWSHealtheventSelectedandConfigAggregatorBucket: !And [!Equals [!Ref AWSHealtheventSelected, "Y"], !Not [!Equals [!Ref ConfigAggregatorBucket, "N"]]]
+  ConfigAggregatorBucket: !Not [!Equals [!Ref ConfigAggregatorBucket, "N"]]
 
   

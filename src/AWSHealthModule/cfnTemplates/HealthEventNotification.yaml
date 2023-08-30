@@ -1,0 +1,141 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: (AwsHealthEvents) Stack to create eventUrl via APIGW.
+
+Parameters:
+  DataCollectionBusArn:
+    Type: String
+    Description: Primary Event Health Bus Arn(Get it from  DataCollectionRootStack)
+  SlackChannelId:
+    Type: String
+    Default: "N"
+    Description: SlackChannelId.
+  SlackWorkspaceId:
+    Type: String
+    Default: "N"
+    Description: SlackWorkspaceId.
+  TeamId:
+    Type: String
+    Description: The ID of the Microsoft Teams team to configure.
+    Default: "N"
+  TeamsTenantId:
+    Type: String
+    Description: The ID of the Microsoft Teams tenant.
+    Default: "N"
+  TeamsChannelId:
+    Type: String
+    Description: The ID of the Microsoft Teams channel to configure.
+    Default: "N"
+
+Resources:
+  HealthEventSNSTopic:
+    Type: AWS::SNS::Topic
+
+  HealthEventSNSTopicPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Sid: "DefaultSNSTopicPolicy"
+            Effect: Allow
+            Principal:
+              Service: "chatbot.amazonaws.com"
+            Action:
+              - "SNS:GetTopicAttributes"
+              - "SNS:SetTopicAttributes"
+              - "SNS:AddPermission"
+              - "SNS:RemovePermission"
+              - "SNS:DeleteTopic"
+              - "SNS:Subscribe"
+              - "SNS:ListSubscriptionsByTopic"
+              - "SNS:Publish"
+            Resource: !Ref HealthEventSNSTopic
+            Condition:
+              StringEquals:
+                "AWS:SourceOwner": !Sub "${AWS::AccountId}"
+          - Sid: "EBPolicy"
+            Effect: Allow
+            Principal:
+              Service: "events.amazonaws.com"
+            Action: "sns:Publish"
+            Resource: !Ref HealthEventSNSTopic
+      Topics: 
+        - !Ref HealthEventSNSTopic
+
+  HealthEventNotificationRule:
+    Type: "AWS::Events::Rule"
+    Properties:
+      Description: "Event Health bus rule for aws.health events"
+      EventBusName: !Select [1, !Split ["/", !Ref DataCollectionBusArn]]
+      EventPattern:
+        source:
+          - "aws.health"
+          - "awshealthtest"
+      Targets:
+        - Arn: !Ref HealthEventSNSTopic
+          Id: "snsAsTarget"
+
+  ChatbotRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: chatbot.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: cloudwatch-logsAccess-Policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                Resource: !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:*"
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/chatbot/*"
+
+  ChatbotSlackChannelConfiguration:
+    Condition: ChatbotSlackChannelConfiguration
+    Type: AWS::Chatbot::SlackChannelConfiguration
+    Properties:
+      ConfigurationName: ChatbotSlack
+      GuardrailPolicies:
+        - arn:aws:iam::aws:policy/ReadOnlyAccess
+      IamRoleArn: !GetAtt ChatbotRole.Arn
+      LoggingLevel: INFO
+      SlackWorkspaceId: !Ref SlackWorkspaceId
+      SlackChannelId: !Ref SlackChannelId
+      SnsTopicArns:
+        - !Ref HealthEventSNSTopic
+
+  ChatbotTeamsChannelConfiguration:
+    Condition: ChatbotTeamsChannelConfiguration
+    Type: AWS::Chatbot::MicrosoftTeamsChannelConfiguration
+    Properties:
+      ConfigurationName: ChatbotTeams
+      GuardrailPolicies:
+        - arn:aws:iam::aws:policy/ReadOnlyAccess
+      IamRoleArn: !GetAtt ChatbotRole.Arn
+      TeamsChannelId: !Ref TeamsChannelId
+      TeamsTenantId: !Ref TeamsTenantId
+      TeamId: !Ref TeamId
+      SnsTopicArns:
+        - !Ref HealthEventSNSTopic
+
+Conditions:
+  ChatbotTeamsChannelConfiguration:
+    !And
+      - !Not [!Equals [!Ref TeamId, "N"]]
+      - !Not [!Equals [!Ref TeamsTenantId, "N"]]
+      - !Not [!Equals [!Ref TeamsChannelId, "N"]]
+  ChatbotSlackChannelConfiguration:
+    !And
+      - !Not [!Equals [!Ref SlackChannelId, "N"]]
+      - !Not [!Equals [!Ref SlackWorkspaceId, "N"]]
+  

@@ -108,7 +108,6 @@ def get_quicksight_user(account_id, qsidregion):
 
     print("\nAvailable QuickSight Users")
     try:
-
         for i, qsusername in enumerate(qsusernames, 1):
             print("{}. {}".format(i, qsusername))
         print()
@@ -142,6 +141,45 @@ def deploy_stack(command):
     except Exception as e:
         print("An error occurred:", e)
 
+def setup_notification():
+    Notification = input("\n(Optional)Do you want to set up notification? (Y/N): ") or "N"
+    if Notification == "Y":
+        GetChannelChoice = input("   Select client (1 for Slack, 2 for Teams): ") or "1"
+        if GetChannelChoice == "1":
+            print_boxed_text("If this is first time setup, Slack Workspace setup/OAuth authorization must be done from AWS console.\
+                             \n1. Open the AWS Chatbot console at https://console.aws.amazon.com/chatbot/\
+                             \n2. Under Configure a chat client, choose Slack, then choose Configure client.\
+                             \n3. From the dropdown list at the top right, choose the Slack workspace that you want to use with AWS Chatbot and Choose Allow.\
+                             \n4. Note down the Workspace ID from AWS Chatbot Console and Enter below")
+            SlackWorkspaceId = input("\nProvide Workspace ID: ")
+            SlackChannelId = input("Provide Slack Channel Id (Note: Slack Channel must be private and you must invite aws@ to the channel): ")
+            TeamId = "N"
+            TeamsTenantId = "N"
+            TeamsChannelId = "N"
+        elif GetChannelChoice == "2":
+            print_boxed_text("If this is first time setup, Slack Workspace setup/OAuth authorization must be done from AWS console.\
+                    \n1. Open the AWS Chatbot console at https://console.aws.amazon.com/chatbot/.\
+                    \n2. Under Configure a chat client, choose Microsoft Teams, then choose Configure client.\
+                    \n3. Copy and paste your Microsoft Teams channel URL. Your channel URL contains your tenant, team, and channel IDs.\
+                    \n4. Choose Configure and On the Microsoft Teams authorization page, choose Accept.\
+                    \n5. From the Microsoft Teams page, choose Configure new channel.")
+            SlackChannelId = "N"
+            SlackWorkspaceId = "N"
+            TeamId = input("      Provide TeamId: ")
+            TeamsTenantId = input("      Provide TeamsTenantId: ")
+            TeamsChannelId = input("      Provide TeamsChannelId: ")
+        else:
+            print("Invalid Choice... Continuing without notification setup")
+    else:
+        Notification = "N"
+        SlackChannelId = "N"
+        SlackWorkspaceId = "N"
+        TeamId = "N"
+        TeamsTenantId = "N"
+        TeamsChannelId = "N"
+    
+    return Notification, SlackChannelId, SlackWorkspaceId, TeamId, TeamsTenantId, TeamsChannelId
+
 def central_account_setup(region, account_id):
     # Get organization details
     POrgID = get_organization_details()
@@ -149,41 +187,33 @@ def central_account_setup(region, account_id):
     # Create or get S3 bucket
     bucket_name = create_or_get_s3_bucket(account_id, region)
 
-    # Check if AWS Health Events Dashboard should be deployed
-    AWSHealtheventSelected = input("Do you want to deploy AWS Health Events Dashboard (N\Y): ") or "Y"
-    if AWSHealtheventSelected == "Y":
-        # Configure QuickSight settings
-        quicksight_service_role = input("Enter QuickSight Service Role (Hit enter to use default: aws-quicksight-service-role-v0): ") or "aws-quicksight-service-role-v0"
-        qsidregion = input("Enter your QuickSight Identity region (Hit enter to use default: us-east-1): ") or "us-east-1"
-        quicksight_user = get_quicksight_user(account_id, qsidregion)
+    # Configure QuickSight settings
+    quicksight_service_role = input("Enter QuickSight Service Role (Hit enter to use default: aws-quicksight-service-role-v0): ") or "aws-quicksight-service-role-v0"
+    qsidregion = input("Enter your QuickSight Identity region (Hit enter to use default: us-east-1): ") or "us-east-1"
+    quicksight_user = get_quicksight_user(account_id, qsidregion)
 
-        # Check if backfill of healthevents is required
-        BackfillEvents = input("(Optional)Do you want to backfill healthevents? limited to the past 90 days (Y/N): ") or "N"
+    # Check if Notification is required
+    Notification, SlackChannelId, SlackWorkspaceId, TeamId, TeamsTenantId, TeamsChannelId = setup_notification()
 
-        # Check if eventUrl setup is required
-        eventUrlSelected = input("(Optional)Do you want to set up eventUrl for easy access to event descriptions? (Y/N): ") or "N"
-        if eventUrlSelected == "Y":
-            print_boxed_text("Note: EventUrl will be accessible via APIGW with a resource policy resticting with IP range. Add additional authentication to APIGW post-setup as needed.")
-            AllowedIpRange = input("   Provide IP Range which can access these eventUrls, this could be your VPN range (Default 0.0.0.0/0): ") or "0.0.0.0/0"
-        else:
-            AllowedIpRange = "N"
+    # Check if backfill of healthevents is required
+    BackfillEvents = input("(Optional)Do you want to backfill healthevents? limited to the past 90 days (Y/N): ") or "N"
 
-        # Check if event enrichment with Tags is required
-        EnrichEventSelected = input("(Optional)Do you want to enrich events with Tags? It requires access to centralized AWS Config S3 Bucket(Y/N): ") or "N"
-        if EnrichEventSelected == 'Y':
-        # Configure AWS Config Aggregator settings
-            ConfigAggregatorBucket = check_config_bucket(bucket_name,account_id,region)
-        else:
-            ConfigAggregatorBucket = "N"
+    # Check if eventUrl setup is required
+    eventUrlSelected = input("(Optional)Do you want to set up eventUrl for easy access to event descriptions? (Y/N): ") or "N"
+    if eventUrlSelected == "Y":
+        print_boxed_text("Note: EventUrl will be accessible via APIGW with a resource policy resticting with IP range. Add additional authentication to APIGW post-setup as needed.")
+        AllowedIpRange = input("   Provide IP Range which can access these eventUrls, this could be your VPN range (Default 0.0.0.0/0): ") or "0.0.0.0/0"
     else:
-        # AWS Health Events Dashboard is not selected
-        AWSHealtheventSelected = "N"
-        BackfillEvents = "N"
         AllowedIpRange = "N"
-        quicksight_service_role = "N"
-        qsidregion = "N"
-        quicksight_user = "N"
+
+    # Check if event enrichment with Tags is required
+    EnrichEventSelected = input("(Optional)Do you want to enrich events with Tags? It requires access to centralized AWS Config S3 Bucket(Y/N): ") or "N"
+    if EnrichEventSelected == 'Y':
+    # Configure AWS Config Aggregator settings
+        ConfigAggregatorBucket = check_config_bucket(bucket_name,account_id,region)
+    else:
         ConfigAggregatorBucket = "N"
+        
 
     #sync cfn template files
     sync_cfnfiles(bucket_name)
@@ -195,10 +225,15 @@ def central_account_setup(region, account_id):
                 QuicksightServiceRole={quicksight_service_role} \
                 QuickSightUser={quicksight_user} \
                 POrgID={POrgID} \
-                AWSHealtheventSelected={AWSHealtheventSelected} \
                 BackfillEvents={BackfillEvents} \
                 AllowedIpRange={AllowedIpRange}\
-                ConfigAggregatorBucket={ConfigAggregatorBucket}"
+                ConfigAggregatorBucket={ConfigAggregatorBucket}\
+                Notification={Notification}\
+                SlackChannelId={SlackChannelId}\
+                SlackWorkspaceId={SlackWorkspaceId}\
+                TeamId={TeamId}\
+                TeamsTenantId={TeamsTenantId}\
+                TeamsChannelId={TeamsChannelId}"
 
     command= f"sam deploy --stack-name {stack_name} --region {region} --parameter-overrides {parameters}\
         --template-file DataCollectionModule/DataCollectionroot.yaml --capabilities CAPABILITY_NAMED_IAM --disable-rollback"
