@@ -151,8 +151,8 @@ def setup_notification():
                              \n2. Under Configure a chat client, choose Slack, then choose Configure client.\
                              \n3. From the dropdown list at the top right, choose the Slack workspace that you want to use with AWS Chatbot and Choose Allow.\
                              \n4. Note down the Workspace ID from AWS Chatbot Console and Enter below")
-            SlackWorkspaceId = input("\nProvide Workspace ID: ")
-            SlackChannelId = input("Provide Slack Channel Id (Note: Slack Channel must be private and you must invite aws@ to the channel): ")
+            SlackWorkspaceId = input("\nProvide Workspace ID: ") or "N"
+            SlackChannelId = input("Provide Slack Channel Id (Note: Slack Channel must be private and you must invite aws@ to the channel): ") or "N"
             TeamId = "N"
             TeamsTenantId = "N"
             TeamsChannelId = "N"
@@ -165,9 +165,9 @@ def setup_notification():
                     \n5. From the Microsoft Teams page, choose Configure new channel.")
             SlackChannelId = "N"
             SlackWorkspaceId = "N"
-            TeamId = input("      Provide TeamId: ")
-            TeamsTenantId = input("      Provide TeamsTenantId: ")
-            TeamsChannelId = input("      Provide TeamsChannelId: ")
+            TeamId = input("      Provide TeamId: ") or "N"
+            TeamsTenantId = input("      Provide TeamsTenantId: ") or "N"
+            TeamsChannelId = input("      Provide TeamsChannelId: ") or "N"
         else:
             print("Invalid Choice... Continuing without notification setup")
     else:
@@ -213,7 +213,6 @@ def central_account_setup(region, account_id):
         ConfigAggregatorBucket = check_config_bucket(bucket_name,account_id,region)
     else:
         ConfigAggregatorBucket = "N"
-        
 
     #sync cfn template files
     sync_cfnfiles(bucket_name)

@@ -30,30 +30,30 @@ Parameters:
   ConfigAggregatorBucket:
     Default: "N"
     Type: String
-    Description: S3 Bucket where Config data is aggregated, Type "N" to disable this.
+    Description: (Optional) S3 Bucket where Config data is aggregated, Type "N" to disable this.
   Notification:
     Type: String
     Default: "N"
-    Description: Notificaiton Required? Type "N" to disable this.
+    Description: (Optional) Notificaiton Required? Type "N" to disable this.
   SlackChannelId:
     Type: String
     Default: "N"
-    Description: SlackChannelId. Type "N" to disable this.
+    Description: (Optional) SlackChannelId. Type "N" to disable this.
   SlackWorkspaceId:
     Type: String
     Default: "N"
-    Description: SlackWorkspaceId. Type "N" to disable this.
+    Description: (Optional) SlackWorkspaceId. Type "N" to disable this.
   TeamId:
     Type: String
-    Description: The ID of the Microsoft Teams team to configure. Type "N" to disable this.
+    Description: (Optional) The ID of the Microsoft Teams team to configure. Type "N" to disable this.
     Default: "N"
   TeamsTenantId:
     Type: String
-    Description: The ID of the Microsoft Teams tenant. Type "N" to disable this.
+    Description: (Optional) The ID of the Microsoft Teams tenant. Type "N" to disable this.
     Default: "N"
   TeamsChannelId:
     Type: String
-    Description: The ID of the Microsoft Teams channel to configure. Type "N" to disable this.
+    Description: (Optional) The ID of the Microsoft Teams channel to configure. Type "N" to disable this.
     Default: "N"
 
 Resources:

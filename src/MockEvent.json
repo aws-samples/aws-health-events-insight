@@ -1,23 +1,55 @@
+Send a mock event to test slack/teams integration. Go to sns and publish following message.
+
 {
-    "eventArn":"MockwithEC2-1",
-    "service":"Ec2",
-    "eventScopeCode":"ACCOUNT_SPECIFIC",
-    "communicationId":"8f7ef91f0c9f2f3e3f68dffd0fa34fe299e56f323f06154df1de185d0e3f49bf-2",
-    "lastUpdatedTime":"Wed, 2 May 2023 13:30:55 GMT",
-    "eventRegion":"us-east-1",
-    "eventTypeCode":"EC2",
-    "eventTypeCategory":"issue",
-    "startTime":"Wed, 3 May 2023 11:00:00 GMT",
-    "endTime": "Wed, 3 May 2023 11:10:00 GMT",
-    "eventDescription":[
-       {
-          "language":"en_US",
-          "latestDescription":"MockEvent\n"
-       }
-    ],
-    "affectedEntities":[
+   "version":"0",
+   "id":"5a527972-98c1-9ddd-2107-49e6b72268d9",
+   "detail-type":"AWS Health Event",
+   "source":"aws.health",
+   "account":"123456789012",
+   "time":"2023-08-29T03:30:00Z",
+   "region":"us-west-2",
+   "resources":[
+
+   ],
+   "detail":{
+      "eventArn":"arn:aws:health:us-west-2::event/EC2/AWS_EC2_MAINTENANCE_SCHEDULED/AWS_EC2_MAINTENANCE_SCHEDULED_1693278720289",
+      "service":"EC2",
+      "eventScopeCode":"ACCOUNT_SPECIFIC",
+      "communicationId":"32157c62a5a64a33ec5445c5c77f941128b345fa1fe98bbd8ffd7a4a708323bf",
+      "lastUpdatedTime":"Tue, 29 Aug 2023 03:13:27 GMT",
+      "statusCode":"upcoming",
+      "eventRegion":"us-west-2",
+      "eventTypeCode":"AWS_EC2_MAINTENANCE_SCHEDULED",
+      "eventTypeCategory":"accountnotification",
+      "startTime":"Tue, 29 Aug 2023 03:30:00 GMT",
+      "endTime":"Tue, 29 Aug 2023 04:30:00 GMT",
+      "eventDescription":[
+         {
+            "language":"en_US",
+            "latestDescription":"This is a test AWS Health Event AWS_EC2_MAINTENANCE_SCHEDULED"
+         }
+      ]
+   }
+}
+
+Send a mock event to test Control Account setup
+
+{
+   "eventArn":"arn:aws:health:us-west-2::event/EC2/AWS_EC2_MAINTENANCE_SCHEDULED/AWS_EC2_MAINTENANCE_SCHEDULED_1693278720289",
+   "service":"EC2",
+   "eventScopeCode":"ACCOUNT_SPECIFIC",
+   "communicationId":"32157c62a5a64a33ec5445c5c77f941128b345fa1fe98bbd8ffd7a4a708323bf",
+   "lastUpdatedTime":"Tue, 29 Aug 2023 03:13:27 GMT",
+   "statusCode":"upcoming",
+   "eventRegion":"us-west-2",
+   "eventTypeCode":"AWS_EC2_MAINTENANCE_SCHEDULED",
+   "eventTypeCategory":"accountnotification",
+   "startTime":"Tue, 29 Aug 2023 03:30:00 GMT",
+   "endTime":"Tue, 29 Aug 2023 04:30:00 GMT",
+   "eventDescription":[
       {
-          "entityValue":"addpartition-2"
-       }
-    ]
- }
+         "language":"en_US",
+         "latestDescription":"This is a test AWS Health Event AWS_EC2_MAINTENANCE_SCHEDULED"
+      }
+   ]
+}
