@@ -104,7 +104,7 @@ Resources:
     Condition: ChatbotSlackChannelConfiguration
     Type: AWS::Chatbot::SlackChannelConfiguration
     Properties:
-      ConfigurationName: !Sub ChatbotSlack-${AWS::AccountId}-{AWS::Region}
+      ConfigurationName: !Sub ChatbotSlack
       GuardrailPolicies:
         - arn:aws:iam::aws:policy/ReadOnlyAccess
       IamRoleArn: !GetAtt ChatbotRole.Arn
@@ -118,7 +118,7 @@ Resources:
     Condition: ChatbotTeamsChannelConfiguration
     Type: AWS::Chatbot::MicrosoftTeamsChannelConfiguration
     Properties:
-      ConfigurationName: !Sub ChatbotTeams-${AWS::AccountId}-{AWS::Region}
+      ConfigurationName: !Sub ChatbotTeams
       GuardrailPolicies:
         - arn:aws:iam::aws:policy/ReadOnlyAccess
       IamRoleArn: !GetAtt ChatbotRole.Arn
