@@ -5,6 +5,10 @@ Description:  (DataCollection) root stack for DataCollectionBus
 Parameters:
   DataCollectionBucket:
     Type: String
+  AthenaResultBucket:
+    Type: String
+    Default: "aws-athena-query-results-*"
+    Description: S3 Bucket where Athena stores results
   DataCollectionBucketKmsArn:
     Type: String
     Default: "N"
@@ -85,6 +89,7 @@ Resources:
         ConfigAggregatorBucket: !Ref ConfigAggregatorBucket
         DataCollectionBucketKmsArn: !Ref DataCollectionBucketKmsArn
         AthenaBucketKmsArn: !Ref AthenaBucketKmsArn
+        AthenaResultBucket: !Ref AthenaResultBucket
 
   HealthEventDetailsUrl:
     Condition: AllowedIpRange

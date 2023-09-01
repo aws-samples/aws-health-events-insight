@@ -198,11 +198,12 @@ def central_account_setup(region, account_id):
     
     # Create or get S3 bucket
     bucket_name, bucketkmsarn = create_or_get_s3_bucket(account_id, region)
-
-    athenakmsarn = input("Note: If aws athena query results/bucket is encrypted with KMS, you must provide KMS Arn here (Hit enter to skip): ") or "N"
+    print_boxed_text("(Optional) Overwrite input for Amazon Athena")
+    athenaResultBucket = input("Enter Amazon Athena query results bucket name (Hit enter to use default: aws-athena-query-results-* ):") or "aws-athena-query-results-*"
+    athenakmsarn = input("Note: If Amazon Athena query results/bucket is encrypted with KMS, you must provide KMS Arn here (Hit enter to skip): ") or "N"
 
     # Configure QuickSight settings
-    quicksight_service_role = input("Enter QuickSight Service Role (Hit enter to use default: aws-quicksight-service-role-v0): ") or "aws-quicksight-service-role-v0"
+    quicksight_service_role = input("\nEnter QuickSight Service Role (Hit enter to use default: aws-quicksight-service-role-v0): ") or "aws-quicksight-service-role-v0"
     qsidregion = input("Enter your QuickSight Identity region (Hit enter to use default: us-east-1): ") or "us-east-1"
     quicksight_user = get_quicksight_user(account_id, qsidregion)
 
@@ -235,6 +236,7 @@ def central_account_setup(region, account_id):
     stack_name = f"HeidiDataCollection-{account_id}-{region}"
 
     parameters = f"DataCollectionBucket={bucket_name} \
+                AthenaResultBucket={athenaResultBucket}\
                 DataCollectionBucketKmsArn={bucketkmsarn}\
                 AthenaBucketKmsArn={athenakmsarn}\
                 QuicksightServiceRole={quicksight_service_role} \

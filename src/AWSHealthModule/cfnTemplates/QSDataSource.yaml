@@ -7,6 +7,10 @@ Parameters:
   DataCollectionBucket:
     Type: String
     Description: S3 Bucket Where Kinesis creates health data
+  AthenaResultBucket:
+    Type: String
+    Default: "aws-athena-query-results-*"
+    Description: S3 Bucket where Amazon Athena stores results
   DataCollectionBucketKmsArn:
     Type: String
     Default: "N"
@@ -205,8 +209,8 @@ Resources:
             Resource: 
               - !Sub arn:${AWS::Partition}:s3:::${DataCollectionBucket}
               - !Sub arn:${AWS::Partition}:s3:::${DataCollectionBucket}/*
-              - !Sub arn:${AWS::Partition}:s3:::aws-athena-query-results-*
-              - !Sub arn:${AWS::Partition}:s3:::aws-athena-query-results-*/*
+              - !Sub arn:${AWS::Partition}:s3:::${AthenaResultBucket}
+              - !Sub arn:${AWS::Partition}:s3:::${AthenaResultBucket}/*
           - !If
             - ConfigAggregatorBucket
             - Effect: "Allow"
