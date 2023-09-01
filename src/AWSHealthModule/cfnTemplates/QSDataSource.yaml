@@ -7,6 +7,10 @@ Parameters:
   DataCollectionBucket:
     Type: String
     Description: S3 Bucket Where Kinesis creates health data
+  DataCollectionBucketKmsArn:
+    Type: String
+    Default: "N"
+    Description: Enter KMS Arn if bucket is encrypted(Type N for SSE encryption)
   ConfigAggregatorBucket:
     Type: String
     Description: S3 Bucket where Config data is aggregated
@@ -97,7 +101,6 @@ Resources:
           Compressed: false
         TableType: EXTERNAL_TABLE
         Retention: 30
-
   
   GlueHealthTable:
   # AWS Glue Table resource representing  AWS Health External Table
@@ -264,6 +267,17 @@ Resources:
               - "lakeformation:GetDataAccess"
             Resource:
               - "*"
+          - !If
+            - DataCollectionBucketKmsArn
+            - Effect: Allow
+              Action:
+                - "kms:Encrypt"
+                - "kms:Decrypt"
+                - "kms:ReEncrypt*"
+                - "kms:GenerateDataKey*"
+              Resource:
+                - !Ref DataCollectionBucketKmsArn
+            - !Ref AWS::NoValue
       Roles: 
        - !Ref QuicksightServiceRole
 
@@ -311,3 +325,4 @@ Outputs:
 
 Conditions:
   ConfigAggregatorBucket: !Not [!Equals [!Ref ConfigAggregatorBucket, "N"]]
+  DataCollectionBucketKmsArn: !Not [!Equals [!Ref DataCollectionBucketKmsArn, "N"]]

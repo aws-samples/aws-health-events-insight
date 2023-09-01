@@ -5,6 +5,10 @@ Description:  (DataCollection) root stack for DataCollectionBus
 Parameters:
   DataCollectionBucket:
     Type: String
+  DataCollectionBucketKmsArn:
+    Type: String
+    Default: "N"
+    Description: Enter KMS Arn if bucket is encrypted(Type N for SSE encryption)
   QuicksightServiceRole:
     Type: String
     Default: aws-quicksight-service-role-v0
@@ -63,6 +67,7 @@ Resources:
       TemplateURL: !Sub https://${DataCollectionBucket}.s3.amazonaws.com/DataCollection-metadata/DataCollectionModule/DataCollectionStack.yaml
       Parameters:
         DataCollectionBucket: !Ref DataCollectionBucket
+        DataCollectionBucketKmsArn: !Ref DataCollectionBucketKmsArn
         POrgID: !Ref POrgID
 
   DataSource:
@@ -74,6 +79,7 @@ Resources:
         DataCollectionBucket: !Ref DataCollectionBucket
         QuicksightServiceRole: !Ref QuicksightServiceRole
         ConfigAggregatorBucket: !Ref ConfigAggregatorBucket
+        DataCollectionBucketKmsArn: !Ref DataCollectionBucketKmsArn
 
   HealthEventDetailsUrl:
     Condition: AllowedIpRange

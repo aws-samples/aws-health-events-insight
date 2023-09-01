@@ -53,7 +53,7 @@ Resources:
                               ELSE 'Archived'
                           END AS "Status"
                       FROM "AwsDataCatalog"."awshealtheventdb"."awshealthevent"
-                      CROSS JOIN UNNEST(detail.affectedEntities) AS t(entities))
+                      LEFT JOIN UNNEST(detail.affectedEntities) AS t(entities) ON TRUE)
                       WHERE rowrank = 1),
                   tagInfo AS (SELECT
                           Distinct configurationitem.resourceid AS resourceId,

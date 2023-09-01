@@ -27,16 +27,28 @@ def create_or_get_s3_bucket(account_id, region):
     try:
         s3_client = boto3.client('s3', region_name=region)
         s3_client.head_bucket(Bucket=bucket_name)
-        print(f"Skip Creating: S3 bucket {bucket_name} already exists")
+        response = s3_client.get_bucket_encryption(Bucket=bucket_name)
+        encryption = response['ServerSideEncryptionConfiguration']['Rules'][0]['ApplyServerSideEncryptionByDefault']['SSEAlgorithm']
+        if encryption != "AES256":
+            try:
+                bucketkmsarn = response['ServerSideEncryptionConfiguration']['Rules'][0]['ApplyServerSideEncryptionByDefault']['KMSMasterKeyID']
+                print(f"Skip Creating: S3 bucket {bucket_name} exists and encrypted with kms {bucketkmsarn}")
+            except KeyError:
+                bucketkmsarn = input(f"Enter kms Key Arn for {bucket_name}: ")
+        else:
+            bucketkmsarn = "N"
+            print(f"Skip Creating: S3 bucket {bucket_name} already exists")
     except ClientError as e:
         if region == 'us-east-1':
             s3_client.create_bucket(Bucket=bucket_name)
+            bucketkmsarn = "N"
         else:
             location = {'LocationConstraint': region}
             s3_client.create_bucket(Bucket=bucket_name, CreateBucketConfiguration=location)
+            bucketkmsarn = "N"
         s3_client.get_waiter("bucket_exists").wait(Bucket=bucket_name)
         print(f"S3 bucket {bucket_name} has been created")
-    return bucket_name
+    return bucket_name, bucketkmsarn
 
 def print_boxed_text(text):
     lines = text.strip().split('\n')
@@ -185,7 +197,7 @@ def central_account_setup(region, account_id):
     POrgID = get_organization_details()
     
     # Create or get S3 bucket
-    bucket_name = create_or_get_s3_bucket(account_id, region)
+    bucket_name, bucketkmsarn = create_or_get_s3_bucket(account_id, region)
 
     # Configure QuickSight settings
     quicksight_service_role = input("Enter QuickSight Service Role (Hit enter to use default: aws-quicksight-service-role-v0): ") or "aws-quicksight-service-role-v0"
@@ -221,6 +233,7 @@ def central_account_setup(region, account_id):
     stack_name = f"HeidiDataCollection-{account_id}-{region}"
 
     parameters = f"DataCollectionBucket={bucket_name} \
+                DataCollectionBucketKmsArn={bucketkmsarn}\
                 QuicksightServiceRole={quicksight_service_role} \
                 QuickSightUser={quicksight_user} \
                 POrgID={POrgID} \

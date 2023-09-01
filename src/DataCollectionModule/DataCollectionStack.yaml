@@ -13,6 +13,12 @@ Parameters:
     Type: String
     Description: S3 Bucket for ingestion
 
+  # S3 Bucket kms arn
+  DataCollectionBucketKmsArn:
+    Type: String
+    Default: "N"
+    Description: Enter KMS Arn if bucket is encrypted by KMS(Type N for SSE encryption)
+
 Resources:
   # Define an AWS Events Event Bus for DataCollection
   DataCollectionBus:
@@ -78,6 +84,23 @@ Resources:
                 Resource:
                   - !Sub "arn:${AWS::Partition}:s3:::${DataCollectionBucket}"
                   - !Sub "arn:${AWS::Partition}:s3:::${DataCollectionBucket}/*"
+        # Policy allowing KMS access
+        - !If
+          - DataCollectionBucketKmsArn
+          - PolicyName: AllowkmsAccess
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Sid: AllowKMSAccess
+                  Effect: Allow
+                  Action:
+                    - "kms:Encrypt"
+                    - "kms:Decrypt"
+                    - "kms:ReEncrypt*"
+                    - "kms:GenerateDataKey*"
+                  Resource:
+                    - !Ref DataCollectionBucketKmsArn
+          - !Ref AWS::NoValue
 
   # Define an AWS Kinesis Firehose Delivery Stream for data ingestion
   KinesisFirehose:
@@ -163,3 +186,6 @@ Outputs:
     Value: !GetAtt DataCollectionBus.Arn
     Export:
       Name: DataCollectionBusArn
+
+Conditions:
+  DataCollectionBucketKmsArn: !Not [!Equals [!Ref DataCollectionBucketKmsArn, "N"]]
