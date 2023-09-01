@@ -9,6 +9,10 @@ Parameters:
     Type: String
     Default: "N"
     Description: Enter KMS Arn if bucket is encrypted(Type N for SSE encryption)
+  AthenaBucketKmsArn:
+    Type: String
+    Default: "N"
+    Description: Enter KMS Arn if Athena Results bucket is encrypted(Type N for SSE encryption)
   QuicksightServiceRole:
     Type: String
     Default: aws-quicksight-service-role-v0
@@ -80,6 +84,7 @@ Resources:
         QuicksightServiceRole: !Ref QuicksightServiceRole
         ConfigAggregatorBucket: !Ref ConfigAggregatorBucket
         DataCollectionBucketKmsArn: !Ref DataCollectionBucketKmsArn
+        AthenaBucketKmsArn: !Ref AthenaBucketKmsArn
 
   HealthEventDetailsUrl:
     Condition: AllowedIpRange

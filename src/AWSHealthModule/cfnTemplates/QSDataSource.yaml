@@ -11,6 +11,10 @@ Parameters:
     Type: String
     Default: "N"
     Description: Enter KMS Arn if bucket is encrypted(Type N for SSE encryption)
+  AthenaBucketKmsArn:
+    Type: String
+    Default: "N"
+    Description: Enter KMS Arn if Athena Results bucket is encrypted(Type N for SSE encryption)
   ConfigAggregatorBucket:
     Type: String
     Description: S3 Bucket where Config data is aggregated
@@ -203,13 +207,16 @@ Resources:
               - !Sub arn:${AWS::Partition}:s3:::${DataCollectionBucket}/*
               - !Sub arn:${AWS::Partition}:s3:::aws-athena-query-results-*
               - !Sub arn:${AWS::Partition}:s3:::aws-athena-query-results-*/*
-          - Effect: "Allow"
-            Action:
-              - "s3:GetObject"
-              - "s3:ListBucket"
-            Resource: 
-              - !Sub arn:${AWS::Partition}:s3:::${ConfigAggregatorBucket}
-              - !Sub arn:${AWS::Partition}:s3:::${ConfigAggregatorBucket}/*
+          - !If
+            - ConfigAggregatorBucket
+            - Effect: "Allow"
+              Action:
+                - "s3:GetObject"
+                - "s3:ListBucket"
+              Resource: 
+                - !Sub arn:${AWS::Partition}:s3:::${ConfigAggregatorBucket}
+                - !Sub arn:${AWS::Partition}:s3:::${ConfigAggregatorBucket}/*
+            - !Ref AWS::NoValue
           - Effect: "Allow"
             Action:
               - athena:BatchGetQueryExecution
@@ -278,6 +285,17 @@ Resources:
               Resource:
                 - !Ref DataCollectionBucketKmsArn
             - !Ref AWS::NoValue
+          - !If
+            - AthenaBucketKmsArn
+            - Effect: Allow
+              Action:
+                - "kms:Encrypt"
+                - "kms:Decrypt"
+                - "kms:ReEncrypt*"
+                - "kms:GenerateDataKey*"
+              Resource:
+                - !Ref AthenaBucketKmsArn
+            - !Ref AWS::NoValue
       Roles: 
        - !Ref QuicksightServiceRole
 
@@ -326,3 +344,4 @@ Outputs:
 Conditions:
   ConfigAggregatorBucket: !Not [!Equals [!Ref ConfigAggregatorBucket, "N"]]
   DataCollectionBucketKmsArn: !Not [!Equals [!Ref DataCollectionBucketKmsArn, "N"]]
+  AthenaBucketKmsArn: !Not [!Equals [!Ref AthenaBucketKmsArn, "N"]]
