@@ -1,6 +1,7 @@
-# AWS Health Events Intelligence Dashboards and Insights (HEIDI)
+## **AWS Health Events Intelligence Dashboards and Insights (HEIDI)**
+Single pane of glass for all your AWS Health events across different accounts,regions and organizations.
 
- ## In this page
+## Table of Contents
 - [Introduction](#introduction)
 - [Solution Architecture](#solution-architecture)
 - [Prerequisites](#prerequisites)
@@ -37,7 +38,7 @@ HEIDI Data Collection Framework enables you to collect data from different diffe
 
 In this section, We are going to walk through the procedures for configuring Heidi within both the central and member accounts for AWS Health Events.
 
-## Central Account Setup
+### Central Account Setup
 
 The setup script provided in this repo will set up all the necessary components required to receive AWS health events from other accounts. This can be payer or any other regular AWS account which would receive AWS Health data from all other accounts and regions. 
 
@@ -52,19 +53,18 @@ The setup script provided in this repo will set up all the necessary components 
 
 3.  Once CloudFormation status changes to **CREATE_COMPLETE** (about 10-15 minutes), go to Amazon QuickSight dashboard and verify the analysis deployed. 
 
-## Member Setup
+### Member Setup
 
 You MUST complete Member Setup for each Region and Account for which you want to receive AWS Health events.
 
-### Option1 (Using One click Script)
-
+### Using One click Script(Option1)
 1. Setup AWS credntials for desired Account and Regions.
 2. Go to aws-health-events-insight directory and run python3 OneClickSetup.py and provide necessary inputs. 
 
         cd aws-health-events-insight/src
         python3 OneClickSetup.py
 
-### Option 2 (Bulk deployment via StackSet)**:
+### Bulk deployment via StackSet(Option 2)
 1. In CloudFormation Console create a stackset with new resources from the template file [HealthEventMember.yaml](https://github.com/aws-samples/aws-health-events-insight/blob/main/src/AWSHealthModule/cfnTemplates/HealthEventMember.yaml).
 2. Input the DataCollectionBusArn. Go to the AWS CloudFormation console of central account and get this information from output of DataCollectionStack.
 3. Select deployment targets (Deploy to OU or deploy to organization).
