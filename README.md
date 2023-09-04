@@ -9,8 +9,8 @@ Single pane of glass for all your AWS Health events across different accounts,re
     - [Central Account Setup](#central-account-setup)
     - [Member Setup](#member-setup)
 - [Update Metadata](#update-metadata)
-- [Testing](#testing)
-- [Troubleshooting Steps](#troubleshooting-steps)
+- [Setup Validation](#setup-validation)
+- [Troubleshooting](#troubleshooting)
 
 ## **Introduction**
 
@@ -53,18 +53,23 @@ The setup script provided in this repo will set up all the necessary components 
 
 3.  Once CloudFormation status changes to **CREATE_COMPLETE** (about 10-15 minutes), go to Amazon QuickSight dashboard and verify the analysis deployed. 
 
+4. (Optional). To receive AWS Events from various AWS Organizations and Payers, you can update the permission policy for DataCollectionBus-{accountID} Event Bus.
+   1. Go to Amazon EventBridge Console and select Event Buses on your left.
+   2. Select DataCollectionBus-{accountID} Event Bus.
+   3. Select manage permission and add Organizational ID from other AWS Org. e.g. `"aws:PrincipalOrgID": ["o-abcdef","o-jklmoprq"]`
+
 ### **Member Setup**
 
-You MUST complete Member Setup for each Region and Account for which you want to receive AWS Health events.
+You MUST complete Member Setup for each Region and Account(same or different Payer) for which you want to receive AWS Health events.
 
-### Using One click Script(Option1)
+### (Option1) One Click Setup Script
 1. Setup AWS credntials for desired Account and Regions.
 2. Go to aws-health-events-insight directory and run python3 OneClickSetup.py and provide necessary inputs. 
 
         cd aws-health-events-insight/src
         python3 OneClickSetup.py
 
-### Bulk deployment via StackSet(Option 2)
+### (Option2 )Bulk deployment via StackSet
 1. In CloudFormation Console create a stackset with new resources from the template file [HealthEventMember.yaml](https://github.com/aws-samples/aws-health-events-insight/blob/main/src/AWSHealthModule/cfnTemplates/HealthEventMember.yaml).
 2. Input the DataCollectionBusArn. Go to the AWS CloudFormation console of central account and get this information from output of DataCollectionStack.
 3. Select deployment targets (Deploy to OU or deploy to organization).
@@ -88,7 +93,7 @@ This is an optional stap. You can map AWS AccountIDs with Account Name and Accou
 
    ![S3 Location](img/s3Location.jpg)
 
-## **Testing**
+## **Setup Validation**
 Send a mock event to test setup.
 
 1. Go to Amazon EventBridge console and chose default event bus. (You can chose any member account or region) and select send events.
@@ -97,7 +102,7 @@ Send a mock event to test setup.
 
 You will see the event in Amazon S3. For event to reflect in Amazon QuickSight analysis, make sure you refresh the Amazon QuickSight dataset.
 
-## **Troubleshooting Steps**
+## **Troubleshooting**
 
 #### ***1. SYNTAX_ERROR: line 41:15: UNNEST on other than the right side of CROSS JOIN is not supported***
 
@@ -123,5 +128,6 @@ Repeat same process for Amazon QuickSight Service Role.
 
 1. Your AWS environment is relatively new and does not currently have any AWS Health Events. To verify this, please check the AWS Health Dashboard on the AWS Console and send mock event.
 2. The Amazon QuickSight DataSet was created before the event could be backfilled by Amazon Kinesis Firehose. To resolve this, manually refresh the Amazon QuickSight DataSet.
+
 
 [![GitHub Clones](https://img.shields.io/badge/dynamic/json?color=success&label=Clone&query=count&url=https://gist.githubusercontent.com/bajwkanw/24109c8c210fc89367f044d83d07c1bc/raw/clone.json&logo=github)](https://github.com/aws-samples/aws-health-events-insight)
