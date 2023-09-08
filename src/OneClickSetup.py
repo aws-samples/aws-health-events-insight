@@ -170,7 +170,7 @@ def setup_notification():
             TeamsChannelId = "N"
             print()
         elif GetChannelChoice == "2":
-            print_boxed_text("If this is first time setup, Slack Workspace setup/OAuth authorization must be done from AWS console.\
+            print_boxed_text("If this is first time setup, Teams setup/OAuth authorization must be done from AWS console.\
                     \n1. Open the AWS Chatbot console at https://console.aws.amazon.com/chatbot/.\
                     \n2. Under Configure a chat client, choose Microsoft Teams, then choose Configure client.\
                     \n3. Copy and paste your Microsoft Teams channel URL. Your channel URL contains your tenant, team, and channel IDs.\

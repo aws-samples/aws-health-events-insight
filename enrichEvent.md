@@ -7,15 +7,19 @@ AWS Config delivers configuration snapshots of the AWS resources that AWS Config
 1. Configure delivery channel to centralized Amazon S3 bucket. When Amazon S3 bucket that belongs to another AWS account, that bucket must have policies that grant access permissions to AWS Config. 
 2. Replicate all AWS Config delivery Amazon S3 buckets buckets from different accounts to centerlized Amazon S3 bucket.
 
+# Architecture
+
+ ![ALT](img/HeidiWithEnrich.png)
+
 # Reading
 
-![Granting AWS Config access to the Amazon S3 Bucket](https://docs.aws.amazon.com/config/latest/developerguide/s3-bucket-policy.html#granting-access-in-another-account)
+[Granting AWS Config access to the Amazon S3 Bucket](https://docs.aws.amazon.com/config/latest/developerguide/s3-bucket-policy.html#granting-access-in-another-account)
 
-![configuration history and configuration snapshot files](https://aws.amazon.com/blogs/mt/configuration-history-configuration-snapshot-files-aws-config/)
+[Configuration history and configuration snapshot files](https://aws.amazon.com/blogs/mt/configuration-history-configuration-snapshot-files-aws-config/)
 
-![recreate AWS Config delivery channel](https://repost.aws/knowledge-center/recreate-config-delivery-channel)
+[Recreate AWS Config delivery channel](https://repost.aws/knowledge-center/recreate-config-delivery-channel)
 
-![Enable frequency of config snapshot](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-config-deliverychannel.html)
+[Enable frequency of config snapshot](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-config-deliverychannel.html)
 
 # Limitation
 The data obtained from AWS Health events occasionally arrives in a non-ARN format. AWS Heidi conducts a comparison of the Affected Entity with the resourceName, ResourceID, and ResourceArn. This could return multiple rows. There might be duplicate tags with entities with duplicate names. Cross check AWS Config aggregator with following query. Go to aggregator account, nevigate to  AWS Config Console run following in query editor. 
