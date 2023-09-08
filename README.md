@@ -69,7 +69,7 @@ You MUST complete Member Setup for each Region and Account(same or different Pay
         cd aws-health-events-insight/src
         python3 OneClickSetup.py
 
-### (Option2 )Bulk deployment via StackSet
+### (Option2) Bulk deployment via StackSet
 1. In CloudFormation Console create a stackset with new resources from the template file [HealthEventMember.yaml](https://github.com/aws-samples/aws-health-events-insight/blob/main/src/AWSHealthModule/cfnTemplates/HealthEventMember.yaml).
 2. Input the DataCollectionBusArn. Go to the AWS CloudFormation console of Data Collection account and get this information from output of DataCollectionStack.
 3. Select deployment targets (Deploy to OU or deploy to organization).

@@ -154,7 +154,7 @@ def deploy_stack(command):
         print("An error occurred:", e)
 
 def setup_notification():
-    Notification = input("\n(Optional)Do you want to set up notification? (Y/N): ") or "N"
+    Notification = input("Do you want to set up notification? (Y/N): ") or "N"
     if Notification == "Y":
         GetChannelChoice = input("   Select client (1 for Slack, 2 for Teams): ") or "1"
         if GetChannelChoice == "1":
@@ -168,6 +168,7 @@ def setup_notification():
             TeamId = "N"
             TeamsTenantId = "N"
             TeamsChannelId = "N"
+            print()
         elif GetChannelChoice == "2":
             print_boxed_text("If this is first time setup, Slack Workspace setup/OAuth authorization must be done from AWS console.\
                     \n1. Open the AWS Chatbot console at https://console.aws.amazon.com/chatbot/.\
@@ -180,6 +181,7 @@ def setup_notification():
             TeamId = input("      Provide TeamId: ") or "N"
             TeamsTenantId = input("      Provide TeamsTenantId: ") or "N"
             TeamsChannelId = input("      Provide TeamsChannelId: ") or "N"
+            print()
         else:
             print("Invalid Choice... Continuing without notification setup")
     else:
@@ -201,20 +203,19 @@ def central_account_setup(region, account_id):
     print_boxed_text("(Optional) Overwrite input for Amazon Athena")
     athenaResultBucket = input("Enter Amazon Athena query results bucket name (Hit enter to use default: aws-athena-query-results-* ):") or "aws-athena-query-results-*"
     athenakmsarn = input("Note: If Amazon Athena query results/bucket is encrypted with KMS, you must provide KMS Arn here (Hit enter to skip): ") or "N"
-
+    print_boxed_text("(Required) QuickSight User and Service Role Details")    
     # Configure QuickSight settings
-    quicksight_service_role = input("\nEnter QuickSight Service Role (Hit enter to use default: aws-quicksight-service-role-v0): ") or "aws-quicksight-service-role-v0"
+    quicksight_service_role = input("Enter QuickSight Service Role (Hit enter to use default: aws-quicksight-service-role-v0): ") or "aws-quicksight-service-role-v0"
     qsidregion = input("Enter your QuickSight Identity region (Hit enter to use default: us-east-1): ") or "us-east-1"
     quicksight_user = get_quicksight_user(account_id, qsidregion)
-
+    print_boxed_text("(Optional Features) Hit enter to select/skip default. e.g. (Y/N), N is default")
     # Check if Notification is required
     Notification, SlackChannelId, SlackWorkspaceId, TeamId, TeamsTenantId, TeamsChannelId = setup_notification()
-
     # Check if backfill of healthevents is required
-    BackfillEvents = input("(Optional)Do you want to backfill healthevents? limited to the past 90 days (Y/N): ") or "N"
+    BackfillEvents = input("Do you want to backfill healthevents? limited to the past 90 days (Y/N): ") or "N"
 
     # Check if eventUrl setup is required
-    eventUrlSelected = input("(Optional)Do you want to set up eventUrl for easy access to event descriptions? (Y/N): ") or "N"
+    eventUrlSelected = input("Do you want to set up eventUrl for easy access to event descriptions? (Y/N): ") or "N"
     if eventUrlSelected == "Y":
         print_boxed_text("Note: EventUrl will be accessible via APIGW with a resource policy resticting with IP range. Add additional authentication to APIGW post-setup as needed.")
         AllowedIpRange = input("   Provide IP Range which can access these eventUrls, this could be your VPN range (Default 0.0.0.0/0): ") or "0.0.0.0/0"
@@ -222,13 +223,16 @@ def central_account_setup(region, account_id):
         AllowedIpRange = "N"
 
     # Check if event enrichment with Tags is required
-    EnrichEventSelected = input("(Optional)Do you want to enrich events with Tags? It requires access to centralized AWS Config S3 Bucket(Y/N): ") or "N"
+    EnrichEventSelected = input("Do you want to enrich events with Tags? It requires access to centralized AWS Config S3 Bucket(Y/N): ") or "N"
     if EnrichEventSelected == 'Y':
     # Configure AWS Config Aggregator settings
         ConfigAggregatorBucket = check_config_bucket(bucket_name,account_id,region)
     else:
         ConfigAggregatorBucket = "N"
 
+    # Check if case is selected 
+    SendMockEvent = input("(Recommended)Open Support case and request AWS Support to dispatch mock event to test the setup?(N/Y): ") or "Y"
+    
     #sync cfn template files
     sync_cfnfiles(bucket_name)
     
@@ -245,6 +249,7 @@ def central_account_setup(region, account_id):
                 BackfillEvents={BackfillEvents} \
                 AllowedIpRange={AllowedIpRange}\
                 ConfigAggregatorBucket={ConfigAggregatorBucket}\
+                SendMockEvent={SendMockEvent}\
                 Notification={Notification}\
                 SlackChannelId={SlackChannelId}\
                 SlackWorkspaceId={SlackWorkspaceId}\
