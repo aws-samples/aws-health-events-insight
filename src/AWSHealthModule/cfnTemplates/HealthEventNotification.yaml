@@ -30,6 +30,17 @@ Parameters:
     Type: String
     Description: The ID of the Microsoft Teams channel to configure.
     Default: "N"
+    
+Conditions:
+  ChatbotTeamsChannelConfiguration:
+    !And
+      - !Not [!Equals [!Ref TeamId, "N"]]
+      - !Not [!Equals [!Ref TeamsTenantId, "N"]]
+      - !Not [!Equals [!Ref TeamsChannelId, "N"]]
+  ChatbotSlackChannelConfiguration:
+    !And
+      - !Not [!Equals [!Ref SlackChannelId, "N"]]
+      - !Not [!Equals [!Ref SlackWorkspaceId, "N"]]
 
 Resources:
   HealthEventSNSTopic:
@@ -133,15 +144,4 @@ Resources:
       TeamId: !Ref TeamId
       SnsTopicArns:
         - !Ref HealthEventSNSTopic
-
-Conditions:
-  ChatbotTeamsChannelConfiguration:
-    !And
-      - !Not [!Equals [!Ref TeamId, "N"]]
-      - !Not [!Equals [!Ref TeamsTenantId, "N"]]
-      - !Not [!Equals [!Ref TeamsChannelId, "N"]]
-  ChatbotSlackChannelConfiguration:
-    !And
-      - !Not [!Equals [!Ref SlackChannelId, "N"]]
-      - !Not [!Equals [!Ref SlackWorkspaceId, "N"]]
   

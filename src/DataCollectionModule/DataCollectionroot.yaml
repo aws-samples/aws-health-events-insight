@@ -71,6 +71,12 @@ Parameters:
     Type: String
     Description: (Optional) The ID of the Microsoft Teams channel to configure. Type "N" to disable this.
     Default: "N"
+    
+Conditions:
+  Notification: !Equals [!Ref Notification, "Y"]
+  AllowedIpRange: !Not [!Equals [!Ref AllowedIpRange, "N"]]
+  ConfigAggregatorBucket: !Not [!Equals [!Ref ConfigAggregatorBucket, "N"]]
+  SendMockEvent: !Equals [!Ref SendMockEvent, "Y"]
 
 Resources:
   DataCollection:
@@ -164,10 +170,5 @@ Resources:
     Properties: 
       TemplateURL: !Sub https://${DataCollectionBucket}.s3.amazonaws.com/DataCollection-metadata/AWSHealthModule/cfnTemplates/HealthEventCase.yaml
       
-Conditions:
-  Notification: !Equals [!Ref Notification, "Y"]
-  AllowedIpRange: !Not [!Equals [!Ref AllowedIpRange, "N"]]
-  ConfigAggregatorBucket: !Not [!Equals [!Ref ConfigAggregatorBucket, "N"]]
-  SendMockEvent: !Equals [!Ref SendMockEvent, "Y"]
 
   

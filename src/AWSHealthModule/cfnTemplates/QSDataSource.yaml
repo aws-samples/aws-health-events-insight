@@ -26,6 +26,11 @@ Parameters:
     Type: String
     Default: aws-quicksight-service-role-v0
     Description: The Quicksight Service role attached to QS, Default is aws-quicksight-service-role-v0
+    
+Conditions:
+  ConfigAggregatorBucket: !Not [!Equals [!Ref ConfigAggregatorBucket, "N"]]
+  DataCollectionBucketKmsArn: !Not [!Equals [!Ref DataCollectionBucketKmsArn, "N"]]
+  AthenaBucketKmsArn: !Not [!Equals [!Ref AthenaBucketKmsArn, "N"]]
  
 Resources:
   # AWS Glue Database resource to store the Athena table and view
@@ -344,8 +349,3 @@ Outputs:
     Value: !Ref GlueDatabaseDataCollection
     Export:
       Name: GlueDatabaseDataCollection
-
-Conditions:
-  ConfigAggregatorBucket: !Not [!Equals [!Ref ConfigAggregatorBucket, "N"]]
-  DataCollectionBucketKmsArn: !Not [!Equals [!Ref DataCollectionBucketKmsArn, "N"]]
-  AthenaBucketKmsArn: !Not [!Equals [!Ref AthenaBucketKmsArn, "N"]]

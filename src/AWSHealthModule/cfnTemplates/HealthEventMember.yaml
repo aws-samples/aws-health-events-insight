@@ -14,7 +14,9 @@ Parameters:
     Default: https://test
     Description: (Optional) This is to create dependency on AWSHealthEventDetailUrl Stack, so that DynamoDB can populate with backfill events.
 
-
+Conditions:
+  BackfillEvents: !Equals [!Ref BackfillEvents, "Y"]
+  
 Resources:
   PutEventRole:
     Type: AWS::IAM::Role
@@ -208,6 +210,3 @@ Resources:
     Type: Custom::MyLambdaInvoker
     Properties:
       ServiceToken: !GetAtt LambdaBackfillEvents.Arn
-
-Conditions:
-  BackfillEvents: !Equals [!Ref BackfillEvents, "Y"]

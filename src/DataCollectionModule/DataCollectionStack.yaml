@@ -19,6 +19,9 @@ Parameters:
     Default: "N"
     Description: Enter KMS Arn if bucket is encrypted by KMS(Type N for SSE encryption)
 
+Conditions:
+  DataCollectionBucketKmsArn: !Not [!Equals [!Ref DataCollectionBucketKmsArn, "N"]]
+
 Resources:
   # Define an AWS Events Event Bus for DataCollection
   DataCollectionBus:
@@ -186,6 +189,3 @@ Outputs:
     Value: !GetAtt DataCollectionBus.Arn
     Export:
       Name: DataCollectionBusArn
-
-Conditions:
-  DataCollectionBucketKmsArn: !Not [!Equals [!Ref DataCollectionBucketKmsArn, "N"]]
