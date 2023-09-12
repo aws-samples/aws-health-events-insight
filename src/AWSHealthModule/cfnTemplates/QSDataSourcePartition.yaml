@@ -20,6 +20,15 @@ Resources:
   GluePartitionUpdateLambdaRole:
   # IAM Role for the Lambda function to access other AWS services to add partitions 
     Type: AWS::IAM::Role
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W11
+            reason: "Requires for query execution and create/delete paritions"
+          - id: W28
+            reason: "Hardcoded name to pass to config bucket"
+          - id: W58
+            reason: "Lambda has required permission to write CloudWatch Logs"
     Properties:
       RoleName: !Sub GluePartitionUpdateLambda-${AWS::AccountId}-${AWS::Region}-Role
       AssumeRolePolicyDocument:

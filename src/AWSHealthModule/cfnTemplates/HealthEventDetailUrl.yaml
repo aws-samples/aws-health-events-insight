@@ -270,7 +270,7 @@ Resources:
         IntegrationResponses:
           - StatusCode: 200
             ResponseTemplates:
-              application/json: !Sub 
+              application/json:
                   |- 
                   <html>
                   <h1>Event Detail</h1>

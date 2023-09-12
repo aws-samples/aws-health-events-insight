@@ -35,8 +35,16 @@ Resources:
                 cfnresponse.send(event, context, cfnresponse.FAILED, {}, None)
       Runtime: python3.10
       Timeout: 60
+      ReservedConcurrentExecutions: 5
 
   HealthEventMockRole:
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W11
+            reason: "Support needs * resource in permissions"
+          - id: W58
+            reason: "Lambda has required permission to write CloudWatch Logs"
     Type: 'AWS::IAM::Role'
     Properties:
       AssumeRolePolicyDocument:
@@ -53,6 +61,10 @@ Resources:
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                Resource: !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:*"
               - Effect: Allow
                 Action:
                   - logs:CreateLogStream

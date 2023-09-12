@@ -5,7 +5,11 @@ Description: (AwsHealthEvents) Stack to create eventUrl via APIGW.
 Parameters:
   DataCollectionBusArn:
     Type: String
-    Description: Primary Event Health Bus Arn(Get it from  DataCollectionRootStack)
+    Description: Primary Event Health Bus Arn(Get it from  DataCollectionRootStack
+  KmsMasterKeyId:
+    Type: String
+    Default: "alias/aws/sns"
+    Description: KMS Master Key ID.
   SlackChannelId:
     Type: String
     Default: "N"
@@ -30,6 +34,8 @@ Parameters:
 Resources:
   HealthEventSNSTopic:
     Type: AWS::SNS::Topic
+    Properties:
+      KmsMasterKeyId: !Ref KmsMasterKeyId
 
   HealthEventSNSTopicPolicy:
     Type: AWS::SNS::TopicPolicy
