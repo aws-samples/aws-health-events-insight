@@ -26,7 +26,7 @@ Parameters:
     Type: String
     Default: aws-quicksight-service-role-v0
     Description: The Quicksight Service role attached to QS, Default is aws-quicksight-service-role-v0
-    
+
 Conditions:
   ConfigAggregatorBucket: !Not [!Equals [!Ref ConfigAggregatorBucket, "N"]]
   DataCollectionBucketKmsArn: !Not [!Equals [!Ref DataCollectionBucketKmsArn, "N"]]
@@ -170,7 +170,7 @@ Resources:
               Type: array<string>
               Comment: 'from deserializer'
             - Name: detail
-              Type: struct<eventarn:string,service:string,eventscopecode:string,communicationid:string,lastupdatedtime:string,eventregion:string,eventtypecode:string,eventtypecategory:string,starttime:string,endtime:string,eventdescription:array<struct<language:string,latestdescription:string>>,affectedentities:array<struct<entityvalue:string,entityarn:string,entityaz:string,entitytags:array<struct<value:string,key:string>>>>>
+              Type: struct<eventarn:string,affectedAccount:string,service:string,eventscopecode:string,communicationid:string,lastupdatedtime:string,eventregion:string,eventtypecode:string,eventtypecategory:string,starttime:string,endtime:string,eventdescription:array<struct<language:string,latestdescription:string>>,affectedentities:array<struct<entityvalue:string,statusCode:string,entityarn:string,entityaz:string,entitytags:array<struct<value:string,key:string>>>>>
               Comment: 'from deserializer'
           # S3 location of the data for the Athena External Table
           Location: !Sub 's3://${DataCollectionBucket}/DataCollection-data'

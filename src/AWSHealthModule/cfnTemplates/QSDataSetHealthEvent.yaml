@@ -29,7 +29,7 @@ Resources:
                   WITH latestRow AS (select * from (SELECT
                           detail.eventTypeCode,
                           source AS eventSource,
-                          account,
+                          COALESCE(detail.affectedAccount, account) as account,
                           detail.service,
                           detail.eventScopeCode,
                           detail.eventTypeCategory,
@@ -37,6 +37,7 @@ Resources:
                           detail.communicationid,
                           detail.eventRegion,
                           entities.entityValue AS affectedEntities,
+                          entities.statusCode As affectedEntityStatus,
                           detail.eventdescription[1].latestdescription AS eventDescription,
                           rank() OVER (PARTITION BY detail.eventarn,account ORDER BY detail.lastUpdatedTime DESC) AS rowrank,
                           array_join(resources, ', ') AS resources,
@@ -72,6 +73,8 @@ Resources:
                   LEFT JOIN tagInfo ON detail.affectedEntities in (tagInfo.resourceId,tagInfo.resourceName,tagInfo.entityArn)
               Columns:
               - Name: eventTypeCode
+                Type: STRING
+              - Name: affectedEntityStatus
                 Type: STRING
               - Name: rowrank
                 Type: INTEGER
@@ -128,6 +131,7 @@ Resources:
             - ProjectOperation:
                 ProjectedColumns:
                 - eventTypeCode
+                - affectedEntityStatus
                 - rowrank
                 - eventSource
                 - account
