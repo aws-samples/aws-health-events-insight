@@ -22,7 +22,7 @@ Resources:
                 event_start_time = (current_time + datetime.timedelta(hours=12)).strftime('%Y-%m-%d %H:%M UTC')
                 event_end_time = (current_time + datetime.timedelta(hours=24)).strftime('%Y-%m-%d %H:%M UTC')
                 
-                communication_body = f"Hello \nCan you please send a mock PHD event to this account?\nAccountId: {aws_account_id}\nEvent Region: us-east-1\nEvent Start Time: {event_start_time}\nEvent End Time: {event_end_time}\nEvent Category: EC2 Service Event"
+                communication_body = f"Hello \nCan you please send a mock PHD event to this account? If eventStart time is passed, please pick any random start time, its just a test.\nAccountId: {aws_account_id}\nEvent Region: us-east-1\nEvent Start Time: {event_start_time}\nEvent End Time: {event_end_time}\nEvent Category: EC2 Service Event"
 
                 response = support_client.create_case(
                     subject=f"Heidi mock event request for {aws_account_id}",

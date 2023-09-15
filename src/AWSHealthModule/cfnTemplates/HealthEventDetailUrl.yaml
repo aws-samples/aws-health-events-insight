@@ -195,7 +195,6 @@ Resources:
       LogGroupName: !Sub /aws/api-gateway/${apiGateway}
       RetentionInDays: 30
 
-
   APIGatewayAccountSettings:
     Type: AWS::ApiGateway::Account
     Properties: 
