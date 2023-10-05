@@ -2,6 +2,7 @@
 Single pane of glass for all your AWS Health events across different accounts,regions and organizations.
 
 ## **Table of Contents**
+- [Whats New](#whats-new)
 - [Introduction](#introduction)
 - [Solution Architecture](#solution-architecture)
 - [Prerequisites](#prerequisites)
@@ -11,6 +12,11 @@ Single pane of glass for all your AWS Health events across different accounts,re
 - [Update Metadata](#update-metadata)
 - [Setup Validation](#setup-validation)
 - [Troubleshooting](#troubleshooting)
+
+## **Whats New?**
+You can now receive a feed of AWS Health events on Amazon EventBridge from all accounts within your organization in AWS Organizations using organizational view and delegated administrator. With this feature, if you are deploying Heidi in the delegated administrator account, it will ingest AWS Health events from all other accounts. 
+
+**Note:** EventBridge is a regional service, meaning you should set up member configurations in the specific region where you want to receive events. For example, if your operate in us-east-1 and us-east-2, you can deploy Heidi in us-east-1 and configure the member setup in us-east-2 within the delegated admin account.
 
 ## **Introduction**
 
