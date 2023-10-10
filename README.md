@@ -2,7 +2,7 @@
 Single pane of glass for all your AWS Health events across different accounts,regions and organizations.
 
 ## **Table of Contents**
-- [Whats New](#whats-new)
+- [What's New?](#whats-new)
 - [Introduction](#introduction)
 - [Solution Architecture](#solution-architecture)
 - [Prerequisites](#prerequisites)
@@ -99,7 +99,7 @@ This is an optional step. You can map AWS AccountIDs with Account Name and Accou
 
    ![Account Tag](img/AccountTag.jpg)
 
-3. **Important:** Upload the file to a specific Amazon S3 location so that QuickSight dataset can join to create mapping.
+3. **Important:** Upload the file to a specific Amazon S3 location so that QuickSight dataset can join to create mapping. 
 
    ![S3 Location](img/s3Location.jpg)
 
