@@ -32,9 +32,7 @@ HEIDI Data Collection Framework enables you to collect data from different accou
 5. Athena queries the S3 buckets.
 6. QuickSight provides insights into the events.
 
-
- ![ALT](img/HeidiBaseline.jpg)
-
+ ![ArchitectureDiag](img/HeidiBaseline.jpg)
 
 ## **Prerequisites**
 
