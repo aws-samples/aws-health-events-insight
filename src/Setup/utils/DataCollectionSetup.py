@@ -1,5 +1,6 @@
 import boto3
 import subprocess
+import datetime
 from botocore.exceptions import ClientError
 import os
 
@@ -119,6 +120,24 @@ def print_boxed_text(text):
         print(f' {line.ljust(max_length)} ')
     print('═' * (max_length + 2))
 
+def SendMockEvent():
+    try:
+        aws_account_id = get_account_id()
+        current_time = datetime.datetime.now()
+        support_client = boto3.client('support','us-east-1')
+        event_start_time = (current_time + datetime.timedelta(hours=12)).strftime('%Y-%m-%d %H:%M UTC')
+        event_end_time = (current_time + datetime.timedelta(hours=24)).strftime('%Y-%m-%d %H:%M UTC')
+        communication_body = f"Hello \nCan you please send a mock PHD event to this account? If eventStart time is passed, please pick any random start time, its just a test.\nAccountId: {aws_account_id}\nEvent Region: us-east-1\nEvent Start Time: {event_start_time}\nEvent End Time: {event_end_time}\nEvent Category: EC2 Service Event"
+        
+        support_client.create_case(
+            subject=f"Heidi mock event request for {aws_account_id}",
+            serviceCode="aws-health",
+            severityCode="low",
+            categoryCode="general-guidance",
+            communicationBody=communication_body)
+    except Exception as e:
+        print(e)
+
 #Save Input to file for future use
 def save_output_to_file(output):
     with open('utils/ParametersDataCollection.txt', 'w') as file:
@@ -172,7 +191,10 @@ def get_user_input():
             TeamId = input("    Provide TeamId: ") or "na"
             TeamsTenantId = input("    Provide TeamsTenantId: ") or "na"
             TeamsChannelId = input("    Provide TeamsChannelId: ") or "na"
-
+    print()
+    TestSetupViaSupportCase = ask_yes_no("Test end to end setup with Mock Health Event(via support case)?")
+    if TestSetupViaSupportCase:
+        SendMockEvent()
 
     return (
         "yes" if EnableHealthModule else "no",

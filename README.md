@@ -101,7 +101,7 @@ This is an optional step. You can map AWS AccountIDs with Account Name and Accou
 Send a mock event to test setup.
 
 1. Go to EventBridge console and choose default event bus. (You can choose any member account or region) and click the **Send events** button.
-2. **Important** Put the **Event source** and **Detail type** as `awshealthtest` , otherwise the rule will discard the mock event.
+2. **Important** Put the **Event source** and **Detail type** as `heidi.health` , otherwise the rule will discard the mock event.
 3. Copy the entire content from [MockEvent.json](https://github.com/aws-samples/aws-health-events-insight/blob/main/src/MockEvent.json) and paste it in the **Event detail** field.
 4. Click **Send**.
 
