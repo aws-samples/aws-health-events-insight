@@ -1,16 +1,17 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
-Description: (AwsHealthEvents) Stack to create QuickSight Analysis for AwsHealthEvents
+Description: Health Module QS Analysis Setup
+
 Parameters:
-  QSDataSetHealthEventArn:
+  QSDataSetHealthEvent:
     Type: String
     Description: The AWS Health Event QSDataSetArn for Analysis.
-  QuickSightUser:
+  QuickSightAnalysisAuthor:
     Type: String
     Description: The QuickSight User that is allowed configure and manage the QS dashboard.
   EventDetailUrl:
     Type: String
-    Default: https://test
+    Default: https://example.com
     Description: The QuickSight Event Detail Url.
 
 Resources:
@@ -18,12 +19,12 @@ Resources:
     Type: AWS::QuickSight::Analysis
     Properties:
       AwsAccountId: !Sub "${AWS::AccountId}"
-      Name: !Sub "EventHealth-Analysis-${AWS::AccountId}-${AWS::Region}"
-      AnalysisId: !Sub "AWSHealthEvent-Analysis-${AWS::AccountId}-${AWS::Region}"
+      Name: !Sub "HealthEvents-Analysis-${AWS::AccountId}-${AWS::Region}"
+      AnalysisId: !Sub "HealthEvents-Analysis-${AWS::AccountId}-${AWS::Region}"
       Definition: 
         DataSetIdentifierDeclarations:
-        - Identifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
-          DataSetArn: !Ref QSDataSetHealthEventArn
+        - Identifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
+          DataSetArn: !Ref  QSDataSetHealthEvent
         Sheets:
         - SheetId: fb07dc95-b53c-4830-95b0-ab8441a3c3fd
           Title: 'AWS Health Events Intelligence Dashboards & Insights (HEIDI) '
@@ -96,19 +97,19 @@ Resources:
                 SourceControls:
                 - SourceSheetControlId: 859bcd4b-7c07-46e3-ae8c-05d860d6762a
                   ColumnToMatch:
-                    DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                    DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                     ColumnName: service
                 - SourceSheetControlId: 47a3cc44-d525-4d03-ae36-3eae51d26de0
                   ColumnToMatch:
-                    DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                    DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                     ColumnName: accountName
                 - SourceSheetControlId: 8a0e0926-6af1-4441-959e-6b21977824c3
                   ColumnToMatch:
-                    DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                    DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                     ColumnName: accountTag
                 - SourceSheetControlId: 33b7c881-12c8-47d6-aaf0-f7608eef78d1
                   ColumnToMatch:
-                    DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                    DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                     ColumnName: entityTagValue
           - Dropdown:
               FilterControlId: 33b7c881-12c8-47d6-aaf0-f7608eef78d1
@@ -127,19 +128,19 @@ Resources:
                 SourceControls:
                 - SourceSheetControlId: 859bcd4b-7c07-46e3-ae8c-05d860d6762a
                   ColumnToMatch:
-                    DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                    DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                     ColumnName: service
                 - SourceSheetControlId: 47a3cc44-d525-4d03-ae36-3eae51d26de0
                   ColumnToMatch:
-                    DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                    DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                     ColumnName: accountName
                 - SourceSheetControlId: 8a0e0926-6af1-4441-959e-6b21977824c3
                   ColumnToMatch:
-                    DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                    DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                     ColumnName: accountTag
                 - SourceSheetControlId: 99613125-5913-492e-a3d3-1b235dd097f6
                   ColumnToMatch:
-                    DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                    DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                     ColumnName: entityTagKey
           Visuals:
           - PieChartVisual:
@@ -157,13 +158,13 @@ Resources:
                     - CategoricalDimensionField:
                         FieldId: AWSHealthQSLT.accountName.1.1693316765692
                         Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                          DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                           ColumnName: accountName
                     Values:
                     - CategoricalMeasureField:
                         FieldId: AWSHealthQSLT.eventArn.1.1691962810745
                         Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                          DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                           ColumnName: eventArn
                         AggregationFunction: DISTINCT_COUNT
                 SortConfiguration:
@@ -235,13 +236,13 @@ Resources:
                     - CategoricalDimensionField:
                         FieldId: AWSHealthQSLT.eventScopeCode.0.1689177480133
                         Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                          DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                           ColumnName: eventScopeCode
                     Values:
                     - CategoricalMeasureField:
                         FieldId: AWSHealthQSLT.eventArn.1.1691962865656
                         Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                          DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                           ColumnName: eventArn
                         AggregationFunction: DISTINCT_COUNT
                 SortConfiguration:
@@ -310,14 +311,14 @@ Resources:
                     - DateDimensionField:
                         FieldId: AWSHealthQSLT.startTime.1.1687996508298
                         Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                          DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                           ColumnName: startTime
                         HierarchyId: AWSHealthQSLT.startTime.1.1687996508298
                     BarValues:
                     - NumericalMeasureField:
                         FieldId: bcd2978c-5b1a-4eb4-829d-5ad5c66bf06e.1.1687996236945
                         Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                          DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                           ColumnName: eventDuration
                         AggregationFunction:
                           SimpleNumericalAggregation: MAX
@@ -325,7 +326,7 @@ Resources:
                     - CategoricalDimensionField:
                         FieldId: AWSHealthQSLT.service.2.1687996673957
                         Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                          DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                           ColumnName: service
                     LineValues: []
                 SortConfiguration:
@@ -362,7 +363,7 @@ Resources:
                     ApplyTo:
                       FieldId: bcd2978c-5b1a-4eb4-829d-5ad5c66bf06e.1.1687996236945
                       Column:
-                        DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                        DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                         ColumnName: eventDuration
                 SecondaryYAxisDisplayOptions:
                   TickLabelOptions:
@@ -413,13 +414,13 @@ Resources:
                     - CategoricalDimensionField:
                         FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventTypeCategory.0.1683487801849
                         Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                          DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                           ColumnName: eventTypeCategory
                     Values:
                     - CategoricalMeasureField:
                         FieldId: AWSHealthQSLT.eventArn.1.1691962847051
                         Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                          DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                           ColumnName: eventArn
                         AggregationFunction: DISTINCT_COUNT
                 SortConfiguration:
@@ -491,13 +492,13 @@ Resources:
                     - CategoricalDimensionField:
                         FieldId: Status.0.1687998495283
                         Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                          DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                           ColumnName: Status
                     Values:
                     - CategoricalMeasureField:
                         FieldId: AWSHealthQSLT.eventArn.1.1691962831241
                         Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                          DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                           ColumnName: eventArn
                         AggregationFunction: DISTINCT_COUNT
                 SortConfiguration:
@@ -572,13 +573,13 @@ Resources:
                     - CategoricalDimensionField:
                         FieldId: AWSHealthQSLT.accountTag.1.1691089003546
                         Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                          DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                           ColumnName: accountTag
                     Sizes:
                     - CategoricalMeasureField:
                         FieldId: AWSHealthQSLT.eventArn.1.1691962890067
                         Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                          DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                           ColumnName: eventArn
                         AggregationFunction: DISTINCT_COUNT
                     Colors: []
@@ -640,13 +641,13 @@ Resources:
                     - CategoricalDimensionField:
                         FieldId: b9974875-d5dd-4ab9-b193-7ad5c2ea0b2c.eventRegion.0.1683487615968
                         Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                          DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                           ColumnName: eventRegion
                     Values:
                     - CategoricalMeasureField:
                         FieldId: AWSHealthQSLT.eventArn.1.1691962877632
                         Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                          DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                           ColumnName: eventArn
                         AggregationFunction: DISTINCT_COUNT
                     Colors: []
@@ -709,13 +710,13 @@ Resources:
                     - CategoricalDimensionField:
                         FieldId: AWSHealthQSLT.service.0.1688000439590
                         Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                          DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                           ColumnName: service
                     Sizes:
                     - CategoricalMeasureField:
                         FieldId: AWSHealthQSLT.eventArn.1.1691962959026
                         Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                          DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                           ColumnName: eventArn
                         AggregationFunction: DISTINCT_COUNT
                     Colors: []
@@ -780,82 +781,82 @@ Resources:
                     - CategoricalDimensionField:
                         FieldId: AWSHealthQSLT.service.0.1689722387264
                         Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                          DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                           ColumnName: service
                     - CategoricalDimensionField:
                         FieldId: Status.12.1689723403075
                         Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                          DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                           ColumnName: Status
                     - CategoricalDimensionField:
                         FieldId: AWSHealthQSLT.affectedEntities.9.1690685082087
                         Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                          DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                           ColumnName: affectedEntities
                     - CategoricalDimensionField:
                         FieldId: AWSHealthQSLT.eventTypeCategory.10.1690685126505
                         Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                          DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                           ColumnName: eventTypeCategory
                     - CategoricalDimensionField:
                         FieldId: AWSHealthQSLT.eventRegion.8.1689722876524
                         Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                          DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                           ColumnName: eventRegion
                     - CategoricalDimensionField:
                         FieldId: AWSHealthQSLT.accountName.9.1690685099823
                         Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                          DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                           ColumnName: accountName
                     - CategoricalDimensionField:
                         FieldId: AWSHealthQSLT.account.1.1689722392215
                         Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                          DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                           ColumnName: account
                     - DateDimensionField:
                         FieldId: AWSHealthQSLT.startTime.3.1689722402483
                         Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                          DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                           ColumnName: startTime
                     - DateDimensionField:
                         FieldId: 933a5d30-3922-496d-bc77-171eba9f0710.4.1689722405931
                         Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                          DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                           ColumnName: endTime
                     - DateDimensionField:
                         FieldId: AWSHealthQSLT.lastUpdatedTime.13.1690685222728
                         Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                          DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                           ColumnName: lastUpdatedTime
                     - CategoricalDimensionField:
                         FieldId: 51fc89f6-deb3-4761-a8ef-dd0876dccf99.9.1689722926318
                         Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                          DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                           ColumnName: eventDetailUrl
                     - NumericalDimensionField:
                         FieldId: bcd2978c-5b1a-4eb4-829d-5ad5c66bf06e.7.1689722863698
                         Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                          DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                           ColumnName: eventDuration
                     - CategoricalDimensionField:
                         FieldId: AWSHealthQSLT.eventDescription.12.1690685239424
                         Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                          DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                           ColumnName: eventDescription
                     - CategoricalDimensionField:
                         FieldId: AWSHealthQSLT.eventArn.13.1690685240665
                         Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                          DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                           ColumnName: eventArn
                     - CategoricalDimensionField:
                         FieldId: AWSHealthQSLT.entityAZ.16.1691964512298
                         Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                          DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                           ColumnName: entityAZ
                     - CategoricalDimensionField:
                         FieldId: AWSHealthQSLT.entityArn.17.1691964513177
                         Column:
-                          DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                          DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                           ColumnName: entityArn
                     Values: []
                 SortConfiguration: {}
@@ -1073,7 +1074,7 @@ Resources:
                     OptimizedViewPortWidth: 1600px
           ContentType: INTERACTIVE
         CalculatedFields:
-        - DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+        - DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
           Name: eventDetailUrl
           Expression: !Sub concat("${EventDetailUrl}","eventArn=",eventArn,"&account=",account)
         ParameterDeclarations:
@@ -1090,7 +1091,7 @@ Resources:
           - CategoryFilter:
               FilterId: dadd3324-6904-4825-9ffc-3cff5f104236
               Column:
-                DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                 ColumnName: Status
               Configuration:
                 FilterListConfiguration:
@@ -1099,7 +1100,7 @@ Resources:
           - CategoryFilter:
               FilterId: 7b19b632-9b98-4cd4-8d94-6c83fcbe11ea
               Column:
-                DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                 ColumnName: eventTypeCategory
               Configuration:
                 FilterListConfiguration:
@@ -1118,7 +1119,7 @@ Resources:
           - CategoryFilter:
               FilterId: dc6064b9-3917-4008-af13-52b1ef1ab356
               Column:
-                DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                 ColumnName: eventTypeCategory
               Configuration:
                 FilterListConfiguration:
@@ -1139,7 +1140,7 @@ Resources:
           - RelativeDatesFilter:
               FilterId: e3e7837d-2747-400c-b127-89aa036b853a
               Column:
-                DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                 ColumnName: startTime
               AnchorDateConfiguration:
                 AnchorOption: NOW
@@ -1159,7 +1160,7 @@ Resources:
           - CategoryFilter:
               FilterId: aa6e0cd5-5767-492c-b6b4-20294de228c5
               Column:
-                DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                 ColumnName: service
               Configuration:
                 FilterListConfiguration:
@@ -1177,7 +1178,7 @@ Resources:
           - CategoryFilter:
               FilterId: 565de63e-6ebe-4d5c-b1f0-9c98e48c5a15
               Column:
-                DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                 ColumnName: accountName
               Configuration:
                 FilterListConfiguration:
@@ -1195,7 +1196,7 @@ Resources:
           - CategoryFilter:
               FilterId: 26b2b3e6-17f5-42da-8898-0b24957c4a70
               Column:
-                DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                 ColumnName: accountTag
               Configuration:
                 FilterListConfiguration:
@@ -1213,7 +1214,7 @@ Resources:
           - CategoryFilter:
               FilterId: 1a156613-594b-496b-a010-ffb33e4a49a8
               Column:
-                DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                 ColumnName: entityTagKey
               Configuration:
                 FilterListConfiguration:
@@ -1231,7 +1232,7 @@ Resources:
           - CategoryFilter:
               FilterId: 865ff24d-b4dd-49bf-a8ce-6d50daa15e63
               Column:
-                DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+                DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                 ColumnName: entityTagValue
               Configuration:
                 FilterListConfiguration:
@@ -1246,7 +1247,7 @@ Resources:
           CrossDataset: SINGLE_DATASET
         ColumnConfigurations:
         - Column:
-            DataSetIdentifier: !Sub "EventHealth-${AWS::AccountId}-${AWS::Region}"
+            DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
             ColumnName: eventDetailUrl
           FormatConfiguration:
             StringFormatConfiguration:
@@ -1262,7 +1263,7 @@ Resources:
                     OptimizedViewPortWidth: 1600px
             SheetContentType: INTERACTIVE
       Permissions:
-      - Principal: !Sub "${QuickSightUser}"
+      - Principal: !Sub "${QuickSightAnalysisAuthor}"
         Actions:
           - quicksight:RestoreAnalysis
           - quicksight:UpdateAnalysisPermissions

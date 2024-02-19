@@ -1,13 +1,20 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
-Description: (AwsHealthEvents) Stack to create eventUrl via APIGW.
+Description: Health Module EventUrl Setup
 
 Parameters:
-  DataCollectionBusArn:
+  DataCollectionAccountID:
     Type: String
-    Description: Primary Event Health Bus Arn(Get it from  DataCollectionRootStack)
+    Description: AccountId of where the collector is deployed
+  DataCollectionRegion:
+    Type: String
+    Description: Account Region of where the collector is deployed
+  ResourcePrefix:
+    Type: String
+    Description: This prefix will be placed in front of resources created where required. Note you may wish to add a dash at the end to make more readable
+    Default: "Heidi-"
   AllowedIpRange:
-    Default: "0.0.0.0/0"
+    Default: "0.0.0.0/32"
     Type: String
     Description: AllowedIpRange who can access EventDetailUrls.
   AuthorizationType:
@@ -76,7 +83,7 @@ Resources:
               - Effect: Allow
                 Action:
                   - "events:PutEvents"
-                Resource: !Ref DataCollectionBusArn
+                Resource: !Sub "arn:${AWS::Partition}:events:${DataCollectionRegion}:${DataCollectionAccountID}:event-bus/${ResourcePrefix}DataCollectionBus-${DataCollectionAccountID}"
 
   HealthEventLambadDdb:
     Type: AWS::Lambda::Function
@@ -122,7 +129,7 @@ Resources:
                       'body': json.dumps(str(e))
                   }
       Handler: index.lambda_handler
-      Runtime: python3.10
+      Runtime: python3.11
       Timeout: 900
       ReservedConcurrentExecutions: 5
       Role: !GetAtt HealthEventLambadDdbRole.Arn
@@ -134,11 +141,11 @@ Resources:
     Type: "AWS::Events::Rule"
     Properties:
       Description: "Event Health bus rule for aws.health events"
-      EventBusName: !Select [1, !Split ["/", !Ref DataCollectionBusArn]]
+      EventBusName: !Sub ${ResourcePrefix}DataCollectionBus-${DataCollectionAccountID}
       EventPattern:
         source:
+          - "heidi.health"
           - "aws.health"
-          - "awshealthtest"
       Targets:
         - Arn: !GetAtt HealthEventLambadDdb.Arn
           Id: "LambaasTarget"

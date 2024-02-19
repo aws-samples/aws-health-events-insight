@@ -3,40 +3,44 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: (AwsHealthEvents) Stack to create eventUrl via APIGW.
 
 Parameters:
-  DataCollectionBusArn:
+  DataCollectionAccountID:
     Type: String
-    Description: Primary Event Health Bus Arn(Get it from  DataCollectionRootStack
+    Description: AccountId of where the collector is deployed
+  ResourcePrefix:
+    Type: String
+    Description: This prefix will be placed in front of resources created where required. Note you may wish to add a dash at the end to make more readable
+    Default: "Heidi-"
   SlackChannelId:
     Type: String
-    Default: "N"
+    Default: "na"
     Description: SlackChannelId.
   SlackWorkspaceId:
     Type: String
-    Default: "N"
+    Default: "na"
     Description: SlackWorkspaceId.
   TeamId:
     Type: String
     Description: The ID of the Microsoft Teams team to configure.
-    Default: "N"
+    Default: "na"
   TeamsTenantId:
     Type: String
     Description: The ID of the Microsoft Teams tenant.
-    Default: "N"
+    Default: "na"
   TeamsChannelId:
     Type: String
     Description: The ID of the Microsoft Teams channel to configure.
-    Default: "N"
+    Default: "na"
     
 Conditions:
   ChatbotTeamsChannelConfiguration:
     !And
-      - !Not [!Equals [!Ref TeamId, "N"]]
-      - !Not [!Equals [!Ref TeamsTenantId, "N"]]
-      - !Not [!Equals [!Ref TeamsChannelId, "N"]]
+      - !Not [!Equals [!Ref TeamId, "na"]]
+      - !Not [!Equals [!Ref TeamsTenantId, "na"]]
+      - !Not [!Equals [!Ref TeamsChannelId, "na"]]
   ChatbotSlackChannelConfiguration:
     !And
-      - !Not [!Equals [!Ref SlackChannelId, "N"]]
-      - !Not [!Equals [!Ref SlackWorkspaceId, "N"]]
+      - !Not [!Equals [!Ref SlackChannelId, "na"]]
+      - !Not [!Equals [!Ref SlackWorkspaceId, "na"]]
 
 Resources:
   HealthEventSNSTopic:
@@ -77,7 +81,7 @@ Resources:
     Type: "AWS::Events::Rule"
     Properties:
       Description: "Event Health bus rule for aws.health events"
-      EventBusName: !Select [1, !Split ["/", !Ref DataCollectionBusArn]]
+      EventBusName: !Sub ${ResourcePrefix}DataCollectionBus-${DataCollectionAccountID}
       EventPattern:
         source:
           - "aws.health"

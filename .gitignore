@@ -1,3 +1,5 @@
 .*
 !/.gitignore
 !/.github
+src/Setup/utils/*.txt
+./src/Setup/utils/__pycache__/

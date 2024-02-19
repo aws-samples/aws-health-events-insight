@@ -1,0 +1,404 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Event Driven Data Collection Stack
+
+Parameters:
+  AWSOrganizationID:
+    Type: String
+    Description: The AWS Organizations ID for the organization that should be allowed to put events on the event bus. 'Comma Delimited list of AWS Organization IDs for all Payer Account'
+  DataCollectionBucket:
+    Type: String
+    Description: Name of the S3 Bucket to be created to hold data information. 
+  DataCollectionBucketKmsArn:
+    Type: String
+    Default: "na"
+    Description: Enter KMS Arn if supplied Destination bucket is encrypted with KMS(Type N for SSE encryption)
+  AthenaResultBucket:
+    Type: String
+    Default: "aws-athena-query-results-*"
+    Description: S3 Bucket where Amazon Athena stores results
+  AthenaBucketKmsArn:
+    Type: String
+    Default: "na"
+    Description: Enter KMS Arn if Athena Results bucket is encrypted with KMS(Type N for SSE encryption)
+  QuicksightServiceRole:
+    Type: String
+    Default: aws-quicksight-service-role-v0
+    Description: The Quicksight Service role attached to QS, Default is aws-quicksight-service-role-v0
+  ResourcePrefix:
+    Type: String
+    Description: This prefix will be placed in front of resources created where required. Note you may wish to add a dash at the end to make more readable
+    Default: "Heidi-"
+  HeidiDataCollectionDB:
+    Type: String
+    Description: Athena DataCollection DB name
+    Default: "heididatacollectiondb"
+  EnableHealthModule:
+    Type: String
+    Description: Collects AWS Health data from different accounts
+    Default: "yes"
+    AllowedValues:
+      - "yes"
+      - "no"
+
+Outputs:
+  HeidiQSDataSourceArn:
+    Condition: DeployDataCollectionComponents
+    Value: !GetAtt HeidiQSDataSource.Arn
+    Export:
+      Name: HeidiQSDataSourceArn     
+  HeidiDataCollectionDB:
+    Condition: DeployDataCollectionComponents
+    Value: !Ref HeidiDataCollectionDB
+    Export:
+      Name: HeidiDataCollectionDB
+  
+Conditions:
+  DataCollectionBucketKmsArn: !Not [!Equals [!Ref DataCollectionBucketKmsArn, "na"]]
+  AthenaBucketKmsArn: !Not [!Equals [!Ref AthenaBucketKmsArn, "na"]]
+  DeployDataCollectionComponents: !Equals [ !Ref EnableHealthModule, "yes"]
+
+Resources:
+  # Define an IAM Role for the Kinesis Firehose delivery stream
+  DataCollectionKinesisFirehoseRole:
+    Condition: DeployDataCollectionComponents
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: firehose.amazonaws.com
+            Action: sts:AssumeRole 
+      Policies:
+        # Policy allowing CloudWatch Logs access
+        - PolicyName: cloudwatch-logs-access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                Resource: !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:*"
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/kinesisfirehose/*"
+        # Policy allowing S3 access
+        - PolicyName: AllowS3Access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: AllowS3Access
+                Effect: Allow
+                Action:
+                  - "s3:AbortMultipartUpload"
+                  - "s3:GetBucketLocation"
+                  - "s3:GetObject"
+                  - "s3:ListBucket"
+                  - "s3:ListBucketMultipartUploads"
+                  - "s3:PutObject"
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:s3:::${DataCollectionBucket}"
+                  - !Sub "arn:${AWS::Partition}:s3:::${DataCollectionBucket}/*"
+        # Policy allowing KMS access
+        - !If
+          - DataCollectionBucketKmsArn
+          - PolicyName: AllowkmsAccess
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Sid: AllowKMSAccess
+                  Effect: Allow
+                  Action:
+                    - "kms:Encrypt"
+                    - "kms:Decrypt"
+                    - "kms:ReEncrypt*"
+                    - "kms:GenerateDataKey*"
+                  Resource:
+                    - !Ref DataCollectionBucketKmsArn
+          - !Ref AWS::NoValue
+
+#This is common EventBridge event role that give EB necessary permission to put events to Kinesis Firehose
+  DataCollectionRuleRole:
+    Condition: DeployDataCollectionComponents
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+            Action: sts:AssumeRole
+      Path: "/"
+      Policies:
+        # Policy allowing the role to put records to the Kinesis Firehose
+        - PolicyName: !Sub "DataCollectionRule-${AWS::AccountId}-${AWS::Region}-Policy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "firehose:PutRecord"
+                  - "firehose:PutRecordBatch"
+                Resource: 
+                  - !GetAtt DataCollectionKinesisFirehose.Arn
+        - PolicyName: !Sub "DataCollectionRuleDefault-${AWS::AccountId}-${AWS::Region}-Policy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: "events:PutEvents"
+                Resource: 
+                  - !GetAtt DataCollectionBus.Arn
+
+  # Define an AWS Events Event Bus for DataCollection
+  DataCollectionBus:
+    Type: "AWS::Events::EventBus"
+    Properties:
+      Name: !Sub ${ResourcePrefix}DataCollectionBus-${AWS::AccountId}
+
+  # Define the policy for the event bus to allow all accounts from the specified organization to put events
+  DataCollectionBusPolicy:
+    Type: AWS::Events::EventBusPolicy
+    Properties:
+      EventBusName: !Ref DataCollectionBus
+      StatementId: !Sub ${ResourcePrefix}AllowAllAccountsInOrganizationToPutEvents
+      Statement:
+        Effect: "Allow"
+        Principal: "*"
+        Action: "events:PutEvents"
+        Resource: !GetAtt DataCollectionBus.Arn
+        Condition:
+          StringEquals:
+            aws:PrincipalOrgID: !Split [",", !Ref AWSOrganizationID]
+            
+  # Define an AWS Kinesis Firehose Delivery Stream for data ingestion
+  DataCollectionKinesisFirehose:
+    Condition: DeployDataCollectionComponents
+    Type: "AWS::KinesisFirehose::DeliveryStream"
+    Properties:
+      DeliveryStreamName: !Sub "${ResourcePrefix}DataCollection-${AWS::AccountId}-${AWS::Region}"
+      DeliveryStreamType: "DirectPut"
+      DeliveryStreamEncryptionConfigurationInput:
+        KeyType: AWS_OWNED_CMK
+      ExtendedS3DestinationConfiguration:
+        BucketARN: !Sub "arn:${AWS::Partition}:s3:::${DataCollectionBucket}"
+        RoleARN: !GetAtt DataCollectionKinesisFirehoseRole.Arn
+        Prefix: "DataCollection-data/!{partitionKeyFromQuery:source}/!{timestamp:yyyy}/!{timestamp:MM}/!{timestamp:dd}/"
+        CompressionFormat: "UNCOMPRESSED"
+        BufferingHints:
+          IntervalInSeconds: 60
+          SizeInMBs: 64
+        ErrorOutputPrefix: "DataCollection-error/"
+        CloudWatchLoggingOptions:
+          Enabled: true
+          LogGroupName: "DataCollectionFirehoseLogs"
+          LogStreamName: "DataCollectionFirehoseStream"
+        DynamicPartitioningConfiguration:
+          Enabled: true
+          RetryOptions:
+            DurationInSeconds: 300
+        ProcessingConfiguration:
+          Enabled: true
+          Processors:
+            - Type: AppendDelimiterToRecord
+            - Type: MetadataExtraction
+              Parameters:
+                - ParameterName: MetadataExtractionQuery
+                  ParameterValue: "{source:.source}"
+                - ParameterName: JsonParsingEngine
+                  ParameterValue: JQ-1.6
+
+  DataCollectionRuleOnCustomBus:
+    Condition: DeployDataCollectionComponents
+    Type: AWS::Events::Rule
+    Properties:
+      Description: DataCollectionRuleForHeidi
+      EventBusName: !Ref DataCollectionBus
+      EventPattern:
+        source: 
+          - prefix: aws.
+          - prefix: heidi.
+          - prefix: awshealthtest
+      Targets:
+        - Id: DataCollectionRuleOnDataCollectionBus
+          Arn: !GetAtt DataCollectionKinesisFirehose.Arn
+          RoleArn: !GetAtt  DataCollectionRuleRole.Arn
+
+# Create an AWS IAM Managed Policy for QuickSight service role with necessary permissions     
+  QuicksightServiceRolePolicy:
+    Condition: DeployDataCollectionComponents
+    Type: AWS::IAM::ManagedPolicy
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W13
+            reason: "Requires generic access for QS to list all buckets"
+    Properties:
+      Description: "Grants Amazon QuickSight to run awshealthevent athena queries"
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Action:
+              - s3:ListAllMyBuckets
+            Resource: "*"
+          - Effect: "Allow"
+            Action:
+              - "s3:GetBucketLocation"
+              - "s3:GetObject"
+              - "s3:ListBucket"
+              - "s3:ListBucketMultipartUploads"
+              - "s3:AbortMultipartUpload"
+              - "s3:PutObject"
+              - "s3:ListMultipartUploadParts"
+              - "s3:CreateBucket"
+            Resource: 
+              - !Sub arn:${AWS::Partition}:s3:::${DataCollectionBucket}
+              - !Sub arn:${AWS::Partition}:s3:::${DataCollectionBucket}/*
+              - !Sub arn:${AWS::Partition}:s3:::${AthenaResultBucket}
+              - !Sub arn:${AWS::Partition}:s3:::${AthenaResultBucket}/*
+          - Effect: "Allow"
+            Action:
+              - athena:BatchGetQueryExecution
+              - athena:CancelQueryExecution
+              - athena:GetCatalogs
+              - athena:GetExecutionEngine
+              - athena:GetExecutionEngines
+              - athena:GetNamespace
+              - athena:GetNamespaces
+              - athena:GetQueryExecution
+              - athena:GetQueryExecutions
+              - athena:GetQueryResults
+              - athena:GetQueryResultsStream
+              - athena:GetTable
+              - athena:GetTables
+              - athena:ListQueryExecutions
+              - athena:RunQuery
+              - athena:StartQueryExecution
+              - athena:StopQueryExecution
+              - athena:ListWorkGroups
+              - athena:ListEngineVersions
+              - athena:GetWorkGroup
+              - athena:GetDataCatalog
+              - athena:GetDatabase
+              - athena:GetTableMetadata
+              - athena:ListDataCatalogs
+              - athena:ListDatabases
+              - athena:ListTableMetadata
+            Resource: "*"
+          - Effect: "Allow"
+            Action:
+              - "glue:CreateDatabase"
+              - "glue:DeleteDatabase"
+              - "glue:GetDatabase"
+              - "glue:GetDatabases"
+              - "glue:UpdateDatabase"
+              - "glue:CreateTable"
+              - "glue:DeleteTable"
+              - "glue:BatchDeleteTable"
+              - "glue:UpdateTable"
+              - "glue:GetTable"
+              - "glue:GetTables"
+              - "glue:BatchCreatePartition"
+              - "glue:CreatePartition"
+              - "glue:DeletePartition"
+              - "glue:BatchDeletePartition"
+              - "glue:UpdatePartition"
+              - "glue:GetPartition"
+              - "glue:GetPartitions"
+              - "glue:BatchGetPartition"
+            Resource:
+              - "*"
+          - Effect: "Allow"
+            Action:
+              - "lakeformation:GetDataAccess"
+            Resource:
+              - "*"
+          - !If
+            - DataCollectionBucketKmsArn
+            - Effect: Allow
+              Action:
+                - "kms:Encrypt"
+                - "kms:Decrypt"
+                - "kms:ReEncrypt*"
+                - "kms:GenerateDataKey*"
+              Resource:
+                - !Ref DataCollectionBucketKmsArn
+            - !Ref AWS::NoValue
+          - !If
+            - AthenaBucketKmsArn
+            - Effect: Allow
+              Action:
+                - "kms:Encrypt"
+                - "kms:Decrypt"
+                - "kms:ReEncrypt*"
+                - "kms:GenerateDataKey*"
+              Resource:
+                - !Ref AthenaBucketKmsArn
+            - !Ref AWS::NoValue
+      Roles: 
+       - !Ref QuicksightServiceRole
+
+  AthenaDataCollectionDB:
+    Condition: DeployDataCollectionComponents
+    Type: AWS::Glue::Database
+    Properties:
+      CatalogId: !Sub '${AWS::AccountId}'
+      DatabaseInput:
+        Name: !Ref HeidiDataCollectionDB
+        Description: "Heidi Data Collection Athena DB"
+
+# Create an AWS QuickSight DataSource for DataCollection
+  HeidiQSDataSource:
+    Condition: DeployDataCollectionComponents
+    Type: AWS::QuickSight::DataSource
+    Properties:
+      DataSourceId: !Sub "${ResourcePrefix}DataSource-${AWS::AccountId}"
+      AwsAccountId: !Sub ${AWS::AccountId}
+      Name: !Sub "${ResourcePrefix}DataSource-${AWS::AccountId}"
+      Type: ATHENA
+      DataSourceParameters:
+        AthenaParameters:
+          WorkGroup: primary
+      SslProperties:
+        DisableSsl: false
+
+# Common Account Mapping Table
+  GlueTableAccountMap:
+    Condition: DeployDataCollectionComponents
+    Type: AWS::Glue::Table
+    Properties:
+      DatabaseName: !Ref AthenaDataCollectionDB
+      CatalogId: !Sub '${AWS::AccountId}'
+      TableInput:
+        Name: accountsinfo
+        Description: AWS Health Event Account Data
+        Parameters:
+          skip.header.line.count: '1'
+        TableType: EXTERNAL_TABLE
+        StorageDescriptor:
+          Columns:
+            - { Name: accountid, Type: string }
+            - { Name: arn, Type: string }
+            - { Name: email, Type: string }
+            - { Name: name, Type: string }
+            - { Name: status, Type: string }
+            - { Name: joinedmethod, Type: string }
+            - { Name: joinedtimestamp, Type: string }
+            - { Name: Tag, Type: string }
+          Location: !Sub 's3://${DataCollectionBucket}/DataCollection-metadata/ReferenceOds/AccountsInfo'
+          InputFormat: org.apache.hadoop.mapred.TextInputFormat
+          OutputFormat: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+          SerdeInfo:
+            SerializationLibrary: org.apache.hadoop.hive.serde2.OpenCSVSerde
+            Parameters:
+              separatorChar: ","
+              quoteChar: "\""
+              escapeChar: "\\"
+              columns: "accountid,arn,email,name,status,joinedmethod,joinedtimestamp"
+        PartitionKeys: []
