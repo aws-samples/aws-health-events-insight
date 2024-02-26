@@ -46,9 +46,20 @@ Parameters:
     AllowedValues:
       - "yes"
       - "no"
+  Enabletaginfo:
+    Type: String
+    Description: "Optional: Enable Tag enrichment to pull tagging info from resource explorer API"
+    Default: "no"
+    AllowedValues:
+      - "yes"
+      - "no"
+  ResourceExplorerViewArn:
+    Type: String
+    Default: "na"
+    Description: If Enabletaginfo, Resource Explorer View Arn is required.
   EnableNotificationModule:
     Type: String
-    Description: "Optional: Event URL are for easy read. Enabling this would create DynamoDB, APIGW and Lambda"
+    Description: "Optional: This required preauth with chatbot and slack/teams as prereq."
     Default: "no"
     AllowedValues:
       - "yes"
@@ -78,17 +89,17 @@ Conditions:
   EnableHealthModule: !Equals [ !Ref EnableHealthModule, "yes"]
   EnableHealthEventUrl: !Equals [ !Ref EnableHealthEventUrl, "yes"]
   EnableNotificationModule: !Equals [ !Ref EnableNotificationModule, "yes"]
+  Enabletaginfo: !Equals [ !Ref Enabletaginfo, "yes"]
   DeployHealthEventUrl: !And 
     - !Condition EnableHealthModule
     - !Condition EnableHealthEventUrl
-  DeployCollectionComponents: !Or
+  DeploytaginfoSetup: !And
     - !Condition EnableHealthModule
-    - !Condition EnableNotificationModule
+    - !Condition Enabletaginfo
 
 Resources:
   DataCollectionModule:
     Type: AWS::CloudFormation::Stack
-    Condition: DeployCollectionComponents
     Properties:
       TemplateURL: !Sub https://${DataCollectionBucket}.s3.amazonaws.com/DataCollection-metadata/DataCollectionModule/DataCollectionModule.yaml
       Parameters:
@@ -150,6 +161,17 @@ Resources:
         DataCollectionAccountID: !Sub ${AWS::AccountId}
         DataCollectionRegion: !Sub ${AWS::Region}
         ResourcePrefix: !Ref ResourcePrefix
+
+  HealthModuleTaginfoSetuo:
+    Type: AWS::CloudFormation::Stack
+    Condition: DeploytaginfoSetup
+    Properties:
+      TemplateURL: !Sub https://${DataCollectionBucket}.s3.amazonaws.com/DataCollection-metadata/HealthModule/HealthModuleTaginfoSetup.yaml
+      Parameters:
+        DataCollectionAccountID: !Sub ${AWS::AccountId}
+        DataCollectionRegion: !Sub ${AWS::Region}
+        ResourcePrefix: !Ref ResourcePrefix
+        ResourceExplorerViewArn: !Ref ResourceExplorerViewArn
 
   HealthModuleQSAnalysis:
     Type: AWS::CloudFormation::Stack

@@ -22,8 +22,16 @@ def get_account_id():
 #Get current AWS Organization ID
 def get_organization_details():
     # Get the ID of the AWS organization for event bus
+    AdditionalOrgs = ''
     org_client = boto3.client('organizations')
-    POrgID = org_client.describe_organization()['Organization']['Id']
+    OrgID = org_client.describe_organization()['Organization']['Id']
+    AdditionalOrgsRequired = ask_yes_no(f"You will get events from OrganizationId {OrgID}. Do you want to add additional Payers/Organization Ids")
+    if AdditionalOrgsRequired:
+        AdditionalOrgs = input(f"Enter organizations IDs with comma seperated: ")
+        POrgID = f"{OrgID},{AdditionalOrgs}"
+    else:
+        POrgID = OrgID
+    print(f"OrgID included {POrgID}")
     return POrgID
 
 #Create or update user with bucket KMS
@@ -168,7 +176,6 @@ def get_user_input():
     AWSOrganizationID = get_organization_details()
     DataCollectionBucket, DataCollectionBucketKmsArn = create_or_get_s3_bucket(account_id, region)
 
-    MultiAccountRoleName = input("Enter MultiAccountRoleName, Hit enter to use default (MultiAccountRole): ") or "MultiAccountRole"
     ResourcePrefix = input("Enter ResourcePrefix, Hit enter to use default (Heidi-): ") or "Heidi-"
     print_boxed_text("Module Selection")
     EnableHealthModule = ask_yes_no("Do you want to enable the AWS Health Module(HEIDI)?")
@@ -192,7 +199,7 @@ def get_user_input():
             TeamsTenantId = input("    Provide TeamsTenantId: ") or "na"
             TeamsChannelId = input("    Provide TeamsChannelId: ") or "na"
     print()
-    TestSetupViaSupportCase = ask_yes_no("Test end to end setup with Mock Health Event(via support case)?")
+    TestSetupViaSupportCase = ask_yes_no("Do you want to test end to end setup with Mock Health Event(via support case)?")
     if TestSetupViaSupportCase:
         SendMockEvent()
 
@@ -201,8 +208,7 @@ def get_user_input():
         "yes" if EnableNotificationModule else "no",
         region, account_id, AWSOrganizationID,
         DataCollectionBucket, DataCollectionBucketKmsArn, QuickSightAnalysisAuthor,
-        AthenaResultBucket, AthenaBucketKmsArn, QuicksightServiceRole,
-        MultiAccountRoleName, ResourcePrefix, 
+        AthenaResultBucket, AthenaBucketKmsArn, QuicksightServiceRole,ResourcePrefix, 
         SlackChannelId, SlackWorkspaceId, TeamId, TeamsTenantId, TeamsChannelId, qsregion
     )
 
@@ -219,13 +225,12 @@ def save_variables_to_file(variables): #last variable is variables[20], incremen
         f"#Update here if Athena result bucket is not default\nAthenaResultBucket: {variables[8]}\n",
         f"#Update here Athena bucket is encrypted with KMS otherwise na\nAthenaBucketKmsArn: {variables[9]}\n",
         f"#Update here if QuicksightServiceRole is not default\nQuicksightServiceRole: {variables[10]}\n",
-        f"#MultiAccount Rolename, DO NOT CHANGE\nMultiAccountRoleName: {variables[11]}\n",
-        f"#Resource prefix, DO NOT CHANGE\nResourcePrefix: {variables[12]}\n",
-        f"#If EnableNotificationModule, Provide SlackChannelId for slack\nSlackChannelId: {variables[13]}\n",
-        f"#If EnableNotificationModule, Provide SlackWorkspaceId for slack\nSlackWorkspaceId: {variables[14]}\n",
-        f"#If EnableNotificationModule, Provide TeamId for MS Teams\nTeamId: {variables[15]}\n",
-        f"#If EnableNotificationModule, Provide TeamsTenantId for MS Teams\nTeamsTenantId: {variables[16]}\n",
-        f"#If EnableNotificationModule, Provide TeamsChannelId for MS Teams\nTeamsChannelId: {variables[17]}\n"
+        f"#Resource prefix, DO NOT CHANGE\nResourcePrefix: {variables[11]}\n",
+        f"#If EnableNotificationModule, Provide SlackChannelId for slack\nSlackChannelId: {variables[12]}\n",
+        f"#If EnableNotificationModule, Provide SlackWorkspaceId for slack\nSlackWorkspaceId: {variables[13]}\n",
+        f"#If EnableNotificationModule, Provide TeamId for MS Teams\nTeamId: {variables[14]}\n",
+        f"#If EnableNotificationModule, Provide TeamsTenantId for MS Teams\nTeamsTenantId: {variables[15]}\n",
+        f"#If EnableNotificationModule, Provide TeamsChannelId for MS Teams\nTeamsChannelId: {variables[16]}\n"
     ])
     save_output_to_file(output)
 
@@ -259,7 +264,6 @@ def read_parameters(file_path):
     athena_result_bucket = parameters.get('AthenaResultBucket', 'aws-athena-query-results-*')
     athena_bucket_kms_arn = parameters.get('AthenaBucketKmsArn', 'na')
     quicksight_service_role = parameters.get('QuicksightServiceRole', 'aws-quicksight-service-role-v0')
-    multi_account_role_name = parameters.get('MultiAccountRoleName', '')
     resource_prefix = parameters.get('ResourcePrefix', '')
     slack_channel_id = parameters.get('SlackChannelId', '')
     Slack_Workspace_Id = parameters.get('SlackWorkspaceId', '')
@@ -280,7 +284,6 @@ def read_parameters(file_path):
         'AthenaResultBucket': athena_result_bucket,
         'AthenaBucketKmsArn': athena_bucket_kms_arn,
         'QuicksightServiceRole': quicksight_service_role,
-        'MultiAccountRoleName': multi_account_role_name,
         'ResourcePrefix': resource_prefix,
         'SlackChannelId': slack_channel_id,
         'SlackWorkspaceId': Slack_Workspace_Id,
@@ -323,7 +326,6 @@ def setup():
                 f"AthenaBucketKmsArn={parameters_dict['AthenaBucketKmsArn']} " \
                 f"QuicksightServiceRole={parameters_dict['QuicksightServiceRole']} " \
                 f"QuickSightAnalysisAuthor={parameters_dict['QuickSightAnalysisAuthor']} " \
-                f"MultiAccountRoleName={parameters_dict['MultiAccountRoleName']} " \
                 f"ResourcePrefix={parameters_dict['ResourcePrefix']} " \
                 f"SlackChannelId={parameters_dict['SlackChannelId']} " \
                 f"SlackWorkspaceId={parameters_dict['SlackWorkspaceId']} " \

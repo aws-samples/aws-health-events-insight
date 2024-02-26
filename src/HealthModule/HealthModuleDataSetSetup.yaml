@@ -101,7 +101,8 @@ Resources:
               DataSourceArn: !Ref HeidiQSDataSourceArn
               Name: !Sub "awshealthevents-${AWS::AccountId}-${AWS::Region}"
               SqlQuery: |-
-                  WITH latestRow AS (select * from (SELECT
+                  WITH latestRow AS (
+                        select * from (SELECT
                           detail.eventTypeCode,
                           source AS eventSource,
                           COALESCE(detail.affectedAccount, account) as account,
@@ -127,17 +128,25 @@ Resources:
                               WHEN (((CAST(date_parse(detail.startTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) + (7 * INTERVAL '1' DAY)) < current_timestamp) AND (detail.eventTypeCategory = 'accountNotification') AND (CAST(date_parse(detail.endTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) IS NULL)) THEN 'Archived'
                               WHEN (CAST(date_parse(detail.endTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) IS NULL) THEN 'Active'
                               ELSE 'Archived'
-                          END AS "Status",
-                        '' as entityArn,
-                        '' as entityAZ,
-                        '' as entityTagKey,
-                        '' as entityTagValue
+                          END AS "Status"
                       FROM "AwsDataCatalog"."heididatacollectiondb"."awshealthevent"
                       LEFT JOIN UNNEST(detail.affectedEntities) AS t(entities) ON TRUE)
-                      WHERE rowrank = 1)
-                  SELECT detail.*, COALESCE(accountinfo."name", detail."account") AS accountName, accountinfo.Tag as accountTag
-                  FROM latestRow detail
-                  LEFT JOIN "AwsDataCatalog"."heididatacollectiondb"."accountsinfo" accountinfo ON detail.account = accountinfo."accountid"
+                      WHERE rowrank = 1),
+                      tagInfo AS (
+                        SELECT 
+                          detail.entityarn as entityArn,
+                          '' as entityAZ,
+                          tags.entitykey as entityTagKey,
+                          tags.entityvalue as entityTagValue
+                      FROM "AwsDataCatalog"."heididatacollectiondb"."taginfo", unnest(detail.tags) as t(tags))
+                      SELECT 
+                        detail.*, 
+                        taginfo.*, 
+                        COALESCE(accountinfo."name", detail."account") AS accountName, 
+                        accountinfo.Tag as accountTag
+                      FROM latestRow detail
+                      LEFT JOIN "AwsDataCatalog"."heididatacollectiondb"."accountsinfo" accountinfo ON detail.account = accountinfo."accountid"
+                      LEFT JOIN tagInfo ON detail.affectedEntities in (taginfo.entityarn)
               Columns:
               - Name: eventTypeCode
                 Type: STRING

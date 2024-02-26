@@ -9,7 +9,8 @@ Single pane of glass for all your Health events across different accounts, regio
 - [Installation](#installation)
     - [Data Collection Account Setup](#data-collection-account-setup)
     - [Member Setup](#member-setup)
-- [Update Metadata](#update-metadata)
+- [Update Metadata](#update-metadata-optional)
+- [Backfill HealthEvents](#backfill-healthevents-optional)
 - [Setup Validation](#setup-validation)
 - [Troubleshooting](#troubleshooting)
 
@@ -53,20 +54,20 @@ The setup script provided in this repo will set up all the necessary components 
 
         git clone https://github.com/aws-samples/aws-health-events-insight.git
 
-2. Go to `aws-health-events-insight` directory and run `OneClickSetup.py` and provide account specific inputs. The setup script will generate a CloudFormation stack to deploy all necessary AWS resources, including the QuickSight dashboard.
+2. Go to `aws-health-events-insight` directory and run `OneClickSetup.py` and provide account specific inputs. The setup script will generate a CloudFormation stack to deploy all necessary AWS resources, including the QuickSight dashboard. 
 
         cd aws-health-events-insight/src/Setup
         python3 OneClickSetup.py
 
-3. Once CloudFormation status changes to **CREATE_COMPLETE** (about 10-15 minutes), go to QuickSight dashboard and verify the initial deployment. 
+3. Once CloudFormation status changes to **CREATE_COMPLETE** (about 10-15 minutes), go to QuickSight Analysis and verify the initial deployment. 
 
 ### **Member Setup**
 
-You can now receive a feed of AWS Health events on Amazon EventBridge from all accounts within your organization in AWS Organizations using organizational view and delegated administrator. With this feature, if you are deploying HEIDI in the health delegated administrator account, it will ingest AWS Health events from all other accounts. You still need to deploy member setup for other modules such as case insights and Trusted Advisor in all member accounts. 
+You can now receive a feed of AWS Health events on Amazon EventBridge from all accounts within your organization in AWS Organizations using organizational view and delegated administrator. With this feature, if you are deploying HEIDI in the health delegated administrator account, it will ingest AWS Health events from all other accounts. Amazon EventBridge is a regional service. You must still run member setup in AWS Organizations or delegated health admin account for the regions where you wish to receive events. 
 
-If you are not deploying HEIDI in the health delegated admin account, you MUST complete Member Setup for each Region and account for which you want to receive events. 
+If you have additional Payer/Organization IDs, you are also required to run member setup within the delegated health admin account for each additional Payer.
 
-#### (Option 1) One Click Setup Script
+#### (Option 1) One Click Setup Script to add Member Region
 1. Setup AWS credentials for desired Member Regions. Or, log in to your AWS console and launch **AWS CloudShell** from the Member account and region and clone aws-health-events-insight repo.
 2. Go to `aws-health-events-insight` directory and run `OneClickSetup.py` and provide necessary inputs. 
 
@@ -75,12 +76,12 @@ If you are not deploying HEIDI in the health delegated admin account, you MUST c
 
 #### (Option 2) Bulk deployment via CloudFormation StackSet
 1. In CloudFormation console, create a StackSet with new resources from the template file [HealthModuleCollectionSetup.yaml](https://github.com/aws-samples/aws-health-events-insight/blob/main/src/HealthModule/HealthModuleCollectionSetup.yaml).
-2. Input the DataCollectionBusArn. Go to the AWS CloudFormation console of Data Collection account and get this information from output of DataCollectionStack.
+2. Input variables
 3. Select deployment targets (Deploy to OU or deploy to organization).
 4. Select regions to deploy.
 5. Submit.
 
-**Note:** To receive global events, you must create Member account/region setup for the US East (N. Virginia) region and US West (Oregon) Region as the backup region if needed.
+**Note:** If you are NOT deploying HEIDI in the health delegated admin account, you MUST complete Member Setup for each Link Account and Region for which you want to receive events. To receive global events, you must create Member account/region setup for the US East (N. Virginia) region and US West (Oregon) Region as the backup region if needed.
 
 ## **Update Metadata (optional)**
 This is an optional step. You can map AWS AccountIDs with Account Name and Account Tags (AppID, Env, etc.)
@@ -102,10 +103,21 @@ Send a mock event to test setup.
 
 1. Go to EventBridge console and choose default event bus. (You can choose any member account or region) and click the **Send events** button.
 2. **Important** Put the **Event source** and **Detail type** as `heidi.health` , otherwise the rule will discard the mock event.
-3. Copy the entire content from [MockEvent.json](https://github.com/aws-samples/aws-health-events-insight/blob/main/src/MockEvent.json) and paste it in the **Event detail** field.
+3. Copy the entire content from [MockEvent.json](https://github.com/aws-samples/aws-health-events-insight/blob/main/src/HealthModule/MockHealthEvent.json) and paste it in the **Event detail** field.
 4. Click **Send**.
 
 You will see the event in Amazon S3. For the mock event to reflect in QuickSight sooner, you can refresh the QuickSight dataset manually.
+
+## **Backfill HealthEvents (optional)**
+
+**Note** By default, Heidi does not automatically backfill older health events. However, you can manually perform this task using the [HealthEventBackFill.py](https://github.com/aws-samples/aws-health-events-insight/blob/main/src/Setup/utils/HealthEventBackFill.py) script.
+
+Go to `aws-health-events-insight` directory and run `HealthEventBackFill.py` and provide necessary inputs. 
+
+        cd aws-health-events-insight/src/Setup/utils
+        python3 HealthEventBackFill.py
+
+Ensure to execute this script in the specific AWS account for which you intend to backfill the events. 
 
 ## **Troubleshooting**
 

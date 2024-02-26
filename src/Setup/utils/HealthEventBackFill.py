@@ -2,8 +2,13 @@ import boto3
 import json
 from datetime import datetime
 
+DataCollectionAccountID = input("Enter DataCollection Account ID: ")
+DataCollectionRegion = input("Enter DataCollection region: ")
+ResourcePrefix = input("Enter ResourcePrefix, Hit enter to use default (Heidi-): ") or "Heidi-"
+
 health_client = boto3.client('health', 'us-east-1')
-eventbridge_client = boto3.client('events')
+eventbridge_client = boto3.client('events',DataCollectionRegion)
+EventBusArnVal = f"arn:aws:events:{DataCollectionRegion}:{DataCollectionAccountID}:event-bus/{ResourcePrefix}DataCollectionBus-{DataCollectionAccountID}"
 
 def get_events():
     events = []
@@ -44,7 +49,7 @@ def get_event_data(event_details, event_description):
 
     return event_data
 
-def send_event_defaultBus(event_data):
+def send_event_defaultBus(event_data, EventBusArn):
     # Send the event to EventBridge
     eventbridge_client.put_events(
         Entries=[
@@ -52,28 +57,33 @@ def send_event_defaultBus(event_data):
                 'Source': 'heidi.health',
                 'DetailType': 'awshealthtest',
                 'Detail': json.dumps(event_data),
-                'EventBusName': 'default'
+                'EventBusName': EventBusArn
             }
         ]
     )
 
 def backfill():
     events = get_events()
+    EventBusArn = EventBusArnVal
     try:
         for awsevent in events:
             event_details_response = health_client.describe_event_details(eventArns=[awsevent['arn']])
             event_affected_response = health_client.describe_affected_entities(filter={'eventArns': [awsevent['arn']]})
             entities = event_affected_response['entities']
-            entity_values = ', '.join([entity['entityValue'] for entity in entities])
-            successful_set_details = event_details_response.get('successfulSet')
-            if not successful_set_details:
-                continue
+            affected_entities = []
+            for entity in entities:
+                entity_values = entity['entityValue']
+                affected_entities.append({'entityValue': entity_values})
             
-            event_details = successful_set_details[0]['event']
-            event_details['affectedEntities'] = [{'entityValue':entity_values}]
-            event_description = successful_set_details[0]['eventDescription']
+            event_details = event_details_response['successfulSet'][0]['event'] if event_details_response.get('successfulSet') else None
+            if not event_details:
+                continue
+                
+            event_details['affectedEntities'] = affected_entities
+                
+            event_description = event_details_response['successfulSet'][0]['eventDescription']
             event_data = get_event_data(event_details, event_description)
-            send_event_defaultBus(event_data)
+            send_event_defaultBus(event_data, EventBusArn)
     except Exception as e:
         print(e)
 

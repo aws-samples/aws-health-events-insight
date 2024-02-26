@@ -45,26 +45,22 @@ def get_user_input():
     print_boxed_text("Data Collection Account Parameters")
     DataCollectionAccountID = input(f"Enter Data Collection Account ID, Default {get_account_id()}: ") or get_account_id()
     DataCollectionRegion = input("Enter Data Collection Region ID: ")
-    MultiAccountRoleName = input("Enter MultiAccountRoleName, Hit enter to use default (MultiAccountRole): ") or "MultiAccountRole"
     ResourcePrefix = input("Enter ResourcePrefix, Hit enter to use default (Heidi-): ") or "Heidi-"
     return (
-        DataCollectionAccountID, DataCollectionRegion, DeploymentRegionHealth,
-        MultiAccountRoleName, ResourcePrefix
+        DataCollectionAccountID, DataCollectionRegion, DeploymentRegionHealth, ResourcePrefix
     )
 
 # setup
 def setup():
     parameters_dict = {}
-    DataCollectionAccountID, DataCollectionRegion, DeploymentRegionHealth, MultiAccountRoleName, ResourcePrefix = get_user_input()
+    DataCollectionAccountID, DataCollectionRegion, DeploymentRegionHealth, ResourcePrefix = get_user_input()
 
     parameters_dict['DataCollectionAccountID'] = DataCollectionAccountID
     parameters_dict['DataCollectionRegion'] = DataCollectionRegion
-    parameters_dict['MultiAccountRoleName'] = MultiAccountRoleName
     parameters_dict['ResourcePrefix'] = ResourcePrefix
 
     parameters = f"DataCollectionAccountID={parameters_dict['DataCollectionAccountID']} \
                 DataCollectionRegion={parameters_dict['DataCollectionRegion']} \
-                MultiAccountRoleName={parameters_dict['MultiAccountRoleName']} \
                 ResourcePrefix={parameters_dict['ResourcePrefix']}"
 
     for region in DeploymentRegionHealth.split(','):

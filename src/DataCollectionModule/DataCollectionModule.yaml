@@ -402,3 +402,74 @@ Resources:
               escapeChar: "\\"
               columns: "accountid,arn,email,name,status,joinedmethod,joinedtimestamp"
         PartitionKeys: []
+
+# Common Tag info table
+  GlueTableTaginfo:
+    # AWS Glue Table resource tag info
+      Condition: DeployDataCollectionComponents
+      Type: AWS::Glue::Table
+      Properties:
+        # Reference to the AWS Glue Database
+        DatabaseName: !Ref AthenaDataCollectionDB
+        CatalogId: !Sub '${AWS::AccountId}'
+        TableInput:
+          Name: taginfo
+          Description: 'AWS tag info data'
+          Owner: GlueTeam
+          PartitionKeys:
+            - Name: date_created
+              Type: string
+            - Name: source_partition 
+              Type: string
+          Parameters:
+            EXTERNAL: 'TRUE'  # 'EXTERNAL' should be a string
+            projection.enabled: 'true'
+            projection.date_created.type: 'date'
+            projection.date_created.format: 'yyyy/MM/dd'
+            projection.date_created.interval: '1'
+            projection.date_created.interval.unit: 'DAYS'
+            projection.date_created.range: '2021/01/01,NOW'
+            projection.source_partition.type: 'enum'
+            projection.source_partition.values: 'heidi.taginfo'
+            storage.location.template: !Join ['', ['s3://', !Ref DataCollectionBucket, '/DataCollection-data/${source_partition}/${date_created}/']]
+          StorageDescriptor:
+            # Columns and their data types for the table
+            Columns:
+              - Name: version
+                Type: string
+                Comment: 'from deserializer'
+              - Name: id
+                Type: string
+                Comment: 'from deserializer'
+              - Name: detail-type
+                Type: string
+                Comment: 'from deserializer'
+              - Name: source
+                Type: string
+                Comment: 'from deserializer'
+              - Name: account
+                Type: string
+                Comment: 'from deserializer'
+              - Name: time
+                Type: string
+                Comment: 'from deserializer'
+              - Name: region
+                Type: string
+                Comment: 'from deserializer'
+              - Name: resources
+                Type: array<string>
+                Comment: 'from deserializer'
+              - Name: detail
+                Type: struct<entityarn:string,tags:array<struct<entitykey:string,entityvalue:string>>>
+                Comment: 'from deserializer'
+            # S3 location of the data for the Athena External Table
+            Location: !Sub 's3://${DataCollectionBucket}/DataCollection-data'
+            InputFormat: 'org.apache.hadoop.mapred.TextInputFormat'
+            OutputFormat: 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat'
+            SerdeInfo:
+              SerializationLibrary: 'org.openx.data.jsonserde.JsonSerDe'
+              Parameters:
+                paths: 'account,detail,detail-type,id,region,resources,source,time,version'
+            Compressed: false
+          TableType: EXTERNAL_TABLE
+          Retention: 30

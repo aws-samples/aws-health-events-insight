@@ -1,0 +1,148 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Template to pull tagging data
+
+Parameters:
+  DataCollectionAccountID:
+    Type: String
+    Description: AccountId of where the collector is deployed
+  DataCollectionRegion:
+    Type: String
+    Description: Account Region of where the collector is deployed
+  ResourcePrefix:
+    Type: String
+    Description: This prefix will be placed in front of resources created where required. Note you may wish to add a dash at the end to make more readable
+    Default: "Heidi-"
+  ResourceExplorerViewArn:
+    Type: String
+    Description: Provide Resource Explorer View Arn 
+
+Resources:
+  HealthModuleResourceExplorerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole 
+      Policies:
+        - PolicyName: cloudwatch-logsAccess-Policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                Resource: !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:*"
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
+        - PolicyName: ResourceExplorer-Policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "resource-explorer-2:search"
+                Resource: !Ref ResourceExplorerViewArn
+        - PolicyName: Putevents-Policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "events:PutEvents"
+                Resource: !Sub "arn:${AWS::Partition}:events:${DataCollectionRegion}:${DataCollectionAccountID}:event-bus/${ResourcePrefix}DataCollectionBus-${DataCollectionAccountID}"
+
+  HealthModuleResourceExploreLambda:
+    Type: AWS::Lambda::Function
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W58
+            reason: "Given AWSLambda ExecutionRole and allows Cloudwatch"
+    Properties: 
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import os
+          import re
+
+          def lambda_handler(event, context):
+              try:
+                  # Extract the data from the event
+                  payload = event['detail']
+                  for entity in payload.get('affectedEntities', []):
+                      entity_value = entity.get('entityValue', '')
+                      if re.match(r'^arn:.*', entity_value):
+                          resource_explorer(entity_value)
+              except Exception as e:
+                  print(e)
+
+          def resource_explorer(entityValue):
+              try:
+                  resource_arn = os.environ['ResourceExplorerViewArn']
+                  region = resource_arn.split(":")[3]
+                  resource_explorer = boto3.client('resource-explorer-2',region)
+                  query_string = f"id:{entityValue}"
+                  view_arn = os.environ['ResourceExplorerViewArn']
+                  response = resource_explorer.search(QueryString=query_string, ViewArn=view_arn)
+                  tag_data = {}
+                  for resource in response.get('Resources', []):
+                      arn = resource.get('Arn')
+                      tags = [{'entityKey': item['Key'], 'entityValue': item['Value']} for prop in resource.get('Properties', []) for item in prop.get('Data', [])]
+                      tag_data = {'entityArn': arn, 'tags': tags}
+                      send_event(tag_data) if tags else print("No resources found")
+              except Exception as e:
+                  print(e)
+
+          def send_event(tag_data):
+              try:
+                  eventbridge_client = boto3.client('events')
+                  response = eventbridge_client.put_events(
+                      Entries=[{
+                          'Source': 'heidi.taginfo',
+                          'DetailType': 'Heidi tags from resource explorer',
+                          'Detail': json.dumps(tag_data),
+                          'EventBusName': os.environ['EventBusName']
+                      }]
+                  )
+                  print(response)
+              except Exception as e:
+                  print(response)
+      Handler: index.lambda_handler
+      Runtime: python3.11
+      Timeout: 900
+      ReservedConcurrentExecutions: 5
+      Role: !GetAtt HealthModuleResourceExplorerRole.Arn
+      Environment:
+        Variables:
+          ResourceExplorerViewArn: !Ref ResourceExplorerViewArn
+          EventBusName: !Sub "${ResourcePrefix}DataCollectionBus-${DataCollectionAccountID}"
+
+  HealthModuleResourceExploreRule:
+    Type: "AWS::Events::Rule"
+    Properties:
+      Description: "Event Health bus rule for aws.health events"
+      EventBusName: !Sub ${ResourcePrefix}DataCollectionBus-${DataCollectionAccountID}
+      EventPattern:
+        source:
+          - "heidi.health"
+          - "aws.health"
+      Targets:
+        - Arn: !GetAtt HealthModuleResourceExploreLambda.Arn
+          Id: "LambaasTarget"
+
+  HealthModuleResourceExploreLambdaPermissions:
+    Type: "AWS::Lambda::Permission"
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt HealthModuleResourceExploreLambda.Arn
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt HealthModuleResourceExploreRule.Arn

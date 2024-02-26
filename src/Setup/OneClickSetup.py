@@ -1,3 +1,5 @@
+import sys
+sys.dont_write_bytecode = True
 from utils import DataCollectionSetup
 from utils import MemberSetup
 
