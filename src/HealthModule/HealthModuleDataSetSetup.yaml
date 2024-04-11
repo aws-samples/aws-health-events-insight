@@ -73,7 +73,7 @@ Resources:
               Type: array<string>
               Comment: 'from deserializer'
             - Name: detail
-              Type: struct<eventarn:string,affectedAccount:string,service:string,eventscopecode:string,communicationid:string,lastupdatedtime:string,eventregion:string,eventtypecode:string,eventtypecategory:string,starttime:string,endtime:string,eventdescription:array<struct<language:string,latestdescription:string>>,affectedentities:array<struct<entityvalue:string,statusCode:string,entityarn:string,entityaz:string,entitytags:array<struct<value:string,key:string>>>>>
+              Type: struct<eventarn:string,affectedAccount:string,service:string,eventscopecode:string,communicationid:string,lastupdatedtime:string,eventregion:string,eventtypecode:string,eventtypecategory:string,starttime:string,endtime:string,eventdescription:array<struct<language:string,latestdescription:string>>,affectedentities:array<struct<entityvalue:string,status:string,entityarn:string,entityaz:string,entitytags:array<struct<value:string,key:string>>>>>
               Comment: 'from deserializer'
           # S3 location of the data for the Athena External Table
           Location: !Sub 's3://${DataCollectionBucket}/DataCollection-data'
@@ -101,21 +101,24 @@ Resources:
               DataSourceArn: !Ref HeidiQSDataSourceArn
               Name: !Sub "awshealthevents-${AWS::AccountId}-${AWS::Region}"
               SqlQuery: |-
-                  WITH latestRow AS (
+                      WITH latestRow AS (
                         select * from (SELECT
                           detail.eventTypeCode,
                           source AS eventSource,
                           COALESCE(detail.affectedAccount, account) as account,
                           detail.service,
                           detail.eventScopeCode,
-                          detail.eventTypeCategory,
+                          CASE 
+                              WHEN ((detail.eventTypeCategory = 'scheduledChange') AND (detail.eventArn like '%PLANNED_LIFECYCLE_EVENT%')) THEN 'PlannedLifeCycle'
+                              ELSE detail.eventTypeCategory
+                          END AS "eventTypeCategory",
                           detail.eventArn,
                           detail.communicationid,
                           detail.eventRegion,
                           entities.entityValue AS affectedEntities,
-                          entities.statusCode As affectedEntityStatus,
+                          entities.status As affectedEntityStatus,
                           detail.eventdescription[1].latestdescription AS eventDescription,
-                          rank() OVER (PARTITION BY detail.eventarn,account ORDER BY detail.lastUpdatedTime DESC) AS rowrank,
+                          rank() OVER (PARTITION BY detail.eventArn,account ORDER BY detail.lastUpdatedTime DESC) AS rowrank,
                           array_join(resources, ', ') AS resources,
                           CAST(from_iso8601_timestamp("time") AS timestamp) AS ingestionTime,
                           CAST(date_parse(detail.endTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) AS endTime,
@@ -123,12 +126,18 @@ Resources:
                           CAST(date_parse(detail.lastUpdatedTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) AS lastUpdatedTime,
                           CAST(DATE_DIFF('HOUR', CAST(date_parse(detail.startTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp), CAST(date_parse(detail.endTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp)) AS BIGINT) AS eventDuration,
                           CASE
-                              WHEN (CAST(date_parse(detail.endTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) > current_timestamp) THEN 'Upcoming'
-                              WHEN ((CAST(date_parse(detail.endTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) IS NULL) AND (detail.eventTypeCategory = 'scheduledChange')) THEN 'Upcoming'
+                              WHEN (CAST(date_parse(detail.endTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) > current_timestamp) THEN 'scheduledChange'
+                              WHEN ((CAST(date_parse(detail.endTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) IS NULL) AND (detail.eventTypeCategory = 'scheduledChange') AND (detail.eventArn not like '%PLANNED_LIFECYCLE_EVENT%')) THEN 'scheduledChange'
+                              WHEN ((CAST(date_parse(detail.endTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) IS NULL) AND (detail.eventTypeCategory = 'scheduledChange') AND (entities.status like '%RESOLVED%')) THEN 'Archived'
+                              WHEN ((CAST(date_parse(detail.endTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) IS NULL) AND (detail.eventTypeCategory = 'scheduledChange') AND (detail.eventArn like '%PLANNED_LIFECYCLE_EVENT%')) THEN 'PlannedLifeCycle'
                               WHEN (((CAST(date_parse(detail.startTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) + (7 * INTERVAL '1' DAY)) < current_timestamp) AND (detail.eventTypeCategory = 'accountNotification') AND (CAST(date_parse(detail.endTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) IS NULL)) THEN 'Archived'
                               WHEN (CAST(date_parse(detail.endTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) IS NULL) THEN 'Active'
                               ELSE 'Archived'
-                          END AS "Status"
+                          END AS "Status",
+                          CASE
+                              WHEN (detail.eventArn like '%PLANNED_LIFECYCLE_EVENT%') THEN 'Y'
+                              ELSE 'N'
+                          END AS "plannedLifeCycleEvent"
                       FROM "AwsDataCatalog"."heididatacollectiondb"."awshealthevent"
                       LEFT JOIN UNNEST(detail.affectedEntities) AS t(entities) ON TRUE)
                       WHERE rowrank = 1),
@@ -200,6 +209,8 @@ Resources:
                 Type: STRING
               - Name: entityTagValue
                 Type: STRING
+              - Name: plannedLifeCycleEvent
+                Type: STRING
         LogicalTableMap:
           AWSHealthQSLT:
             Alias: !Sub "awshealthevents-${AWS::AccountId}-${AWS::Region}"
@@ -232,6 +243,7 @@ Resources:
                 - entityAZ
                 - entityTagKey
                 - entityTagValue
+                - plannedLifeCycleEvent
             Source:
               PhysicalTableId: AWSHealthQSPT
         Permissions:
