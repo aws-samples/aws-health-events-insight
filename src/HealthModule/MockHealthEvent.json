@@ -35,7 +35,7 @@ Send a mock event to test slack/teams integration. Go to sns and publish followi
 Send a mock event to test Control Account setup
 
 {
-   "eventArn":"arn:aws:health:us-west-2::event/EC2/AWS_EC2_MAINTENANCE_SCHEDULED/AWS_EC2_MAINTENANCE_SCHEDULED_1693278720289",
+   "eventArn":"arn:aws:health:us-west-2::event/EC2/PLANNED_LIFECYCLE_EVENT/AWS_EC2_MAINTENANCE_SCHEDULED_1693278720289",
    "service":"EC2",
    "eventScopeCode":"ACCOUNT_SPECIFIC",
    "communicationId":"32157c62a5a64a33ec5445c5c77f941128b345fa1fe98bbd8ffd7a4a708323bf",
@@ -43,9 +43,8 @@ Send a mock event to test Control Account setup
    "statusCode":"upcoming",
    "eventRegion":"us-west-2",
    "eventTypeCode":"AWS_EC2_MAINTENANCE_SCHEDULED",
-   "eventTypeCategory":"accountnotification",
+   "eventTypeCategory":"scheduledChange",
    "startTime":"Tue, 29 Aug 2023 03:30:00 GMT",
-   "endTime":"Tue, 29 Aug 2023 04:30:00 GMT",
    "eventDescription":[
       {
          "language":"en_US",
@@ -53,9 +52,9 @@ Send a mock event to test Control Account setup
       }
    ],
    "affectedEntities":[
-      {"entityValue":"arn:ec2-1-101002929","lastupdatedTime": "Thu, 26 Jan 2023 19:01:55 GMT", "statusCode": "completed","tags":{}},
-      {"entityValue":"arn:ec2-1-101002930","lastupdatedTime": "Thu, 26 Jan 2023 19:05:12 GMT", "statusCode": "completed","tags":{}},
-      {"entityValue":"arn:ec2-1-101002931","lastupdatedTime": "Thu, 26 Jan 2023 19:07:13 GMT", "statusCode": "completed","tags":{}},
-      {"entityValue":"arn:ec2-1-101002932","lastupdatedTime": "Thu, 26 Jan 2023 19:10:59 GMT", "statusCode": "completed","tags":{}}
+      {"entityValue":"arn:ec2-1-101002929","lastupdatedTime": "Thu, 26 Jan 2023 19:01:55 GMT", "status": "PENDING","tags":{}},
+      {"entityValue":"arn:ec2-1-101002930","lastupdatedTime": "Thu, 26 Jan 2023 19:05:12 GMT", "status": "RESOLVED","tags":{}},
+      {"entityValue":"arn:ec2-1-101002931","lastupdatedTime": "Thu, 26 Jan 2023 19:07:13 GMT", "status": "UPCOMING","tags":{}},
+      {"entityValue":"arn:ec2-1-101002932","lastupdatedTime": "Thu, 26 Jan 2023 19:10:59 GMT", "status": "RESOLVED","tags":{}}
       ]
 }

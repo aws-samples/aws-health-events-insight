@@ -73,7 +73,8 @@ def backfill():
             affected_entities = []
             for entity in entities:
                 entity_values = entity['entityValue']
-                affected_entities.append({'entityValue': entity_values})
+                status_code = entity.get('statusCode', 'UNKNOWN')
+                affected_entities.append({'entityValue': entity_values, 'status': status_code})
             
             event_details = event_details_response['successfulSet'][0]['event'] if event_details_response.get('successfulSet') else None
             if not event_details:
