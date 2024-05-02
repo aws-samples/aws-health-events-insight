@@ -117,7 +117,8 @@ Resources:
                           detail.eventRegion,
                           entities.entityValue AS affectedEntities,
                           entities.status As affectedEntityStatus,
-                          detail.eventdescription[1].latestdescription AS eventDescription,
+                          SUBSTRING(detail.eventdescription[1].latestdescription, 1, 2000) AS eventDescription1,
+                          SUBSTRING(detail.eventdescription[1].latestdescription, 2001) AS eventDescription2,
                           rank() OVER (PARTITION BY detail.eventArn,account ORDER BY detail.lastUpdatedTime DESC) AS rowrank,
                           array_join(resources, ', ') AS resources,
                           CAST(from_iso8601_timestamp("time") AS timestamp) AS ingestionTime,
@@ -175,7 +176,9 @@ Resources:
                 Type: STRING
               - Name: communicationid
                 Type: STRING
-              - Name: eventDescription
+              - Name: eventDescription1
+                Type: STRING
+              - Name: eventDescription2
                 Type: STRING
               - Name: resources
                 Type: STRING
@@ -226,7 +229,8 @@ Resources:
                 - eventTypeCategory
                 - eventArn
                 - communicationid
-                - eventDescription
+                - eventDescription1
+                - eventDescription2
                 - resources
                 - ingestionTime
                 - endTime
