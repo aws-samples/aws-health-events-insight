@@ -63,13 +63,15 @@ The setup script provided in this repo will set up all the necessary components 
 
 ### **Member Setup**
 
+**Note:** If you are deploying HEIDI in the health delegated admin account, You dont need to run member setup in any other link account within the organization. 
+
 You can now receive a feed of AWS Health events on Amazon EventBridge from all accounts within your organization in AWS Organizations using organizational view and delegated administrator. With this feature, if you are deploying HEIDI in the health delegated administrator account, it will ingest AWS Health events from all other accounts. Amazon EventBridge is a regional service. You must still run member setup in AWS Organizations or delegated health admin account for the regions where you wish to receive events. 
 
-If you have additional Payer/Organization IDs, you are also required to run member setup within the delegated health admin account for each additional Payer.
+If you have additional Payer/Organization IDs, you are also required to run member setup within the delegated health admin account for each additional Payer. 
 
 #### (Option 1) One Click Setup Script to add Member Region
-1. Setup AWS credentials for desired Member Regions. Or, log in to your AWS console and launch **AWS CloudShell** from the Member account and region and clone aws-health-events-insight repo.
-2. Go to `aws-health-events-insight` directory and run `OneClickSetup.py` and provide necessary inputs. 
+1. Setup AWS credentials for DataCollection Account. Or, log in to your AWS console and launch **AWS CloudShell**.
+2. Go to `aws-health-events-insight` directory and run `OneClickSetup.py` and select `Member Setup` provide necessary inputs. 
 
         cd aws-health-events-insight/src/Setup
         python3 OneClickSetup.py
@@ -119,6 +121,19 @@ Go to `aws-health-events-insight` directory and run `HealthEventBackFill.py` and
 
 Ensure to execute this script in the specific AWS account for which you intend to backfill the events. 
 
+## **FAQ**
+
+**Q: Does HEIDI support multiple payer/AWS organizations?**\
+**A:** Yes, HEIDI allows you to include additional organizational IDs during deployment.
+
+**Q: Is member setup required in all linked accounts?**\
+**A:** No, if the data collection deployment is in the delegated health admin account, member setup is NOT required in all linked accounts. See Member Setup for more details.
+
+**Q: What is the cost of the Heidi solution?**\
+**A:** The cost varies depending on the number of notifications. For up to 1 million notifications per month, it's approximately $30 including QuickSight licencing cost. For more details see [calculations](https://calculator.aws/#/estimate?id=a5243df5c6b91c413a8b535d292e480f34bdb030).
+
+
+
 ## **Troubleshooting**
 
 #### ***1. SYNTAX_ERROR: line 41:15: UNNEST on other than the right side of CROSS JOIN is not supported***
@@ -129,15 +144,15 @@ This implies that you are using Athena V2. Please upgrade worker to Athena V3. A
 
 `AWS::QuickSight::RefreshSchedule` does not exist in certain regions such as us-west-1, ca-central-1 etc. You can comment out `AWSHealthEventQSDataSetRefresh` section in [AWSHealthEventQSDataSet.yaml](https://github.com/aws-samples/aws-health-events-insight/blob/main/src/HealthModule/HealthModuleDataSetSetup.yaml) and setup refresh schedule from QuickSight console. 
 
-#### ***3. Resource handler returned message: Insufficient permissions to execute the query. Insufficient Lake Formation permission(s) on awshealthevent***
+#### ***3. Resource handler returned message: Insufficient permissions to execute the query. Insufficient Lake Formation permission(s) on heididatacollectiondb***
 
-In case Lakeformation is enabled, both the QuickSight Analysis author and the QuickSight Service Role need to provide access permissions for the awshealthdb database and all associated tables.
+In case Lakeformation is enabled, both the QuickSight Analysis author and the QuickSight Service Role need to provide access permissions for the heididatacollectiondb database and all associated tables.
 
 1. Navigate to Lakeformation and go to the "Permissions" tab.
 2. Under "Data Lake Permissions," select "Grant."
 3.  Choose "SAML users and groups."
 4. **Important:** Provide the QuickSight ARN. This ARN represents the role that owns (or authors) the dataset.
-5. From the dropdown menu, select the "awshealthdb" database and grant the necessary permission.
+5. From the dropdown menu, select the "heididatacollectiondb" database and grant the necessary permission.
 6. Repeat the previous step (Step 5), but this time, select all tables and grant the required permission.
 Repeat same process for QuickSight Service Role.
 
@@ -153,3 +168,4 @@ Repeat same process for QuickSight Service Role.
 
 
 [![GitHub Clones](https://img.shields.io/badge/dynamic/json?color=success&label=Clone&query=count&url=https://gist.githubusercontent.com/bajwkanw/24109c8c210fc89367f044d83d07c1bc/raw/clone.json&logo=github)](https://github.com/aws-samples/aws-health-events-insight)
+
