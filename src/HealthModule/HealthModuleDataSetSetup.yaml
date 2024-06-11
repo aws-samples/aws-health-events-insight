@@ -119,7 +119,7 @@ Resources:
                           entities.status As affectedEntityStatus,
                           SUBSTRING(detail.eventdescription[1].latestdescription, 1, 2000) AS eventDescription1,
                           SUBSTRING(detail.eventdescription[1].latestdescription, 2001) AS eventDescription2,
-                          rank() OVER (PARTITION BY detail.eventArn,account ORDER BY detail.lastUpdatedTime DESC) AS rowrank,
+                          rank() OVER (PARTITION BY detail.eventArn, COALESCE(detail.affectedAccount, account) ORDER BY CAST(date_parse(detail.lastUpdatedTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) DESC) AS rowrank,
                           array_join(resources, ', ') AS resources,
                           CAST(from_iso8601_timestamp("time") AS timestamp) AS ingestionTime,
                           CAST(date_parse(detail.endTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) AS endTime,
