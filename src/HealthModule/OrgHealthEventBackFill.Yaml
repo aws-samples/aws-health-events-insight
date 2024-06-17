@@ -1,0 +1,190 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: SupportCase Module Data Collection Setup
+
+Parameters:
+  DataCollectionAccountID:
+    Type: String
+    Description: AccountId of where the collector is deployed
+  DataCollectionRegion:
+    Type: String
+    Description: Account Region of where the collector is deployed
+  ResourcePrefix:
+    Type: String
+    Description: This prefix will be placed in front of resources created where required. Note you may wish to add a dash at the end to make more readable
+    Default: "Heidi-"
+
+#This is one time execution of lamnda to backfill the events
+Resources:
+  LambdaBackfillEventsRole:
+    Type: AWS::IAM::Role
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W11
+            reason: "Health API required Resource *"
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Path: /
+      Policies:
+        - PolicyName: Healthapiaccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - health:DescribeEvents
+                  - health:DescribeEventDetails
+                  - health:DescribeAffectedEntities
+                Resource: "*"
+        - PolicyName: PutEventtoDataCollectionBus-access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "events:PutEvents"
+                Resource: !Sub "arn:${AWS::Partition}:events:${DataCollectionRegion}:${DataCollectionAccountID}:event-bus/${ResourcePrefix}DataCollectionBus-${DataCollectionAccountID}"
+                
+  LambdaBackfillEvents: 
+    Type: AWS::Lambda::Function
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W58
+            reason: "Given AWSLambdaBasicExecutionRole and allows Cloudwatch"
+    Properties:
+      Code:
+          ZipFile: |
+            import boto3
+            import json
+            import os
+            from datetime import datetime
+
+            # Initialize clients outside the handler to take advantage of connection reuse
+            health_client = boto3.client('health', 'us-east-1')
+            eventbridge_client = boto3.client('events')
+            EventBusArnVal = os.environ['EventBusArnVal']
+
+            def get_events():
+                events = []
+                next_token = None
+                try:
+                    while True:
+                        kwargs = {}
+                        if next_token:
+                            kwargs['nextToken'] = next_token
+                        events_response = health_client.describe_events(filter={}, **kwargs)
+                        events += events_response['events']
+                        next_token = events_response.get('nextToken')
+                        if not next_token:
+                            break
+                    return events
+                except Exception as e:
+                    print(f"Error fetching events: {e}")
+                    return []
+
+            def get_event_data(event_details, event_description):
+                event_data = {
+                    'eventArn': event_details['arn'],
+                    'eventRegion': event_details.get('region', ''),
+                    'eventTypeCode': event_details.get('eventTypeCode', ''),
+                    'startTime': event_details['startTime'].strftime('%a, %d %b %Y %H:%M:%S GMT'),
+                    'eventDescription': [{'latestDescription': event_description['latestDescription']}]
+                }
+                if 'endTime' in event_details:
+                    event_data['endTime'] = event_details['endTime'].strftime('%a, %d %b %Y %H:%M:%S GMT')
+                if 'lastUpdatedTime' in event_details:
+                    event_data['lastUpdatedTime'] = event_details['lastUpdatedTime'].strftime('%a, %d %b %Y %H:%M:%S GMT')
+
+                event_data.update((key, value) for key, value in event_details.items() if key not in event_data)
+
+                return event_data
+
+            def send_event_default_bus(event_data, event_bus_arn):
+                try:
+                    eventbridge_client.put_events(
+                        Entries=[
+                            {
+                                'Source': 'heidi.health',
+                                'DetailType': 'awshealthtest',
+                                'Detail': json.dumps(event_data),
+                                'EventBusName': event_bus_arn
+                            }
+                        ]
+                    )
+                except Exception as e:
+                    print(f"Error sending event to EventBridge: {e}")
+
+            def backfill():
+                events = get_events()
+                for awsevent in events:
+                    try:
+                        event_details_response = health_client.describe_event_details(eventArns=[awsevent['arn']])
+                        event_affected_response = health_client.describe_affected_entities(filter={'eventArns': [awsevent['arn']]})
+                        entities = event_affected_response['entities']
+                        affected_entities = [{'entityValue': entity['entityValue'], 'status': entity.get('statusCode', 'UNKNOWN')} for entity in entities]
+
+                        event_details = event_details_response['successfulSet'][0]['event'] if event_details_response.get('successfulSet') else None
+                        if not event_details:
+                            continue
+
+                        event_details['affectedEntities'] = affected_entities
+                        event_description = event_details_response['successfulSet'][0]['eventDescription']
+                        event_data = get_event_data(event_details, event_description)
+                        send_event_default_bus(event_data, EventBusArnVal)
+                    except Exception as e:
+                        print(f"Error processing event {awsevent['arn']}: {e}")
+
+            def lambda_handler(event, context):
+                backfill()
+                return {
+                    'statusCode': 200,
+                    'body': json.dumps('Backfill process completed successfully')
+                }
+
+      Handler: index.lambda_handler
+      Runtime: python3.10
+      ReservedConcurrentExecutions: 5
+      Timeout: 900
+      Role: !GetAtt LambdaBackfillEventsRole.Arn
+      Environment:
+        Variables:
+          EventBusArnVal: !Sub "arn:${AWS::Partition}:events:${DataCollectionRegion}:${DataCollectionAccountID}:event-bus/${ResourcePrefix}DataCollectionBus-${DataCollectionAccountID}"
+
+# Permissioned for EB to trigger Heidi Backfill lambda.
+  HeidiBackfillLambdaPermissions:
+    Type: "AWS::Lambda::Permission"
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt LambdaBackfillEvents.Arn
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt EventToTriggerBackfillLambda.Arn
+
+# Trigger Lambda when its created successfully.
+  EventToTriggerBackfillLambda:
+    Type: "AWS::Events::Rule"
+    Properties:
+      Description: "EventBridge default rule to trigger Heidi backfill Lambda"
+      EventBusName: default
+      EventPattern:
+        source:
+          - "aws.cloudformation"
+        detail:
+          logical-resource-id:
+            - HeidiBackfillLambdaPermissions
+          status-details:
+            status:
+              - CREATE_COMPLETE
+      Targets:
+        - Arn: !GetAtt LambdaBackfillEvents.Arn
+          Id: EventToTriggerBackfillLambda

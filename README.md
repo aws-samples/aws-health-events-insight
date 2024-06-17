@@ -112,7 +112,9 @@ You will see the event in Amazon S3. For the mock event to reflect in QuickSight
 
 ## **Backfill HealthEvents (optional)**
 
-**Note** By default, Heidi does not automatically backfill older health events. However, you can manually perform this task using the [HealthEventBackFill.py](https://github.com/aws-samples/aws-health-events-insight/blob/main/src/Setup/utils/HealthEventBackFill.py) script.
+**Option 1: Manual backfill for individual Account** 
+
+By default, Heidi does not automatically backfill older health events. However, you can manually perform this task using the [HealthEventBackFill.py](https://github.com/aws-samples/aws-health-events-insight/blob/main/src/Setup/utils/HealthEventBackFill.py) script. You need to run this Python script in each account where backfill is required.
 
 Go to `aws-health-events-insight` directory and run `HealthEventBackFill.py` and provide necessary inputs. 
 
@@ -120,6 +122,16 @@ Go to `aws-health-events-insight` directory and run `HealthEventBackFill.py` and
         python3 HealthEventBackFill.py
 
 Ensure to execute this script in the specific AWS account for which you intend to backfill the events. 
+
+**Option 2: Bulk Backfill across AWS Organization/Organizational Unit (OU)**
+
+1. In CloudFormation console, create a StackSet with new resources from the template file [OrgHealthEventBackfill.yaml](https://github.com/aws-samples/aws-health-events-insight/blob/main/src/HealthModule/OrgHealthEventBackFill.Yaml). 
+2. Input Centerlized Heidi DataCollection Account, DataCollection Region and ResourcePrefix. 
+3. Select deployment targets (Deploy to OU or deploy to organization).
+4. Select us-east-1 region to deploy.
+5. Submit.
+
+Once stacksets are deployed, It will create lambda function which will send events from individual accounts to Heidi datacollection account. You can go ahead and remove stacksets once they are deployed as this is once time activity to backfill the events.
 
 ## **FAQ**
 
