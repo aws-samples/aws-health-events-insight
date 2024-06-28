@@ -9,8 +9,9 @@ import os
 def get_default_region():
     # Get the default AWS region from the current session
     session = boto3.Session()
-    region = input(f"Enter deployment region (Hit enter to use default: {session.region_name}): ") or session.region_name
-    return region
+    region = input(f"Enter datacollection region (Hit enter to use default: {session.region_name}): ") or session.region_name
+    MemberRegionHealth = input(f"Enter member regions where you wish to receive events with comma seperated: ")
+    return region, MemberRegionHealth
 
 #Get Current Account ID
 def get_account_id():
@@ -171,7 +172,7 @@ def get_user_input():
     AthenaBucketKmsArn ="na"
     QuicksightServiceRole ="na"
 
-    region = get_default_region()
+    region, MemberRegionHealth = get_default_region()
     account_id = get_account_id()
     AWSOrganizationID = get_organization_details()
     DataCollectionBucket, DataCollectionBucketKmsArn = create_or_get_s3_bucket(account_id, region)
@@ -209,7 +210,8 @@ def get_user_input():
         region, account_id, AWSOrganizationID,
         DataCollectionBucket, DataCollectionBucketKmsArn, QuickSightAnalysisAuthor,
         AthenaResultBucket, AthenaBucketKmsArn, QuicksightServiceRole,ResourcePrefix, 
-        SlackChannelId, SlackWorkspaceId, TeamId, TeamsTenantId, TeamsChannelId, qsregion
+        SlackChannelId, SlackWorkspaceId, TeamId, TeamsTenantId, TeamsChannelId, qsregion, #qs region not required in parameter
+        MemberRegionHealth
     )
 
 def save_variables_to_file(variables): #last variable is variables[20], increment from here and also update this comment.
@@ -218,6 +220,7 @@ def save_variables_to_file(variables): #last variable is variables[20], incremen
         f"#Deploy Notification module\nEnableNotificationModule: {variables[1]}\n",
         f"#Data Collection Region\nDataCollectionRegion: {variables[2]}\n",
         f"#Data Collection Account\nDataCollectionAccountID: {variables[3]}\n",
+        f"#Member Regions \nMemberRegionHealth: {variables[18]}\n",
         f"#AWS Organization ID which can send events to Data Collection Account\nAWSOrganizationID: {variables[4]}\n",
         f"#Bucket which would collection data from various members\nDataCollectionBucket: {variables[5]}\n",
         f"#Update here if Collection bucket is encrypted with KMS otherwise na\nDataCollectionBucketKmsArn: {variables[6]}\n",
@@ -257,6 +260,7 @@ def read_parameters(file_path):
     enable_notification_module = parameters.get('EnableNotificationModule', '')
     data_collection_region = parameters.get('DataCollectionRegion', '')
     data_collection_account_id = parameters.get('DataCollectionAccountID', '')
+    MemberRegionHealth = parameters.get('MemberRegionHealth','')
     aws_organization_id = parameters.get('AWSOrganizationID', '')
     quicksight_analysis_author = parameters.get('QuickSightAnalysisAuthor', '')
     data_collection_bucket = parameters.get('DataCollectionBucket', '')
@@ -277,6 +281,7 @@ def read_parameters(file_path):
         'EnableNotificationModule': enable_notification_module,
         'DataCollectionRegion': data_collection_region,
         'DataCollectionAccountID': data_collection_account_id,
+        'MemberRegionHealth': MemberRegionHealth,
         'AWSOrganizationID': aws_organization_id,
         'QuickSightAnalysisAuthor': quicksight_analysis_author,
         'DataCollectionBucket': data_collection_bucket,
@@ -318,7 +323,7 @@ def setup():
     sync_cfnfiles(parameters_dict['DataCollectionBucket'])
 
     # Create or update the CloudFormation stack
-    stack_name = f"Heidi-{parameters_dict['DataCollectionAccountID']}-{parameters_dict['DataCollectionRegion']}"
+    stack_name = f"{parameters_dict['ResourcePrefix']}-{parameters_dict['DataCollectionAccountID']}-{parameters_dict['DataCollectionRegion']}"
 
     parameters = f"AWSOrganizationID={parameters_dict['AWSOrganizationID']} " \
                 f"DataCollectionBucket={parameters_dict['DataCollectionBucket']} " \
@@ -340,6 +345,16 @@ def setup():
     
     #Deploy Stack
     deploy_stack(command)
+
+    memberparameters = f"DataCollectionAccountID={parameters_dict['DataCollectionAccountID']} " \
+                f"DataCollectionRegion={parameters_dict['DataCollectionRegion']} " \
+                f"ResourcePrefix={parameters_dict['ResourcePrefix']} "
+    
+    for memberregion in parameters_dict['MemberRegionHealth'].split(','):
+        Member_stack_name = f"{parameters_dict['ResourcePrefix']}-HealthModule-{get_account_id()}-{memberregion}"
+        Membercommand = f"sam deploy --stack-name {Member_stack_name} --region {memberregion} --parameter-overrides {memberparameters} \
+                --template-file ../HealthModule/HealthModuleCollectionSetup.yaml --capabilities CAPABILITY_NAMED_IAM --disable-rollback"
+        deploy_stack(Membercommand)
 
 if __name__ == "__main__":
     setup()

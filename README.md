@@ -44,11 +44,11 @@ HEIDI Data Collection Framework enables you to collect data from different accou
 
 ## **Installation**
 
-In this section, we are going to walk through the procedure for configuring HEIDI within both the Data Collection and Member accounts for AWS Health Events.
+In this section, we will guide you through configuring HEIDI for AWS Health Events in both the Data Collection and Member accounts. Our recommendation is to deploy HEIDI in a delegated health admin account so that it can automatically receive feeds from all other accounts within your organization without any additional setup. You can designate up to 5 linked accounts as delegated health admin accounts within your AWS organization. To register an account as a delegated health admin, please follow these  [instructions](https://docs.aws.amazon.com/health/latest/ug/delegated-administrator-organizational-view.html#register-a-delegated-administrator)
 
 ### **Data Collection Setup**
 
-The setup script provided in this repo will set up all the necessary components required to receive AWS health events from other accounts. This can be your payer/organization or any other linked/member AWS account which you designate to receive AWS Health data from other HEIDI Member accounts and regions. 
+The setup script provided in this repo will set up all the necessary components required to receive AWS health events from other accounts and other regions. This can be your payer/organization or any other linked/member AWS account which you designate to receive AWS Health data from other HEIDI Member accounts and regions. 
 
 1. To start, log in to your AWS console and launch **AWS CloudShell** and clone aws-health-events-insight repo. You can use your local environment provided that you have assumed a role with necessary permissions to deploy the solution.
 
@@ -61,11 +61,11 @@ The setup script provided in this repo will set up all the necessary components 
 
 3. Once CloudFormation status changes to **CREATE_COMPLETE** (about 10-15 minutes), go to QuickSight Analysis and verify the initial deployment. 
 
-### **Member Setup**
+### **Member Setup ( Not required for Heidi in delegated health admin account )**
 
-**Note:** If you are deploying HEIDI in the health delegated admin account, You dont need to run member setup in any other link account within the organization. 
+You can now receive a feed of AWS Health events on Amazon EventBridge from all accounts within your organization in AWS Organizations using organizational view and delegated administrator. With this feature, if you are deploying HEIDI in the health delegated administrator account, it will ingest AWS Health events from all other accounts and you dont have to run this setup.
 
-You can now receive a feed of AWS Health events on Amazon EventBridge from all accounts within your organization in AWS Organizations using organizational view and delegated administrator. With this feature, if you are deploying HEIDI in the health delegated administrator account, it will ingest AWS Health events from all other accounts. Amazon EventBridge is a regional service. You must still run member setup in AWS Organizations or delegated health admin account for the regions where you wish to receive events. 
+**Note:** If HEIDI is deployed in the health delegated admin account, you dont have to run member setup in any other linked accounts across the organization. This step can be skipped. However, if HEIDI is not deployed in the health delegated admin account, or if the account is outside your AWS organization, you must complete this setup to enable those accounts to send data feeds to the HEIDI data collection account.
 
 If you have additional Payer/Organization IDs, you are also required to run member setup within the delegated health admin account for each additional Payer. 
 
@@ -143,7 +143,6 @@ Once stacksets are deployed, It will create lambda function which will send even
 
 **Q: What is the cost of the Heidi solution?**\
 **A:** The cost varies depending on the number of notifications. For up to 1 million notifications per month, it's approximately $30 including QuickSight licencing cost. For more details see [calculations](https://calculator.aws/#/estimate?id=a5243df5c6b91c413a8b535d292e480f34bdb030).
-
 
 
 ## **Troubleshooting**
