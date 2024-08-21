@@ -62,30 +62,87 @@ def send_event_defaultBus(event_data, EventBusArn):
         ]
     )
 
+# def backfill():
+#     events = get_events()
+#     EventBusArn = EventBusArnVal
+#     try:
+#         for awsevent in events:
+#             event_details_response = health_client.describe_event_details(eventArns=[awsevent['arn']])
+#             event_affected_response = health_client.describe_affected_entities(filter={'eventArns': [awsevent['arn']]})
+#             entities = event_affected_response['entities']
+#             affected_entities = []
+#             for entity in entities:
+#                 entity_values = entity['entityValue']
+#                 status_code = entity.get('statusCode', 'UNKNOWN')
+#                 affected_entities.append({'entityValue': entity_values, 'status': status_code})
+            
+#             event_details = event_details_response['successfulSet'][0]['event'] if event_details_response.get('successfulSet') else None
+#             if not event_details:
+#                 continue
+                
+#             event_details['affectedEntities'] = affected_entities
+                
+#             event_description = event_details_response['successfulSet'][0]['eventDescription']
+#             event_data = get_event_data(event_details, event_description)
+#             send_event_defaultBus(event_data, EventBusArn)
+#     except Exception as e:
+#         print(e)
+
 def backfill():
     events = get_events()
     EventBusArn = EventBusArnVal
-    try:
-        for awsevent in events:
+
+    for awsevent in events:
+        try:
+            # Fetch event details
             event_details_response = health_client.describe_event_details(eventArns=[awsevent['arn']])
-            event_affected_response = health_client.describe_affected_entities(filter={'eventArns': [awsevent['arn']]})
-            entities = event_affected_response['entities']
-            affected_entities = []
-            for entity in entities:
-                entity_values = entity['entityValue']
-                status_code = entity.get('statusCode', 'UNKNOWN')
-                affected_entities.append({'entityValue': entity_values, 'status': status_code})
             
-            event_details = event_details_response['successfulSet'][0]['event'] if event_details_response.get('successfulSet') else None
+            # Pagination setup for affected entities
+            affected_entities = []
+            next_token = None
+            
+            while True:
+                # Fetch affected entities with optional pagination token
+                params = {
+                    'filter': {'eventArns': [awsevent['arn']]}
+                }
+                if next_token:
+                    params['nextToken'] = next_token
+
+                event_affected_response = health_client.describe_affected_entities(**params)
+                
+                # Process entities
+                entities = event_affected_response.get('entities', [])
+                for entity in entities:
+                    entity_value = entity.get('entityValue', 'UNKNOWN')
+                    status_code = entity.get('statusCode', 'UNKNOWN')
+                    affected_entities.append({'entityValue': entity_value, 'status': status_code})
+                
+                # Check for pagination token
+                next_token = event_affected_response.get('nextToken')
+                if not next_token:
+                    break  # Exit loop if no more pages
+
+            # Extract event details
+            successful_set = event_details_response.get('successfulSet', [])
+            if not successful_set:
+                continue
+            
+            event_details = successful_set[0].get('event', {})
             if not event_details:
                 continue
-                
+
+            # Append accumulated affected entities
             event_details['affectedEntities'] = affected_entities
-                
-            event_description = event_details_response['successfulSet'][0]['eventDescription']
+
+            # Extract event description
+            event_description = successful_set[0].get('eventDescription', '')
+
+            # Prepare and send event data
             event_data = get_event_data(event_details, event_description)
             send_event_defaultBus(event_data, EventBusArn)
-    except Exception as e:
-        print(e)
+
+        except Exception as e:
+            print(f"Error occurred: {e}")
 
 backfill()
