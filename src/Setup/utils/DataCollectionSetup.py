@@ -4,6 +4,17 @@ import datetime
 from botocore.exceptions import ClientError
 import os
 
+# Get Tag
+def tag():
+    # Get the default AWS region from the current session
+    tag_key = input("Enter the key to tag the stack (Hit enter to use default: 'App'): ") or "App"
+    tag_value = input(f"Enter the value for '{tag_key}' (Hit enter to use default: 'Heidi'): ") or "Heidi"
+    return tag_key, tag_value
+
+
+# Call the tag function to get the tag key and value
+tag_key, tag_value = tag()
+
 
 #Get Current Region
 def get_default_region():
@@ -63,6 +74,14 @@ def create_or_get_s3_bucket(account_id, region):
             bucketkmsarn = "na"
         s3_client.get_waiter("bucket_exists").wait(Bucket=bucket_name)
         print(f"S3 bucket {bucket_name} has been created")
+
+        # Add tags to the newly created bucket
+        tagging = {
+            'TagSet': [{'Key': tag_key, 'Value': tag_value},]}
+        
+        s3_client.put_bucket_tagging(Bucket=bucket_name, Tagging=tagging)
+        print(f"Tags added to bucket {bucket_name}")
+        
     return bucket_name, bucketkmsarn
 
 #Upload CFN and Metadatafiles
@@ -340,8 +359,12 @@ def setup():
                 f"EnableHealthModule={parameters_dict['EnableHealthModule']} " \
                 f"EnableNotificationModule={parameters_dict['EnableNotificationModule']} " 
     
+    #Update tags here
+    # Call the tag function to get the tag key and value
+    tags =  f"{tag_key}={tag_value} "
+                
     command= f"sam deploy --stack-name {stack_name} --region {parameters_dict['DataCollectionRegion']} --parameter-overrides {parameters}\
-        --template-file ../DataCollectionModule/HeidiRoot.yaml --capabilities CAPABILITY_NAMED_IAM --disable-rollback"
+        --template-file ../DataCollectionModule/HeidiRoot.yaml --tags {tags} --capabilities CAPABILITY_NAMED_IAM --disable-rollback"
     
     #Deploy Stack
     deploy_stack(command)
@@ -353,7 +376,7 @@ def setup():
     for memberregion in parameters_dict['MemberRegionHealth'].split(','):
         Member_stack_name = f"{parameters_dict['ResourcePrefix']}-HealthModule-{get_account_id()}-{memberregion}"
         Membercommand = f"sam deploy --stack-name {Member_stack_name} --region {memberregion} --parameter-overrides {memberparameters} \
-                --template-file ../HealthModule/HealthModuleCollectionSetup.yaml --capabilities CAPABILITY_NAMED_IAM --disable-rollback"
+                --template-file ../HealthModule/HealthModuleCollectionSetup.yaml --tags {tags} --capabilities CAPABILITY_NAMED_IAM --disable-rollback"
         deploy_stack(Membercommand)
 
 if __name__ == "__main__":
