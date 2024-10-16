@@ -105,7 +105,7 @@ Send a mock event to test setup.
 
 1. Go to EventBridge console and choose default event bus. (You can choose any member account or region) and click the **Send events** button.
 2. **Important** Put the **Event source** and **Detail type** as `heidi.health` , otherwise the rule will discard the mock event.
-3. Copy the entire content from [MockEvent.json](https://github.com/aws-samples/aws-health-events-insight/blob/main/src/HealthModule/MockHealthEvent.json) and paste it in the **Event detail** field.
+3. Copy the content below `Send a mock event to test Control Account setup` from [MockEvent.json](https://github.com/aws-samples/aws-health-events-insight/blob/main/src/HealthModule/MockHealthEvent.json) and paste it in the **Event detail** field.
 4. Click **Send**.
 
 You will see the event in Amazon S3. For the mock event to reflect in QuickSight sooner, you can refresh the QuickSight dataset manually.
