@@ -9,8 +9,6 @@ Parameters:
   DataCollectionBucket:
     Type: String
     Description: Name of the S3 Bucket to be created to hold data information. 
-    MinLength: 1
-    ConstraintDescription: This parameter is required and cannot be empty.
   DataCollectionBucketKmsArn:
     Type: String
     Default: "na"
@@ -27,8 +25,6 @@ Parameters:
     Type: String
     Default: aws-quicksight-service-role-v0
     Description: The Quicksight Service role attached to QS, Default is aws-quicksight-service-role-v0
-    MinLength: 1
-    ConstraintDescription: This parameter is required and cannot be empty.
   ResourcePrefix:
     Type: String
     Description: This prefix will be placed in front of resources created where required. Note you may wish to add a dash at the end to make more readable
