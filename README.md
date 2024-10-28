@@ -85,6 +85,18 @@ If you have additional Payer/Organization IDs, you are also required to run memb
 
 **Note:** If you are NOT deploying HEIDI in the health delegated admin account, you MUST complete Member Setup for each Link Account and Region for which you want to receive events. To receive global events, you must create Member account/region setup for the US East (N. Virginia) region and US West (Oregon) Region as the backup region if needed.
 
+## **Populate Resource Tags (optional)**
+This is an optional step. AWS Resource Explorer customers can now list all AWS resources indexed by Resource Explorer across Services, AWS Regions, and AWS accounts. In order to populate you must configure AWS Resource Explorer. Please visit [setting up and configuring Resource Explorer before proceeding](https://docs.aws.amazon.com/resource-explorer/latest/userguide/getting-started-setting-up.html). Once setup is complete proceed as follow:
+
+1. Go to AWS account where you have created AWS Resource Explorer [aggregator index](https://docs.aws.amazon.com/resource-explorer/latest/userguide/getting-started-terms-and-concepts.html#term-index)
+
+2. Go to `aws-health-events-insight` directory and run `TagBackfill.py` and provide necessary inputs. 
+
+        cd aws-health-events-insight/src/Setup/utils
+        python3 TagBackFill.py
+
+3. Once script is finished, refresh Quicksight Dataset.
+
 ## **Update Metadata (optional)**
 This is an optional step. You can map AWS AccountIDs with Account Name and Account Tags (AppID, Env, etc.)
 

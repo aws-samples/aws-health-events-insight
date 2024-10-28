@@ -142,13 +142,14 @@ Resources:
                       FROM "AwsDataCatalog"."heididatacollectiondb"."awshealthevent"
                       LEFT JOIN UNNEST(detail.affectedEntities) AS t(entities) ON TRUE)
                       WHERE rowrank = 1),
-                      tagInfo AS (
+                      tagInfo AS (select * from (
                         SELECT 
                           detail.entityarn as entityArn,
+                          rank() OVER (PARTITION BY detail.entityarn, tags.entitykey,tags.entityvalue ORDER BY time DESC) AS rowranktag,
                           '' as entityAZ,
                           tags.entitykey as entityTagKey,
                           tags.entityvalue as entityTagValue
-                      FROM "AwsDataCatalog"."heididatacollectiondb"."taginfo", unnest(detail.tags) as t(tags))
+                      FROM "AwsDataCatalog"."heididatacollectiondb"."taginfo", unnest(detail.tags) as t(tags)) where rowranktag =1)
                       SELECT 
                         detail.*, 
                         taginfo.*, 

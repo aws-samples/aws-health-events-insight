@@ -342,7 +342,7 @@ def setup():
     sync_cfnfiles(parameters_dict['DataCollectionBucket'])
 
     # Create or update the CloudFormation stack
-    stack_name = f"{parameters_dict['ResourcePrefix']}-{parameters_dict['DataCollectionAccountID']}-{parameters_dict['DataCollectionRegion']}"
+    stack_name = f"{parameters_dict['ResourcePrefix']}{parameters_dict['DataCollectionAccountID']}-{parameters_dict['DataCollectionRegion']}"
 
     parameters = f"AWSOrganizationID={parameters_dict['AWSOrganizationID']} " \
                 f"DataCollectionBucket={parameters_dict['DataCollectionBucket']} " \
@@ -374,7 +374,7 @@ def setup():
                 f"ResourcePrefix={parameters_dict['ResourcePrefix']} "
     
     for memberregion in parameters_dict['MemberRegionHealth'].split(','):
-        Member_stack_name = f"{parameters_dict['ResourcePrefix']}-HealthModule-{get_account_id()}-{memberregion}"
+        Member_stack_name = f"{parameters_dict['ResourcePrefix']}HealthModule-{get_account_id()}-{memberregion}"
         Membercommand = f"sam deploy --stack-name {Member_stack_name} --region {memberregion} --parameter-overrides {memberparameters} \
                 --template-file ../HealthModule/HealthModuleCollectionSetup.yaml --tags {tags} --capabilities CAPABILITY_NAMED_IAM --disable-rollback"
         deploy_stack(Membercommand)
