@@ -9,6 +9,10 @@ Parameters:
   QuickSightAnalysisAuthor:
     Type: String
     Description: The QuickSight User that is allowed configure and manage the QS dashboard.
+  ResourcePrefix:
+    Type: String
+    Description: This prefix will be placed in front of resources created where required. Note you may wish to add a dash at the end to make more readable
+    Default: "heidi-"
   EventDetailUrl:
     Type: String
     Default: https://example.com
@@ -19,8 +23,8 @@ Resources:
     Type: AWS::QuickSight::Analysis
     Properties:
       AwsAccountId: !Sub "${AWS::AccountId}"
-      Name: !Sub "HealthEvents-Analysis-${AWS::AccountId}-${AWS::Region}"
-      AnalysisId: !Sub "HealthEvents-Analysis-${AWS::AccountId}-${AWS::Region}"
+      Name: !Sub "${ResourcePrefix}Analysis-${AWS::AccountId}-${AWS::Region}"
+      AnalysisId: !Sub "${ResourcePrefix}Analysis-${AWS::AccountId}-${AWS::Region}"
       Definition: 
         DataSetIdentifierDeclarations:
         - Identifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"

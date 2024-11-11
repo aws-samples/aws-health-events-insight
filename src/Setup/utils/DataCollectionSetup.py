@@ -196,7 +196,8 @@ def get_user_input():
     AWSOrganizationID = get_organization_details()
     DataCollectionBucket, DataCollectionBucketKmsArn = create_or_get_s3_bucket(account_id, region)
 
-    ResourcePrefix = input("Enter ResourcePrefix, Hit enter to use default (Heidi-): ") or "Heidi-"
+    ResourcePrefix = input("Enter ResourcePrefix (Must be in lowercase), Hit enter to use default (heidi-): ") or "heidi-"
+    ResourcePrefix = ResourcePrefix.lower()
     print_boxed_text("Module Selection")
     EnableHealthModule = ask_yes_no("Do you want to enable the AWS Health Module(HEIDI)?")
     if EnableHealthModule:
@@ -372,12 +373,18 @@ def setup():
     memberparameters = f"DataCollectionAccountID={parameters_dict['DataCollectionAccountID']} " \
                 f"DataCollectionRegion={parameters_dict['DataCollectionRegion']} " \
                 f"ResourcePrefix={parameters_dict['ResourcePrefix']} "
-    
+
     for memberregion in parameters_dict['MemberRegionHealth'].split(','):
-        Member_stack_name = f"{parameters_dict['ResourcePrefix']}HealthModule-{get_account_id()}-{memberregion}"
-        Membercommand = f"sam deploy --stack-name {Member_stack_name} --region {memberregion} --parameter-overrides {memberparameters} \
-                --template-file ../HealthModule/HealthModuleCollectionSetup.yaml --tags {tags} --capabilities CAPABILITY_NAMED_IAM --disable-rollback"
-        deploy_stack(Membercommand)
+        # Check if the memberregion is not empty or just whitespace
+        if memberregion.strip():  # This ensures that empty strings or whitespace regions are ignored
+            Member_stack_name = f"{parameters_dict['ResourcePrefix']}HealthModule-{get_account_id()}-{memberregion}"
+            Membercommand = f"sam deploy --stack-name {Member_stack_name} --region {memberregion} --parameter-overrides {memberparameters} \
+                    --template-file ../HealthModule/HealthModuleCollectionSetup.yaml --tags {tags} --capabilities CAPABILITY_NAMED_IAM --disable-rollback"
+            
+            # Deploy the stack
+            deploy_stack(Membercommand)
+        else:
+            print(f"Skipping member Region deployment, no member Region supplied.")
 
 if __name__ == "__main__":
     setup()

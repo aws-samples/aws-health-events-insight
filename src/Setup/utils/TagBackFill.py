@@ -4,8 +4,8 @@ import boto3
 
 DataCollectionAccountID = input("Enter DataCollection Account ID: ")
 DataCollectionRegion = input("Enter DataCollection region: ")
-ResourcePrefix = input("Enter ResourcePrefix, Hit enter to use default (Heidi-): ") or "Heidi-"
-ResourceExplorerViewArn = input("Enter Resource explorere view ARN: ") or "arn:aws:resource-explorer-2:us-east-1:646279148361:view/index-test/203e04a0-2c88-4823-9291-c7e86f8c1478"
+ResourcePrefix = input("Enter ResourcePrefix, Hit enter to use default (heidi-): ") or "heidi-"
+ResourceExplorerViewArn = input("Enter Resource explorere view ARN: ")
 
 eventbridge_client = boto3.client('events',DataCollectionRegion)
 EventBusArnVal = f"arn:aws:events:{DataCollectionRegion}:{DataCollectionAccountID}:event-bus/{ResourcePrefix}DataCollectionBus-{DataCollectionAccountID}"
@@ -24,7 +24,7 @@ def resource_explorer():
         
         # Define pagination configuration
         pagination_config = {
-            'MaxItems': 100000,  # Total maximum items to return across all pages
+            'MaxItems': 20000000,  # Total maximum items to return across all pages
             'PageSize': 1000     # Number of items per page
         }
         

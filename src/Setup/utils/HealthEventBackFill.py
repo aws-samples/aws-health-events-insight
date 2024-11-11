@@ -4,7 +4,7 @@ from datetime import datetime
 
 DataCollectionAccountID = input("Enter DataCollection Account ID: ")
 DataCollectionRegion = input("Enter DataCollection region: ")
-ResourcePrefix = input("Enter ResourcePrefix, Hit enter to use default (Heidi-): ") or "Heidi-"
+ResourcePrefix = input("Enter ResourcePrefix, Hit enter to use default (heidi-): ") or "heidi-"
 
 health_client = boto3.client('health', 'us-east-1')
 eventbridge_client = boto3.client('events',DataCollectionRegion)

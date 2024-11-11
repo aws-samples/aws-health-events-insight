@@ -45,7 +45,7 @@ def get_user_input():
     print_boxed_text("Data Collection Account Parameters")
     DataCollectionAccountID = input(f"Enter Data Collection Account ID, Default {get_account_id()}: ") or get_account_id()
     DataCollectionRegion = input("Enter Data Collection Region ID: ")
-    ResourcePrefix = input("Enter ResourcePrefix, Hit enter to use default (Heidi-): ") or "Heidi-"
+    ResourcePrefix = input("Enter ResourcePrefix, Hit enter to use default (heidi-): ") or "heidi-"
     return (
         DataCollectionAccountID, DataCollectionRegion, DeploymentRegionHealth, ResourcePrefix
     )
@@ -64,7 +64,7 @@ def setup():
                 ResourcePrefix={parameters_dict['ResourcePrefix']}"
 
     for region in DeploymentRegionHealth.split(','):
-        stack_name = f"Heidi-HealthModule-{get_account_id()}-{region}"
+        stack_name = f"{parameters_dict['ResourcePrefix']}HealthModule-member-{get_account_id()}-{region}"
         command = f"sam deploy --stack-name {stack_name} --region {region} --parameter-overrides {parameters} \
             --template-file ../HealthModule/HealthModuleCollectionSetup.yaml --capabilities CAPABILITY_NAMED_IAM --disable-rollback"
         # Deploy Stack

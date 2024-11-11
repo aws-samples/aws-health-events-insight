@@ -12,10 +12,20 @@ Parameters:
   HeidiDataCollectionDB:
     Type: String
     Description: Athena DataCollection DB
-    Default: "heididatacollectiondb"
+    Default: "datacollectiondb"
   HeidiQSDataSourceArn:
     Type: String
     Description: Quick Sight Datasource Arn.
+  ResourcePrefix:
+    Type: String
+    Description: This prefix will be placed in front of resources created where required. Note you may wish to add a dash at the end to make more readable
+    Default: "heidi-"
+
+Outputs:
+  QSDataSetHealthEvent:
+    Value: !GetAtt QSDataSetHealthEvent.Arn
+    Export:
+      Name: !Sub ${ResourcePrefix}QSDataSetHealthEvent
 
 Resources:  
   GlueHealthTable:
@@ -23,7 +33,7 @@ Resources:
     Type: AWS::Glue::Table
     Properties:
       # Reference to the AWS Glue Database
-      DatabaseName: !Ref HeidiDataCollectionDB
+      DatabaseName: !Sub ${ResourcePrefix}${HeidiDataCollectionDB}
       CatalogId: !Sub '${AWS::AccountId}'
       TableInput:
         Name: awshealthevent
@@ -93,14 +103,14 @@ Resources:
       Properties:
         AwsAccountId: !Sub ${AWS::AccountId}
         ImportMode: SPICE
-        DataSetId: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
-        Name: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
+        DataSetId: !Sub "${ResourcePrefix}${AWS::AccountId}-${AWS::Region}"
+        Name: !Sub "${ResourcePrefix}${AWS::AccountId}-${AWS::Region}"
         PhysicalTableMap:
           "AWSHealthQSPT":
             CustomSql:
               DataSourceArn: !Ref HeidiQSDataSourceArn
-              Name: !Sub "awshealthevents-${AWS::AccountId}-${AWS::Region}"
-              SqlQuery: |-
+              Name: !Sub "${ResourcePrefix}${AWS::AccountId}-${AWS::Region}"
+              SqlQuery: !Sub |-
                       WITH latestRow AS (
                         select * from (SELECT
                           detail.eventTypeCode,
@@ -139,7 +149,7 @@ Resources:
                               WHEN (detail.eventArn like '%PLANNED_LIFECYCLE_EVENT%') THEN 'Y'
                               ELSE 'N'
                           END AS "plannedLifeCycleEvent"
-                      FROM "AwsDataCatalog"."heididatacollectiondb"."awshealthevent"
+                      FROM "AwsDataCatalog"."${ResourcePrefix}${HeidiDataCollectionDB}"."awshealthevent"
                       LEFT JOIN UNNEST(detail.affectedEntities) AS t(entities) ON TRUE)
                       WHERE rowrank = 1),
                       tagInfo AS (select * from (
@@ -149,14 +159,14 @@ Resources:
                           '' as entityAZ,
                           tags.entitykey as entityTagKey,
                           tags.entityvalue as entityTagValue
-                      FROM "AwsDataCatalog"."heididatacollectiondb"."taginfo", unnest(detail.tags) as t(tags)) where rowranktag =1)
+                      FROM "AwsDataCatalog"."${ResourcePrefix}${HeidiDataCollectionDB}"."taginfo", unnest(detail.tags) as t(tags)) where rowranktag =1)
                       SELECT 
                         detail.*, 
                         taginfo.*, 
                         COALESCE(accountinfo."name", detail."account") AS accountName, 
                         accountinfo.Tag as accountTag
                       FROM latestRow detail
-                      LEFT JOIN "AwsDataCatalog"."heididatacollectiondb"."accountsinfo" accountinfo ON detail.account = accountinfo."accountid"
+                      LEFT JOIN "AwsDataCatalog"."${ResourcePrefix}${HeidiDataCollectionDB}"."accountsinfo" accountinfo ON detail.account = accountinfo."accountid"
                       LEFT JOIN tagInfo ON detail.affectedEntities in (taginfo.entityarn)
               Columns:
               - Name: eventTypeCode
@@ -271,15 +281,9 @@ Resources:
     Type: AWS::QuickSight::RefreshSchedule
     Properties: 
       AwsAccountId: !Sub ${AWS::AccountId}
-      DataSetId: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
+      DataSetId: !Sub "${ResourcePrefix}${AWS::AccountId}-${AWS::Region}"
       Schedule:
         RefreshType: FULL_REFRESH
         ScheduleFrequency:
           Interval: HOURLY
         ScheduleId: QSDataSetHealthEventRefresh
-
-Outputs:
-  QSDataSetHealthEvent:
-    Value: !GetAtt QSDataSetHealthEvent.Arn
-    Export:
-      Name: QSDataSetHealthEvent

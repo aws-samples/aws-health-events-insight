@@ -31,7 +31,7 @@ Parameters:
   ResourcePrefix:
     Type: String
     Description: This prefix will be placed in front of resources created where required. Note you may wish to add a dash at the end to make more readable
-    Default: "Heidi-"
+    Default: "heidi-"
   EnableHealthModule:
     Type: String
     Description: Collects AWS Health data from different accounts and create quicksight analysis
@@ -151,6 +151,7 @@ Resources:
         QuickSightAnalysisAuthor: !Ref QuickSightAnalysisAuthor
         HeidiDataCollectionDB: !GetAtt DataCollectionModule.Outputs.HeidiDataCollectionDB
         HeidiQSDataSourceArn: !GetAtt DataCollectionModule.Outputs.HeidiQSDataSourceArn
+        ResourcePrefix: !Ref ResourcePrefix
 
   HealthModuleEventUrlSetup:
     Type: AWS::CloudFormation::Stack
@@ -183,3 +184,4 @@ Resources:
         QuickSightAnalysisAuthor: !Ref QuickSightAnalysisAuthor
         QSDataSetHealthEvent: !GetAtt HealthModuleDataSetSetup.Outputs.QSDataSetHealthEvent
         EventDetailUrl: !If [ EnableHealthEventUrl, !GetAtt HealthModuleEventUrlSetup.Outputs.EventDetailApiEndpoint, "https://example.com" ]
+        ResourcePrefix: !Ref ResourcePrefix
