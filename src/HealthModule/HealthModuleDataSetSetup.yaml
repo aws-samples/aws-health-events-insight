@@ -83,7 +83,7 @@ Resources:
               Type: array<string>
               Comment: 'from deserializer'
             - Name: detail
-              Type: struct<eventarn:string,affectedAccount:string,service:string,eventscopecode:string,communicationid:string,lastupdatedtime:string,eventregion:string,eventtypecode:string,eventtypecategory:string,starttime:string,endtime:string,eventdescription:array<struct<language:string,latestdescription:string>>,affectedentities:array<struct<entityvalue:string,status:string,entityarn:string,entityaz:string,entitytags:array<struct<value:string,key:string>>>>>
+              Type: struct<eventarn:string,affectedAccount:string,service:string,eventscopecode:string,communicationid:string,lastupdatedtime:string,eventregion:string,eventtypecode:string,eventtypecategory:string,statusCode:string,starttime:string,endtime:string,eventdescription:array<struct<language:string,latestdescription:string>>,affectedentities:array<struct<entityvalue:string,status:string,entityarn:string,entityaz:string,entitytags:array<struct<value:string,key:string>>>>>
               Comment: 'from deserializer'
           # S3 location of the data for the Athena External Table
           Location: !Sub 's3://${DataCollectionBucket}/DataCollection-data'
@@ -137,14 +137,11 @@ Resources:
                           CAST(date_parse(detail.lastUpdatedTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) AS lastUpdatedTime,
                           CAST(DATE_DIFF('HOUR', CAST(date_parse(detail.startTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp), CAST(date_parse(detail.endTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp)) AS BIGINT) AS eventDuration,
                           CASE
-                              WHEN (CAST(date_parse(detail.endTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) > current_timestamp) THEN 'scheduledChange'
-                              WHEN ((CAST(date_parse(detail.endTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) IS NULL) AND (detail.eventTypeCategory = 'scheduledChange') AND (detail.eventArn not like '%PLANNED_LIFECYCLE_EVENT%')) THEN 'scheduledChange'
-                              WHEN ((CAST(date_parse(detail.endTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) IS NULL) AND (detail.eventTypeCategory = 'scheduledChange') AND (entities.status like '%RESOLVED%')) THEN 'Archived'
-                              WHEN ((CAST(date_parse(detail.endTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) IS NULL) AND (detail.eventTypeCategory = 'scheduledChange') AND (detail.eventArn like '%PLANNED_LIFECYCLE_EVENT%')) THEN 'PlannedLifeCycle'
-                              WHEN (((CAST(date_parse(detail.startTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) + (7 * INTERVAL '1' DAY)) < current_timestamp) AND (detail.eventTypeCategory = 'accountNotification') AND (CAST(date_parse(detail.endTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) IS NULL)) THEN 'Archived'
-                              WHEN (CAST(date_parse(detail.endTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) IS NULL) THEN 'Active'
-                              ELSE 'Archived'
-                          END AS "Status",
+                              WHEN ((CAST(date_parse(detail.endTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) IS NULL) AND (detail.eventTypeCategory = 'scheduledChange'))  THEN detail.statusCode
+                              WHEN (((CAST(date_parse(detail.startTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) + (15 * INTERVAL '1' DAY)) < current_timestamp) AND (detail.eventTypeCategory = 'accountNotification') AND (CAST(date_parse(detail.endTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) IS NULL)) THEN 'closed'
+                              WHEN (CAST(date_parse(detail.endTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) IS NULL) THEN 'open'
+                              ELSE detail.statusCode
+                          END AS "statusCode",
                           CASE
                               WHEN (detail.eventArn like '%PLANNED_LIFECYCLE_EVENT%') THEN 'Y'
                               ELSE 'N'
@@ -203,7 +200,8 @@ Resources:
                 Type: DATETIME
               - Name: eventDuration
                 Type: INTEGER
-              - Name: Status
+              - Name: statusCode
+                Type: STRING
                 Type: STRING
               - Name: eventRegion
                 Type: STRING
@@ -248,7 +246,7 @@ Resources:
                 - startTime
                 - lastUpdatedTime
                 - eventDuration
-                - Status
+                - statusCode
                 - eventRegion
                 - service
                 - accountName
