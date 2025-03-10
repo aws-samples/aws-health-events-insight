@@ -21,10 +21,6 @@ Parameters:
     Type: String
     Default: "na"
     Description: Enter KMS Arn if Athena Results bucket is encrypted with KMS(Type N for SSE encryption)
-  QuicksightServiceRole:
-    Type: String
-    Default: aws-quicksight-service-role-v0
-    Description: The Quicksight Service role attached to QS, Default is aws-quicksight-service-role-v0
   ResourcePrefix:
     Type: String
     Description: This prefix will be placed in front of resources created where required. Note you may wish to add a dash at the end to make more readable
@@ -229,120 +225,122 @@ Resources:
           Arn: !GetAtt DataCollectionKinesisFirehose.Arn
           RoleArn: !GetAtt  DataCollectionRuleRole.Arn
 
-# Create an AWS IAM Managed Policy for QuickSight service role with necessary permissions     
-  QuicksightServiceRolePolicy:
+# Create an AWS IAM Managed Policy for QuickSight service role with necessary permissions
+  AthenaQuicksightAssumeRole:
     Condition: DeployDataCollectionComponents
-    Type: AWS::IAM::ManagedPolicy
-    Metadata:
-      cfn_nag:
-        rules_to_suppress:
-          - id: W13
-            reason: "Requires generic access for QS to list all buckets"
+    Type: AWS::IAM::Role
     Properties:
-      Description: "Grants Amazon QuickSight to run awshealthevent athena queries"
-      PolicyDocument:
-        Version: "2012-10-17"
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
         Statement:
-          - Effect: "Allow"
-            Action:
-              - s3:ListAllMyBuckets
-            Resource: "*"
-          - Effect: "Allow"
-            Action:
-              - "s3:GetBucketLocation"
-              - "s3:GetObject"
-              - "s3:ListBucket"
-              - "s3:ListBucketMultipartUploads"
-              - "s3:AbortMultipartUpload"
-              - "s3:PutObject"
-              - "s3:ListMultipartUploadParts"
-              - "s3:CreateBucket"
-            Resource: 
-              - !Sub arn:${AWS::Partition}:s3:::${DataCollectionBucket}
-              - !Sub arn:${AWS::Partition}:s3:::${DataCollectionBucket}/*
-              - !Sub arn:${AWS::Partition}:s3:::${AthenaResultBucket}
-              - !Sub arn:${AWS::Partition}:s3:::${AthenaResultBucket}/*
-          - Effect: "Allow"
-            Action:
-              - athena:BatchGetQueryExecution
-              - athena:CancelQueryExecution
-              - athena:GetCatalogs
-              - athena:GetExecutionEngine
-              - athena:GetExecutionEngines
-              - athena:GetNamespace
-              - athena:GetNamespaces
-              - athena:GetQueryExecution
-              - athena:GetQueryExecutions
-              - athena:GetQueryResults
-              - athena:GetQueryResultsStream
-              - athena:GetTable
-              - athena:GetTables
-              - athena:ListQueryExecutions
-              - athena:RunQuery
-              - athena:StartQueryExecution
-              - athena:StopQueryExecution
-              - athena:ListWorkGroups
-              - athena:ListEngineVersions
-              - athena:GetWorkGroup
-              - athena:GetDataCatalog
-              - athena:GetDatabase
-              - athena:GetTableMetadata
-              - athena:ListDataCatalogs
-              - athena:ListDatabases
-              - athena:ListTableMetadata
-            Resource: "*"
-          - Effect: "Allow"
-            Action:
-              - "glue:CreateDatabase"
-              - "glue:DeleteDatabase"
-              - "glue:GetDatabase"
-              - "glue:GetDatabases"
-              - "glue:UpdateDatabase"
-              - "glue:CreateTable"
-              - "glue:DeleteTable"
-              - "glue:BatchDeleteTable"
-              - "glue:UpdateTable"
-              - "glue:GetTable"
-              - "glue:GetTables"
-              - "glue:BatchCreatePartition"
-              - "glue:CreatePartition"
-              - "glue:DeletePartition"
-              - "glue:BatchDeletePartition"
-              - "glue:UpdatePartition"
-              - "glue:GetPartition"
-              - "glue:GetPartitions"
-              - "glue:BatchGetPartition"
-            Resource:
-              - "*"
-          - Effect: "Allow"
-            Action:
-              - "lakeformation:GetDataAccess"
-            Resource:
-              - "*"
-          - !If
-            - DataCollectionBucketKmsArn
-            - Effect: Allow
-              Action:
-                - "kms:Encrypt"
-                - "kms:Decrypt"
-                - "kms:ReEncrypt*"
-                - "kms:GenerateDataKey*"
-              Resource:
-                - !Ref DataCollectionBucketKmsArn
-            - !Ref AWS::NoValue
-          - !If
-            - AthenaBucketKmsArn
-            - Effect: Allow
-              Action:
-                - "kms:Encrypt"
-                - "kms:Decrypt"
-                - "kms:ReEncrypt*"
-                - "kms:GenerateDataKey*"
-              Resource:
-                - !Ref AthenaBucketKmsArn
-            - !Ref AWS::NoValue
-      Roles: 
-       - !Ref QuicksightServiceRole
+          - Effect: Allow
+            Principal:
+              Service: quicksight.amazonaws.com
+            Action: sts:AssumeRole 
+      Policies:
+        # Policy allowing athena access for heidi datacollection
+        - PolicyName: heidi-s3-access-policy 
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - s3:ListAllMyBuckets
+                Resource: "*"
+              - Effect: "Allow"
+                Action:
+                  - "s3:GetBucketLocation"
+                  - "s3:GetObject"
+                  - "s3:ListBucket"
+                  - "s3:ListBucketMultipartUploads"
+                  - "s3:AbortMultipartUpload"
+                  - "s3:PutObject"
+                  - "s3:ListMultipartUploadParts"
+                  - "s3:CreateBucket"
+                Resource: 
+                  - !Sub arn:${AWS::Partition}:s3:::${DataCollectionBucket}
+                  - !Sub arn:${AWS::Partition}:s3:::${DataCollectionBucket}/*
+                  - !Sub arn:${AWS::Partition}:s3:::${AthenaResultBucket}
+                  - !Sub arn:${AWS::Partition}:s3:::${AthenaResultBucket}/*
+              - Effect: "Allow"
+                Action:
+                  - athena:BatchGetQueryExecution
+                  - athena:CancelQueryExecution
+                  - athena:GetCatalogs
+                  - athena:GetExecutionEngine
+                  - athena:GetExecutionEngines
+                  - athena:GetNamespace
+                  - athena:GetNamespaces
+                  - athena:GetQueryExecution
+                  - athena:GetQueryExecutions
+                  - athena:GetQueryResults
+                  - athena:GetQueryResultsStream
+                  - athena:GetTable
+                  - athena:GetTables
+                  - athena:ListQueryExecutions
+                  - athena:RunQuery
+                  - athena:StartQueryExecution
+                  - athena:StopQueryExecution
+                  - athena:ListWorkGroups
+                  - athena:ListEngineVersions
+                  - athena:GetWorkGroup
+                  - athena:GetDataCatalog
+                  - athena:GetDatabase
+                  - athena:GetTableMetadata
+                  - athena:ListDataCatalogs
+                  - athena:ListDatabases
+                  - athena:ListTableMetadata
+                Resource: "*"
+              - Effect: "Allow"
+                Action:
+                  - "glue:CreateDatabase"
+                  - "glue:DeleteDatabase"
+                  - "glue:GetDatabase"
+                  - "glue:GetDatabases"
+                  - "glue:UpdateDatabase"
+                  - "glue:CreateTable"
+                  - "glue:DeleteTable"
+                  - "glue:BatchDeleteTable"
+                  - "glue:UpdateTable"
+                  - "glue:GetTable"
+                  - "glue:GetTables"
+                  - "glue:BatchCreatePartition"
+                  - "glue:CreatePartition"
+                  - "glue:DeletePartition"
+                  - "glue:BatchDeletePartition"
+                  - "glue:UpdatePartition"
+                  - "glue:GetPartition"
+                  - "glue:GetPartitions"
+                  - "glue:BatchGetPartition"
+                Resource:
+                  - "*"
+              - Effect: "Allow"
+                Action:
+                  - "lakeformation:GetDataAccess"
+                Resource:
+                  - "*"
+              - !If
+                - DataCollectionBucketKmsArn
+                - Effect: Allow
+                  Action:
+                    - "kms:Encrypt"
+                    - "kms:Decrypt"
+                    - "kms:ReEncrypt*"
+                    - "kms:GenerateDataKey*"
+                  Resource:
+                    - !Ref DataCollectionBucketKmsArn
+                - !Ref AWS::NoValue
+              - !If
+                - AthenaBucketKmsArn
+                - Effect: Allow
+                  Action:
+                    - "kms:Encrypt"
+                    - "kms:Decrypt"
+                    - "kms:ReEncrypt*"
+                    - "kms:GenerateDataKey*"
+                  Resource:
+                    - !Ref AthenaBucketKmsArn
+                - !Ref AWS::NoValue
 
   AthenaDataCollectionDB:
     Condition: DeployDataCollectionComponents
@@ -365,6 +363,7 @@ Resources:
       DataSourceParameters:
         AthenaParameters:
           WorkGroup: primary
+          RoleArn: !GetAtt AthenaQuicksightAssumeRole.Arn
       SslProperties:
         DisableSsl: false
 

@@ -29,14 +29,15 @@ def get_events():
         print(e)
         return []
 
-def get_event_data(event_details, event_description):
+def get_event_data(event_details, event_description,event_metadata):
     event_data = {
         'eventArn': event_details['arn'],
         'eventRegion': event_details.get('region', ''),
         'eventTypeCode': event_details.get('eventTypeCode', ''),
         'startTime': event_details.get('startTime').strftime('%a, %d %b %Y %H:%M:%S GMT'),
-        'eventDescription': [{'latestDescription': event_description['latestDescription']}]
-    }
+        'eventDescription': [{'latestDescription': event_description['latestDescription']}],
+        'eventMetadata': event_metadata
+        }
     # Check if 'timefield' exists in event_details before including it in event_data
     if 'endTime' in event_details:
         event_data['endTime'] = event_details['endTime'].strftime('%a, %d %b %Y %H:%M:%S GMT')
@@ -138,8 +139,11 @@ def backfill():
             # Extract event description
             event_description = successful_set[0].get('eventDescription', '')
 
+            # Extract event Metadata
+            event_metadata = successful_set[0].get('eventMetadata', '')
+
             # Prepare and send event data
-            event_data = get_event_data(event_details, event_description)
+            event_data = get_event_data(event_details, event_description,event_metadata)
             send_event_defaultBus(event_data, EventBusArn)
 
         except Exception as e:

@@ -21,10 +21,6 @@ Parameters:
     Type: String
     Default: "na"
     Description: Enter KMS Arn if Athena Results bucket is encrypted with KMS(Type N for SSE encryption)
-  QuicksightServiceRole:
-    Type: String
-    Default: aws-quicksight-service-role-v0
-    Description: The Quicksight Service role attached to QS, Default is aws-quicksight-service-role-v0
   QuickSightAnalysisAuthor:
       Type: String
       Description: The QuickSight analysis author Arn that is allowed configure and manage the QS Analyses and dashboards. e.g. arn:aws:quicksight:<Region>:<AccountID>:user/default/<username>
@@ -108,7 +104,6 @@ Resources:
         DataCollectionBucketKmsArn: !Ref DataCollectionBucketKmsArn
         AthenaResultBucket: !Ref AthenaResultBucket
         AthenaBucketKmsArn: !Ref AthenaBucketKmsArn
-        QuicksightServiceRole: !Ref QuicksightServiceRole
         ResourcePrefix: !Ref ResourcePrefix
         EnableHealthModule: !Ref EnableHealthModule
 

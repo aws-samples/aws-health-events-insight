@@ -83,7 +83,7 @@ Resources:
               Type: array<string>
               Comment: 'from deserializer'
             - Name: detail
-              Type: struct<eventarn:string,affectedAccount:string,service:string,eventscopecode:string,communicationid:string,lastupdatedtime:string,eventregion:string,eventtypecode:string,eventtypecategory:string,statusCode:string,starttime:string,endtime:string,eventdescription:array<struct<language:string,latestdescription:string>>,affectedentities:array<struct<entityvalue:string,status:string,entityarn:string,entityaz:string,entitytags:array<struct<value:string,key:string>>>>>
+              Type: struct<eventarn:string,affectedAccount:string,service:string,eventscopecode:string,communicationid:string,lastupdatedtime:string,eventregion:string,eventtypecode:string,eventtypecategory:string,statusCode:string,starttime:string,endtime:string,eventdescription:array<struct<language:string,latestdescription:string>>,eventMetadata:string,affectedentities:array<struct<entityvalue:string,status:string,entityarn:string,entityaz:string,entitytags:array<struct<value:string,key:string>>>>>
               Comment: 'from deserializer'
           # S3 location of the data for the Athena External Table
           Location: !Sub 's3://${DataCollectionBucket}/DataCollection-data'
@@ -118,6 +118,7 @@ Resources:
                           COALESCE(detail.affectedAccount, account) as account,
                           detail.service,
                           detail.eventScopeCode,
+                          detail.eventMetadata,
                           CASE 
                               WHEN ((detail.eventTypeCategory = 'scheduledChange') AND (detail.eventArn like '%PLANNED_LIFECYCLE_EVENT%')) THEN 'PlannedLifeCycle'
                               ELSE detail.eventTypeCategory
@@ -129,7 +130,8 @@ Resources:
                           entities.status As affectedEntityStatus,
                           SUBSTRING(detail.eventdescription[1].latestdescription, 1, 2000) AS eventDescription1,
                           SUBSTRING(detail.eventdescription[1].latestdescription, 2001) AS eventDescription2,
-                          rank() OVER (PARTITION BY detail.eventArn, COALESCE(detail.affectedAccount, account) ORDER BY CAST(date_parse(detail.lastUpdatedTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) DESC) AS rowrank,
+                          json_extract_scalar(detail.eventMetadata, '$.deprecated_versions') AS deprecated_versions,
+                          rank() OVER (PARTITION BY detail.eventArn, COALESCE(detail.affectedAccount, account) ORDER BY time DESC) AS rowrank,
                           array_join(resources, ', ') AS resources,
                           CAST(from_iso8601_timestamp("time") AS timestamp) AS ingestionTime,
                           CAST(date_parse(detail.endTime, '%a, %e %b %Y %H:%i:%s GMT') AS timestamp) AS endTime,
@@ -188,6 +190,10 @@ Resources:
                 Type: STRING
               - Name: eventDescription2
                 Type: STRING
+              - Name: deprecated_versions
+                Type: STRING
+              - Name: eventMetadata
+                Type: STRING
               - Name: resources
                 Type: STRING
               - Name: ingestionTime
@@ -201,7 +207,6 @@ Resources:
               - Name: eventDuration
                 Type: INTEGER
               - Name: statusCode
-                Type: STRING
                 Type: STRING
               - Name: eventRegion
                 Type: STRING
@@ -240,6 +245,8 @@ Resources:
                 - communicationid
                 - eventDescription1
                 - eventDescription2
+                - deprecated_versions
+                - eventMetadata
                 - resources
                 - ingestionTime
                 - endTime

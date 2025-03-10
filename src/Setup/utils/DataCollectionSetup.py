@@ -189,7 +189,6 @@ def get_user_input():
     QuickSightAnalysisAuthor = "na"
     AthenaResultBucket = "na"
     AthenaBucketKmsArn ="na"
-    QuicksightServiceRole ="na"
 
     region, MemberRegionHealth = get_default_region()
     account_id = get_account_id()
@@ -205,7 +204,6 @@ def get_user_input():
         QuickSightAnalysisAuthor = get_quicksight_user(account_id, qsregion)
         AthenaResultBucket = input("Enter AthenaResultBucket, Hit enter to use default (aws-athena-query-results-*): ") or "aws-athena-query-results-*"
         AthenaBucketKmsArn = input("Enter AthenaBucketKmsArn, Hit enter to use default (na): ") or "na"
-        QuicksightServiceRole = input("Hit enter to use default (aws-quicksight-service-role-v0): ") or "aws-quicksight-service-role-v0"
     print()
     EnableNotificationModule = ask_yes_no("Do you want to enable the Notification Module?")
     if EnableNotificationModule:
@@ -229,7 +227,7 @@ def get_user_input():
         "yes" if EnableNotificationModule else "no",
         region, account_id, AWSOrganizationID,
         DataCollectionBucket, DataCollectionBucketKmsArn, QuickSightAnalysisAuthor,
-        AthenaResultBucket, AthenaBucketKmsArn, QuicksightServiceRole,ResourcePrefix, 
+        AthenaResultBucket, AthenaBucketKmsArn,ResourcePrefix, 
         SlackChannelId, SlackWorkspaceId, TeamId, TeamsTenantId, TeamsChannelId, qsregion, #qs region not required in parameter
         MemberRegionHealth
     )
@@ -240,20 +238,19 @@ def save_variables_to_file(variables): #last variable is variables[20], incremen
         f"#Deploy Notification module\nEnableNotificationModule: {variables[1]}\n",
         f"#Data Collection Region\nDataCollectionRegion: {variables[2]}\n",
         f"#Data Collection Account\nDataCollectionAccountID: {variables[3]}\n",
-        f"#Member Regions \nMemberRegionHealth: {variables[18]}\n",
+        f"#Member Regions \nMemberRegionHealth: {variables[17]}\n",
         f"#AWS Organization ID which can send events to Data Collection Account\nAWSOrganizationID: {variables[4]}\n",
         f"#Bucket which would collection data from various members\nDataCollectionBucket: {variables[5]}\n",
         f"#Update here if Collection bucket is encrypted with KMS otherwise na\nDataCollectionBucketKmsArn: {variables[6]}\n",
         f"#QuickSight Analysis Author\nQuickSightAnalysisAuthor: {variables[7]}\n",
         f"#Update here if Athena result bucket is not default\nAthenaResultBucket: {variables[8]}\n",
         f"#Update here Athena bucket is encrypted with KMS otherwise na\nAthenaBucketKmsArn: {variables[9]}\n",
-        f"#Update here if QuicksightServiceRole is not default\nQuicksightServiceRole: {variables[10]}\n",
-        f"#Resource prefix, DO NOT CHANGE\nResourcePrefix: {variables[11]}\n",
-        f"#If EnableNotificationModule, Provide SlackChannelId for slack\nSlackChannelId: {variables[12]}\n",
-        f"#If EnableNotificationModule, Provide SlackWorkspaceId for slack\nSlackWorkspaceId: {variables[13]}\n",
-        f"#If EnableNotificationModule, Provide TeamId for MS Teams\nTeamId: {variables[14]}\n",
-        f"#If EnableNotificationModule, Provide TeamsTenantId for MS Teams\nTeamsTenantId: {variables[15]}\n",
-        f"#If EnableNotificationModule, Provide TeamsChannelId for MS Teams\nTeamsChannelId: {variables[16]}\n"
+        f"#Resource prefix, DO NOT CHANGE\nResourcePrefix: {variables[10]}\n",
+        f"#If EnableNotificationModule, Provide SlackChannelId for slack\nSlackChannelId: {variables[11]}\n",
+        f"#If EnableNotificationModule, Provide SlackWorkspaceId for slack\nSlackWorkspaceId: {variables[12]}\n",
+        f"#If EnableNotificationModule, Provide TeamId for MS Teams\nTeamId: {variables[13]}\n",
+        f"#If EnableNotificationModule, Provide TeamsTenantId for MS Teams\nTeamsTenantId: {variables[14]}\n",
+        f"#If EnableNotificationModule, Provide TeamsChannelId for MS Teams\nTeamsChannelId: {variables[15]}\n"
     ])
     save_output_to_file(output)
 
@@ -287,7 +284,6 @@ def read_parameters(file_path):
     data_collection_bucket_kms_arn = parameters.get('DataCollectionBucketKmsArn', 'na')
     athena_result_bucket = parameters.get('AthenaResultBucket', 'aws-athena-query-results-*')
     athena_bucket_kms_arn = parameters.get('AthenaBucketKmsArn', 'na')
-    quicksight_service_role = parameters.get('QuicksightServiceRole', 'aws-quicksight-service-role-v0')
     resource_prefix = parameters.get('ResourcePrefix', '')
     slack_channel_id = parameters.get('SlackChannelId', '')
     Slack_Workspace_Id = parameters.get('SlackWorkspaceId', '')
@@ -308,7 +304,6 @@ def read_parameters(file_path):
         'DataCollectionBucketKmsArn': data_collection_bucket_kms_arn,
         'AthenaResultBucket': athena_result_bucket,
         'AthenaBucketKmsArn': athena_bucket_kms_arn,
-        'QuicksightServiceRole': quicksight_service_role,
         'ResourcePrefix': resource_prefix,
         'SlackChannelId': slack_channel_id,
         'SlackWorkspaceId': Slack_Workspace_Id,
@@ -349,7 +344,6 @@ def setup():
                 f"DataCollectionBucket={parameters_dict['DataCollectionBucket']} " \
                 f"DataCollectionBucketKmsArn={parameters_dict['DataCollectionBucketKmsArn']} " \
                 f"AthenaBucketKmsArn={parameters_dict['AthenaBucketKmsArn']} " \
-                f"QuicksightServiceRole={parameters_dict['QuicksightServiceRole']} " \
                 f"QuickSightAnalysisAuthor={parameters_dict['QuickSightAnalysisAuthor']} " \
                 f"ResourcePrefix={parameters_dict['ResourcePrefix']} " \
                 f"SlackChannelId={parameters_dict['SlackChannelId']} " \

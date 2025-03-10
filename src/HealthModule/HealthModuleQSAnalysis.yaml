@@ -47,8 +47,6 @@ Resources:
                 DateTimeFormat: YYYY/MM/DD HH:mm:ss
                 InfoIconLabelOptions:
                   Visibility: HIDDEN
-                HelperTextVisibility: VISIBLE
-                DateIconVisibility: VISIBLE
               Type: DATE_RANGE
           - List:
               FilterControlId: f8a8bbfe-f4f8-4e00-b6f9-0cde585794a5
@@ -162,6 +160,121 @@ Resources:
                   Visibility: HIDDEN
               Type: MULTI_SELECT
           Visuals:
+          - BarChartVisual:
+              VisualId: d0241e57-e058-4697-b471-a7811a3ded45
+              Title:
+                Visibility: VISIBLE
+                FormatText:
+                  RichText: |-
+                    <visual-title>
+                      <block align="center">
+                        <inline font-size="24px">Deprecated Version</inline>
+                      </block>
+                    </visual-title>
+              Subtitle:
+                Visibility: VISIBLE
+              ChartConfiguration:
+                FieldWells:
+                  BarChartAggregatedFieldWells:
+                    Category:
+                    - CategoricalDimensionField:
+                        FieldId: AWSHealthQSLT.deprecated_versions.1.1741619517344
+                        Column:
+                          DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
+                          ColumnName: deprecated_versions
+                    Values:
+                    - CategoricalMeasureField:
+                        FieldId: AWSHealthQSLT.affectedEntities.1.1741619546596
+                        Column:
+                          DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
+                          ColumnName: affectedEntities
+                        AggregationFunction: COUNT
+                    Colors: []
+                SortConfiguration:
+                  CategorySort:
+                  - FieldSort:
+                      FieldId: AWSHealthQSLT.deprecated_versions.1.1741619517344
+                      Direction: ASC
+                  CategoryItemsLimit:
+                    OtherCategories: INCLUDE
+                  ColorItemsLimit:
+                    OtherCategories: INCLUDE
+                  SmallMultiplesLimitConfiguration:
+                    OtherCategories: INCLUDE
+                Orientation: HORIZONTAL
+                BarsArrangement: CLUSTERED
+                VisualPalette:
+                  ChartColor: "#219FD7"
+                CategoryAxis:
+                  TickLabelOptions:
+                    LabelOptions:
+                      Visibility: VISIBLE
+                      FontConfiguration:
+                        FontSize:
+                          Relative: LARGE
+                  AxisLineVisibility: HIDDEN
+                  ScrollbarOptions:
+                    Visibility: VISIBLE
+                CategoryLabelOptions:
+                  AxisLabelOptions:
+                  - CustomLabel: Deprecated Versions
+                    ApplyTo:
+                      FieldId: AWSHealthQSLT.deprecated_versions.1.1741619517344
+                      Column:
+                        DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
+                        ColumnName: deprecated_versions
+                ValueAxis:
+                  TickLabelOptions:
+                    LabelOptions:
+                      Visibility: VISIBLE
+                      FontConfiguration:
+                        FontSize:
+                          Relative: LARGE
+                  AxisOffset: 759px
+                ValueLabelOptions:
+                  AxisLabelOptions:
+                  - CustomLabel: Affected Entities
+                    ApplyTo:
+                      FieldId: AWSHealthQSLT.affectedEntities.1.1741619546596
+                      Column:
+                        DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
+                        ColumnName: affectedEntities
+                Legend:
+                  Title:
+                    CustomLabel: Services
+                  Width: 102px
+                DataLabels:
+                  Visibility: HIDDEN
+                  LabelFontConfiguration:
+                    FontSize:
+                      Relative: LARGE
+                  Overlap: DISABLE_OVERLAP
+                Tooltip:
+                  TooltipVisibility: VISIBLE
+                  SelectedTooltipType: DETAILED
+                  FieldBasedTooltip:
+                    AggregationVisibility: HIDDEN
+                    TooltipTitleType: PRIMARY_VALUE
+                    TooltipFields:
+                    - FieldTooltipItem:
+                        FieldId: AWSHealthQSLT.deprecated_versions.1.1741619517344
+                        Visibility: VISIBLE
+                    - FieldTooltipItem:
+                        FieldId: AWSHealthQSLT.affectedEntities.1.1741619546596
+                        Visibility: VISIBLE
+              Actions:
+              - CustomActionId: eb6f881b-31c0-4d10-b8cf-496b067345e3
+                Name: PendingVsResolved
+                Status: ENABLED
+                Trigger: DATA_POINT_CLICK
+                ActionOperations:
+                - FilterOperation:
+                    SelectedFieldsConfiguration:
+                      SelectedFieldOptions: ALL_FIELDS
+                    TargetVisualsConfiguration:
+                      SameSheetTargetVisualConfiguration:
+                        TargetVisualOptions: ALL_VISUALS
+              ColumnHierarchies: []
           - InsightVisual:
               VisualId: '08772919-0965-43ba-8e50-60613f30f5ee'
               Title:
@@ -416,6 +529,7 @@ Resources:
               ColumnHierarchies:
               - DateTimeHierarchy:
                   HierarchyId: AWSHealthQSLT.startTime.1.1738035915936
+                  DrillDownFilters: []
           - InsightVisual:
               VisualId: ddaa98b6-f661-408b-818c-7cef83e65250
               Title:
@@ -1375,6 +1489,11 @@ Resources:
                   TableAggregatedFieldWells:
                     GroupBy:
                     - CategoricalDimensionField:
+                        FieldId: AWSHealthQSLT.eventTypeCategory.3.1738036159114
+                        Column:
+                          DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
+                          ColumnName: eventTypeCategory
+                    - CategoricalDimensionField:
                         FieldId: AWSHealthQSLT.service.2.1738036100732
                         Column:
                           DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
@@ -1395,25 +1514,25 @@ Resources:
                           DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                           ColumnName: eventRegion
                     - CategoricalDimensionField:
-                        FieldId: AWSHealthQSLT.eventTypeCategory.3.1738036159114
-                        Column:
-                          DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
-                          ColumnName: eventTypeCategory
-                    - CategoricalDimensionField:
                         FieldId: AWSHealthQSLT.statusCode.8.1738036199422
                         Column:
                           DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                           ColumnName: statusCode
                     - CategoricalDimensionField:
-                        FieldId: AWSHealthQSLT.affectedEntities.4.1738036179695
-                        Column:
-                          DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
-                          ColumnName: affectedEntities
-                    - CategoricalDimensionField:
                         FieldId: AWSHealthQSLT.affectedEntityStatus.5.1738036181052
                         Column:
                           DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
                           ColumnName: affectedEntityStatus
+                    - CategoricalDimensionField:
+                        FieldId: AWSHealthQSLT.deprecated_versions.17.1741616392075
+                        Column:
+                          DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
+                          ColumnName: deprecated_versions
+                    - CategoricalDimensionField:
+                        FieldId: AWSHealthQSLT.affectedEntities.4.1738036179695
+                        Column:
+                          DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
+                          ColumnName: affectedEntities
                     - DateDimensionField:
                         FieldId: AWSHealthQSLT.startTime.6.1738036194886
                         Column:
@@ -1464,47 +1583,55 @@ Resources:
                       FontWeight:
                         Name: BOLD
                     TextWrap: WRAP
-                    HorizontalTextAlignment: CENTER
+                    HorizontalTextAlignment: LEFT
                     BackgroundColor: "#FFB500"
-                    Height: 40
+                    Height: 35
                   CellStyle:
                     FontConfiguration:
                       FontSize:
-                        Absolute: 16px
+                        Absolute: 14px
                     HorizontalTextAlignment: AUTO
                     VerticalTextAlignment: MIDDLE
                     BackgroundColor: "#AAAAAA"
-                    Height: 40
+                    Height: 30
                   RowAlternateColorOptions:
                     Status: ENABLED
                     RowAlternateColors:
                     - "#EEEEEE"
                 FieldOptions:
                   SelectedFieldOptions:
+                  - FieldId: AWSHealthQSLT.eventTypeCategory.3.1738036159114
+                    Width: 177px
+                    CustomLabel: Event Type
                   - FieldId: AWSHealthQSLT.service.2.1738036100732
+                    Width: 173px
                     CustomLabel: Service
                   - FieldId: AWSHealthQSLT.accountName.0.1738036088739
+                    Width: 176px
                     CustomLabel: AccountName
                   - FieldId: AWSHealthQSLT.accountTag.1.1738036096864
                     Width: 132px
                     CustomLabel: Account Tag
                   - FieldId: AWSHealthQSLT.eventRegion.13.1738036291173
                     CustomLabel: Region
-                  - FieldId: AWSHealthQSLT.eventTypeCategory.3.1738036159114
-                    CustomLabel: Event Type
                   - FieldId: AWSHealthQSLT.statusCode.8.1738036199422
-                    CustomLabel: Status
-                  - FieldId: AWSHealthQSLT.affectedEntities.4.1738036179695
-                    Width: 377px
-                    CustomLabel: Affected Resources
+                    Width: 133px
+                    CustomLabel: Event Status
                   - FieldId: AWSHealthQSLT.affectedEntityStatus.5.1738036181052
-                    Width: 552px
+                    Width: 224px
                     CustomLabel: Affected Resource Status
+                  - FieldId: AWSHealthQSLT.deprecated_versions.17.1741616392075
+                    Width: 199px
+                  - FieldId: AWSHealthQSLT.affectedEntities.4.1738036179695
+                    Width: 632px
+                    CustomLabel: Affected Resources
                   - FieldId: AWSHealthQSLT.startTime.6.1738036194886
                     CustomLabel: Start Time
                   - FieldId: AWSHealthQSLT.endTime.7.1738036197943
+                    Width: 111px
                     CustomLabel: End TIme
                   - FieldId: AWSHealthQSLT.ingestionTime.15.1738036348800
+                    Width: 173px
                     CustomLabel: Ingestion Time
                   - FieldId: AWSHealthQSLT.lastUpdatedTime.16.1738036349486
                     CustomLabel: Last Updated TIme
@@ -1513,10 +1640,28 @@ Resources:
                   - FieldId: AWSHealthQSLT.entityTagValue.12.1738036282796
                     CustomLabel: Value
                   - FieldId: 319835ab-d124-45ec-8af8-926ad863fb91.9.1738036249004
+                    Width: 1594px
                     CustomLabel: Description
                   - FieldId: AWSHealthQSLT.eventArn.14.1738036310943
                     CustomLabel: EventArn
-                  Order: []
+                  Order:
+                  - AWSHealthQSLT.eventTypeCategory.3.1738036159114
+                  - AWSHealthQSLT.service.2.1738036100732
+                  - AWSHealthQSLT.accountName.0.1738036088739
+                  - AWSHealthQSLT.accountTag.1.1738036096864
+                  - AWSHealthQSLT.eventRegion.13.1738036291173
+                  - AWSHealthQSLT.statusCode.8.1738036199422
+                  - AWSHealthQSLT.affectedEntityStatus.5.1738036181052
+                  - AWSHealthQSLT.deprecated_versions.17.1741616392075
+                  - AWSHealthQSLT.affectedEntities.4.1738036179695
+                  - AWSHealthQSLT.startTime.6.1738036194886
+                  - AWSHealthQSLT.endTime.7.1738036197943
+                  - AWSHealthQSLT.ingestionTime.15.1738036348800
+                  - AWSHealthQSLT.lastUpdatedTime.16.1738036349486
+                  - AWSHealthQSLT.entityTagKey.11.1738036282216
+                  - AWSHealthQSLT.entityTagValue.12.1738036282796
+                  - 319835ab-d124-45ec-8af8-926ad863fb91.9.1738036249004
+                  - AWSHealthQSLT.eventArn.14.1738036310943
               ConditionalFormatting:
                 ConditionalFormattingOptions:
                 - Cell:
@@ -1858,7 +2003,7 @@ Resources:
                 - ElementId: b1634288-ee77-485d-be29-077e94201bc4
                   ElementType: VISUAL
                   XAxisLocation: 0px
-                  YAxisLocation: 1600px
+                  YAxisLocation: 2000px
                   Width: 1600px
                   Height: 800px
                   Visibility: VISIBLE
@@ -1916,6 +2061,13 @@ Resources:
                   Visibility: VISIBLE
                   LoadingAnimation:
                     Visibility: VISIBLE
+                - ElementId: d0241e57-e058-4697-b471-a7811a3ded45
+                  ElementType: VISUAL
+                  XAxisLocation: 0px
+                  YAxisLocation: 1600px
+                  Width: 1600px
+                  Height: 400px
+                  Visibility: VISIBLE
                 CanvasSizeOptions:
                   ScreenCanvasSizeOptions:
                     OptimizedViewPortWidth: 1600px
@@ -2990,6 +3142,72 @@ Resources:
               SheetVisualScopingConfigurations:
               - SheetId: c487a969-bce6-4670-a7af-504641f9fa26
                 Scope: ALL_VISUALS
+          Status: ENABLED
+          CrossDataset: SINGLE_DATASET
+        - FilterGroupId: 2388fefb-dae3-4132-af9a-6f5edc737adf
+          Filters:
+          - CategoryFilter:
+              FilterId: dd0a6605-fe11-423e-b504-a22fdb298c82
+              Column:
+                DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
+                ColumnName: plannedLifeCycleEvent
+              Configuration:
+                FilterListConfiguration:
+                  MatchOperator: CONTAINS
+                  CategoryValues:
+                  - Y
+                  NullOption: NON_NULLS_ONLY
+          ScopeConfiguration:
+            SelectedSheets:
+              SheetVisualScopingConfigurations:
+              - SheetId: c487a969-bce6-4670-a7af-504641f9fa26
+                Scope: SELECTED_VISUALS
+                VisualIds:
+                - d0241e57-e058-4697-b471-a7811a3ded45
+          Status: ENABLED
+          CrossDataset: SINGLE_DATASET
+        - FilterGroupId: c4678ace-d495-4fb1-9eea-f328c88ee78e
+          Filters:
+          - CategoryFilter:
+              FilterId: 76e2ea78-23de-49a6-9bce-d944bce465d4
+              Column:
+                DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
+                ColumnName: affectedEntityStatus
+              Configuration:
+                FilterListConfiguration:
+                  MatchOperator: DOES_NOT_CONTAIN
+                  CategoryValues:
+                  - RESOLVED
+                  NullOption: NON_NULLS_ONLY
+          ScopeConfiguration:
+            SelectedSheets:
+              SheetVisualScopingConfigurations:
+              - SheetId: c487a969-bce6-4670-a7af-504641f9fa26
+                Scope: SELECTED_VISUALS
+                VisualIds:
+                - d0241e57-e058-4697-b471-a7811a3ded45
+          Status: ENABLED
+          CrossDataset: SINGLE_DATASET
+        - FilterGroupId: 870d0681-372b-4235-b1cc-f5d463f78d3f
+          Filters:
+          - CategoryFilter:
+              FilterId: 5db7abdd-c077-4393-98dc-b9882554f003
+              Column:
+                DataSetIdentifier: !Sub "AWSHealthEvent-${AWS::AccountId}-${AWS::Region}"
+                ColumnName: plannedLifeCycleEvent
+              Configuration:
+                FilterListConfiguration:
+                  MatchOperator: CONTAINS
+                  CategoryValues:
+                  - Y
+                  NullOption: NON_NULLS_ONLY
+          ScopeConfiguration:
+            SelectedSheets:
+              SheetVisualScopingConfigurations:
+              - SheetId: c487a969-bce6-4670-a7af-504641f9fa26
+                Scope: SELECTED_VISUALS
+                VisualIds:
+                - d0241e57-e058-4697-b471-a7811a3ded45
           Status: ENABLED
           CrossDataset: SINGLE_DATASET
         ColumnConfigurations:
