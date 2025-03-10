@@ -1,7 +1,7 @@
 ## **Health Events Intelligence Dashboards and Insights (HEIDI)**
 Single pane of glass for all your Health events across different accounts, regions and organizations.
 
- ![Sample Dashboard](img/Dashboard.gif)
+ ![Alt Text](https://github.com/aws-samples/aws-health-events-insight/blob/main/img/dashboard.gif)
 
 ## **Table of Contents**
 - [What's New?](#whats-new)
