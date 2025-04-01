@@ -1,6 +1,6 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
-Description: SupportCase Module Data Collection Setup
+Description: Health Module for Data Collection Setup
 
 Parameters:
   DataCollectionAccountID:

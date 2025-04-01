@@ -1,6 +1,6 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
-Description: (AwsHealthEvents) Stack to create eventUrl via APIGW.
+Description: (AwsHealthEvents) Stack for notification.
 
 Parameters:
   DataCollectionAccountID:
@@ -119,7 +119,7 @@ Resources:
     Condition: ChatbotSlackChannelConfiguration
     Type: AWS::Chatbot::SlackChannelConfiguration
     Properties:
-      ConfigurationName: !Sub ${ResourcePrefix}-ChatbotSlack
+      ConfigurationName: !Sub ${ResourcePrefix}ChatbotSlack
       GuardrailPolicies:
         - arn:aws:iam::aws:policy/ReadOnlyAccess
       IamRoleArn: !GetAtt ChatbotRole.Arn

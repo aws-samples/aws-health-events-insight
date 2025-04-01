@@ -7,18 +7,18 @@ Heidi can send incoming event notification to slack/teams/chime. AWS Chatbot is 
 # Slack Notification Setup
 
 Heidi will setup all required resources through cloudformation template. If this is first time setup, Slack Workspace setup/OAuth authorization must be done from AWS console.
-1. Open the AWS Chatbot console at https://console.aws.amazon.com/chatbot/\
-2. Under Configure a chat client, choose Slack, then choose Configure client.\
+1. Open the AWS Chatbot console at https://console.aws.amazon.com/chatbot/
+2. Under Configure a chat client, choose Slack, then choose Configure client.
 3. From the dropdown list at the top right, choose the Slack workspace that you want to use with AWS Chatbot and Choose Allow.
 4. Proceed to OneClickSetup script and provide all necessary informaiton.
 
 # Teams notification Setup
 
 Similar to Slack setup, If this is first time setup for MS Teams, Team Workspace setup/OAuth authorization must be done from AWS console.\
-1. Open the AWS Chatbot console at https://console.aws.amazon.com/chatbot/.\
-2. Under Configure a chat client, choose Microsoft Teams, then choose Configure client.\
-3. Copy and paste your Microsoft Teams channel URL. Your channel URL contains your tenant, team, and channel IDs.\
-4. Choose Configure and On the Microsoft Teams authorization page, choose Accept.\
+1. Open the AWS Chatbot console at https://console.aws.amazon.com/chatbot/
+2. Under Configure a chat client, choose Microsoft Teams, then choose Configure client.
+3. Copy and paste your Microsoft Teams channel URL. Your channel URL contains your tenant, team, and channel IDs.
+4. Choose Configure and On the Microsoft Teams authorization page, choose Accept.
 5. From the Microsoft Teams page, choose Configure new channel.
 6. Proceed to OneClickSetup script and provide all necessary informaiton.
 
